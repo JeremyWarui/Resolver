@@ -1,22 +1,7 @@
 import { useState, useMemo } from "react";
+import { type ColumnDef, type VisibilityState } from "@tanstack/react-table";
 import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  ChevronDown,
   MoreHorizontal,
-  SlidersHorizontal,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Edit,
   UserPlus,
@@ -28,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -38,15 +22,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -54,8 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+
+// Import DataTable component
+import DataTable from "@/components/Common/DataTable";
 
 // Import GraphQL hook instead of services
 import useGraphQLTickets from "@/hooks/useGraphQLTickets";
@@ -84,33 +61,34 @@ const allSections = [
 
 function AllTicketsTable() {
   // Table state and filters
-  const [sorting, setSorting] = useState<SortingState>([
+  const [sorting, setSorting] = useState([
     { id: 'id', desc: true } // Default sorting by ID in descending order
   ]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  
+  // Set initial column visibility - hide certain columns by default
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     id: true,
+    ticket_no: true,
     title: true,
-    section: true,
+    sectionName: true,
     raisedBy: true,
     status: true,
+    priority: false,
     createdAt: true,
     assignedTo: true,
-    updatedAt: true,
+    updatedAt: false,
     description: false,
     facility: false,
-    priority: false,
     actions: true,
+    searchField: false, // Always hide the search field column
   });
-  const [rowSelection, setRowSelection] = useState({});
-  const [searchValue, setSearchValue] = useState("");
-
+  
   // Pagination state for server side pagination
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [statusFilter, setStatusFilter] = useState<string | null>("all");
-  const [sectionFilter, setSectionFilter] = useState<string | null>("all");
-  const [technicianFilter, setTechnicianFilter] = useState<string | null>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sectionFilter, setSectionFilter] = useState("all");
+  const [technicianFilter, setTechnicianFilter] = useState("all");
 
   // Use GraphQL hooks instead of fetching directly
   const { 
@@ -124,8 +102,8 @@ function AllTicketsTable() {
     status: statusFilter === "all" ? null : statusFilter,
     section: sectionFilter === "all" ? null : sectionFilter,
     technician: technicianFilter === "all" ? null : technicianFilter,
-    sortField: 'id', // Sort by ID
-    sortDirection: 'desc' // Sort in descending order
+    sortField: 'id',
+    sortDirection: 'desc'
   });
 
   // Use GraphQL hooks to fetch technicians
@@ -143,7 +121,7 @@ function AllTicketsTable() {
 
   // Build a lookup map from section id to section name
   const sectionMap = useMemo(() => {
-    return sections.reduce<Record<string, string>>((map, section) => {
+    return sections.reduce((map, section) => {
       map[section.id] = section.name;
       return map;
     }, {});
@@ -158,13 +136,7 @@ function AllTicketsTable() {
     }));
   }, [tickets, sectionMap]);
 
-  // Unique values for filters (now using ticket's sectionName if needed)
-  // const uniqueSections = useMemo(() => {
-  //   return [
-  //     ...new Set(dataWithSectionNames.map((ticket) => ticket.sectionName)),
-  //   ];
-  // }, [dataWithSectionNames]);
-
+  // Unique values for filters
   const uniqueTechnicians = useMemo(() => {
     return [
       ...new Set(dataWithSectionNames.map((ticket) => ticket.assignedTo)),
@@ -176,13 +148,14 @@ function AllTicketsTable() {
       ...new Set(
         dataWithSectionNames
           .map((ticket) => ticket.raisedBy)
-          .filter((value): value is string => Boolean(value))
+          .filter((value) => Boolean(value))
       ),
     ];
   }, [dataWithSectionNames]);
 
   // Function to truncate text
-  const truncateText = (text: string, maxLength: number) => {
+  const truncateText = (text, maxLength) => {
+    if (!text) return "N/A";
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
   };
@@ -191,18 +164,7 @@ function AllTicketsTable() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: "ticket_no",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Ticket ID</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
+      header: "Ticket ID",
       cell: ({ row }) => <div>{row.getValue("ticket_no")}</div>,
     },
     {
@@ -223,9 +185,7 @@ function AllTicketsTable() {
           className="max-w-[300px] truncate"
           title={row.getValue("description") || "N/A"}
         >
-          {row.getValue("description")
-            ? truncateText(row.getValue("description"), 20)
-            : "N/A"}
+          {truncateText(row.getValue("description"), 20)}
         </div>
       ),
       enableSorting: false,
@@ -238,18 +198,7 @@ function AllTicketsTable() {
     },
     {
       accessorKey: "sectionName",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Section</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
+      header: "Section",
       cell: ({ row }) => <div>{row.getValue("sectionName")}</div>,
     },
     {
@@ -260,18 +209,7 @@ function AllTicketsTable() {
     },
     {
       accessorKey: "status",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Status</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
+      header: "Status",
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         return (
@@ -318,18 +256,7 @@ function AllTicketsTable() {
     },
     {
       accessorKey: "createdAt",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Created</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
+      header: "Created",
       cell: ({ row }) => {
         const createdAt = row.getValue("createdAt") as string;
         const date = new Date(createdAt);
@@ -351,23 +278,12 @@ function AllTicketsTable() {
     {
       accessorKey: "assignedTo",
       header: "Assigned To",
-      cell: ({ row }) => <div>{row.getValue("assignedTo")}</div>,
+      cell: ({ row }) => <div>{row.getValue("assignedTo") || "Unassigned"}</div>,
       enableSorting: false,
     },
     {
       accessorKey: "updatedAt",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Updated</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
+      header: "Updated",
       cell: ({ row }) => {
         const updatedAt = row.original.updatedAt;
         if (!updatedAt) return <div>N/A</div>;
@@ -476,289 +392,134 @@ function AllTicketsTable() {
     },
   ];
 
-  // Handle search input changes
-  const handleSearch = (value: string) => {
-    setSearchValue(value);
-    table.getColumn("searchField")?.setFilterValue(value.toLowerCase());
-  };
+  // Create additional filters component for the admin datatable
+  const additionalFilters = (
+    <>
+      <Select
+        onValueChange={(value) => {
+          setTechnicianFilter(value);
+          setPageIndex(0);
+        }}
+        value={technicianFilter}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by technician">
+            {technicianFilter === "all" ? "All Technicians" : technicianFilter}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Technicians</SelectItem>
+          {allAvailableTechnicians.length > 0 
+            ? allAvailableTechnicians.map((technician) => (
+              <SelectItem key={technician} value={technician}>
+                {technician}
+              </SelectItem>
+            ))
+            : uniqueTechnicians.map((technician) => (
+              <SelectItem key={technician} value={technician}>
+                {technician}
+              </SelectItem>
+            ))
+          }
+        </SelectContent>
+      </Select>
 
-  // Initialize the table using manual pagination so that page change triggers a refetch.
-  const table = useReactTable({
-    data: dataWithSectionNames,
-    columns,
-    manualPagination: true,
-    pageCount: Math.ceil(totalTickets / pageSize),
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    // Note: getPaginationRowModel is still used to easily render UI controls.
-    getPaginationRowModel: getPaginationRowModel(),
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility: {
-        ...columnVisibility,
-        searchField: false, // Always hide search field column
-      },
-      rowSelection,
-      pagination: {
-        pageIndex,
-        pageSize,
-      },
-    },
-  });
-
-  // Handle page change (when clicking previous/next)
-  const goToPage = (newPageIndex: number) => {
-    setPageIndex(newPageIndex);
-  };
+      <Select
+        onValueChange={(value) => {
+          // Handle user filter
+          console.log(`User filter changed to ${value}`);
+          // This would normally update state and filter data
+        }}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Filter by user" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Users</SelectItem>
+          {uniqueUsers.map((user) => (
+            <SelectItem key={user} value={user}>
+              {user}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
+  );
 
   // Determine if we're loading data
   const loading = ticketsLoading || techniciansLoading;
 
+  // Create filter options for the DataTable
+  const filterOptions = {
+    label: "Filter by section",
+    options: [
+      { label: "All Sections", value: "all" },
+      ...allSections.map((section) => ({
+        label: section,
+        value: section,
+      })),
+    ],
+    defaultValue: sectionFilter,
+    onFilterChange: (value) => {
+      setSectionFilter(value);
+      setPageIndex(0);
+    },
+  };
+
+  // Define status filter options
+  const statusFilterOptions = {
+    label: "Filter by status",
+    options: [
+      { label: "All Statuses", value: "all" },
+      ...allStatuses.map((status) => ({
+        label: status.charAt(0).toUpperCase() + status.slice(1),
+        value: status,
+      })),
+    ],
+    defaultValue: statusFilter,
+    onFilterChange: (value) => {
+      setStatusFilter(value);
+      setPageIndex(0);
+    },
+  };
+
+  // Handler for column visibility changes
+  const handleColumnVisibilityChange = (newVisibility: VisibilityState) => {
+    setColumnVisibility(newVisibility);
+  };
+
+  // Function to handle page changes
+  const handlePageChange = (newPageIndex: number) => {
+    setPageIndex(newPageIndex);
+  };
+
+  // Function to handle page size changes
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    // Reset page index when page size changes
+    setPageIndex(0);
+  };
+
   return (
-    <Card className="w-full pt-7">
-      <CardContent>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center py-4">
-          <Input
-            placeholder="Search by ID or title..."
-            value={searchValue}
-            onChange={(event) => handleSearch(event.target.value)}
-            className="max-w-sm"
-          />
-          <div className="flex flex-col gap-4 md:flex-row">
-            <Select
-              onValueChange={(value) => {
-                setSectionFilter(value);
-                setPageIndex(0); // Reset to first page when filter changes
-              }}
-              value={sectionFilter || "all"}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by section">
-                  {sectionFilter === "all" || !sectionFilter ? "All Sections" : sectionFilter}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sections</SelectItem>
-                {allSections.map((section) => (
-                  <SelectItem key={section} value={section}>
-                    {section}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              onValueChange={(value) =>
-                table
-                  .getColumn("raisedBy")
-                  ?.setFilterValue(value === "all" ? undefined : value)
-              }
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by users" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                {uniqueUsers.map((user) => (
-                  <SelectItem key={user} value={user}>
-                    {user}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              onValueChange={(value) => {
-                setStatusFilter(value === "all" ? "" : value);
-                setPageIndex(0);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status">
-                  {statusFilter || "All Statuses"}{" "}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {allStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              onValueChange={(value) =>
-                table
-                  .getColumn("assignedTo")
-                  ?.setFilterValue(value === "all" ? undefined : value)
-              }
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by technician" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Technicians</SelectItem>
-                {allAvailableTechnicians.length > 0 
-                  ? allAvailableTechnicians.map((technician) => (
-                    <SelectItem key={technician} value={technician}>
-                      {technician}
-                    </SelectItem>
-                  ))
-                  : uniqueTechnicians.map((technician) => (
-                    <SelectItem key={technician} value={technician}>
-                      {technician}
-                    </SelectItem>
-                  ))
-                }
-              </SelectContent>
-            </Select>
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    column.id !== "actions" && column.id !== "searchField"
-                )
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {loading ? (
-          <div className="py-8 text-center">Loading...</div>
-        ) : (
-          <>
-            <div className="rounded-sm border">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        No results.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex items-center justify-between space-x-2 py-4">
-              <div className="flex items-center space-x-6">
-                <div className="text-sm text-muted-foreground">
-                  {totalTickets} ticket(s) found.
-                </div>
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium">Rows per page</p>
-                  <Select
-                    value={`${pageSize}`}
-                    onValueChange={(value) => {
-                      setPageSize(Number(value));
-                      setPageIndex(0); // Reset to first page on pageSize change
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[70px]">
-                      <SelectValue placeholder={pageSize} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[5, 10, 15, 20].map((size) => (
-                        <SelectItem key={size} value={`${size}`}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(pageIndex - 1)}
-                  disabled={pageIndex === 0}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                <div className="flex items-center justify-center text-sm font-medium">
-                  Page {pageIndex + 1} of {Math.ceil(totalTickets / pageSize)}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => goToPage(pageIndex + 1)}
-                  disabled={pageIndex + 1 >= Math.ceil(totalTickets / pageSize)}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <DataTable
+      variant="admin"
+      columns={columns}
+      data={dataWithSectionNames}
+      searchPlaceholder="Search by ID or title..."
+      emptyStateMessage="No tickets found"
+      emptyStateDescription="Try changing your filters or check back later"
+      defaultSorting={[{ id: 'id', desc: true }]}
+      defaultPageSize={pageSize}
+      initialColumnVisibility={columnVisibility}
+      filterOptions={statusFilterOptions}
+      additionalFilters={additionalFilters}
+      manualPagination={true}
+      totalItems={totalTickets}
+      loading={loading}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      onColumnVisibilityChange={handleColumnVisibilityChange}
+    />
   );
 }
 

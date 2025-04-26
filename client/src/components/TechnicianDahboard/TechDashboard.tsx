@@ -4,9 +4,9 @@ import { Filter, Download } from 'lucide-react';
 
 // Import components
 import TechTickets from './TechTickets';
+import StatCard from '@/components/Common/StatCard';
 
-// Import card components for custom stats
-import { Card, CardContent } from '@/components/ui/card';
+// Import icons
 import { AlertCircle, Wrench, CheckCircle, Clock } from 'lucide-react';
 
 // Import sample data from shared file
@@ -32,71 +32,45 @@ const TechnicianDashboard = () => {
   // Custom stats card component with calculated data
   const CustomTicketStats = () => (
     <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
-      <Card>
-        <CardContent className='p-4 flex items-center'>
-          <div className='bg-[#e5f2fc] p-3 rounded-full mr-6 ml-2'>
-            <AlertCircle className='h-6 w-6 text-[#0078d4]' />
-          </div>
-          <div>
-            <p className='text-sm text-gray-500'>Open Tickets</p>
-            <div className='flex items-center'>
-              <h3 className='text-2xl font-bold mr-2'>{ticketStats.openTickets}</h3>
-            </div>
-            <p className='text-xs text-gray-500'>Requires attention</p>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Open Tickets"
+        value={ticketStats.openTickets}
+        description="Requires attention"
+        icon={<AlertCircle className='h-6 w-6 text-[#0078d4]' />}
+        iconBgColor="bg-[#e5f2fc]"
+        badge={{ value: "+12%", color: "amber" }}
+        className="bg-white"
+      />
 
-      <Card>
-        <CardContent className='p-4 flex items-center'>
-          <div className='bg-[#fef2e6] p-3 rounded-full mr-6 ml-2'>
-            <Wrench className='h-6 w-6 text-[#ca5010]' />
-          </div>
-          <div>
-            <p className='text-sm text-gray-500'>In Progress</p>
-            <div className='flex items-center'>
-              <h3 className='text-2xl font-bold mr-2'>
-                {ticketStats.inProgressTickets}
-              </h3>
-            </div>
-            <p className='text-xs text-gray-500'>Currently working</p>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="In Progress"
+        value={ticketStats.inProgressTickets}
+        description="Currently working"
+        icon={<Wrench className='h-6 w-6 text-[#0078d4]' />}
+        iconBgColor="bg-[#e5f2fc]"
+        badge={{ value: "+8%", color: "blue" }}
+        className="bg-white"
+      />
 
-      <Card>
-        <CardContent className='p-4 flex items-center'>
-          <div className='bg-[#e5f9e5] p-3 rounded-full mr-6 ml-2'>
-            <CheckCircle className='h-6 w-6 text-[#107c10]' />
-          </div>
-          <div>
-            <p className='text-sm text-gray-500'>Resolved</p>
-            <div className='flex items-center'>
-              <h3 className='text-2xl font-bold mr-2'>
-                {ticketStats.resolvedTickets}
-              </h3>
-            </div>
-            <p className='text-xs text-gray-500'>Completed work</p>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Resolved"
+        value={ticketStats.resolvedTickets}
+        description="Completed work"
+        icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
+        iconBgColor="bg-[#e5f9e5]"
+        badge={{ value: "+24%", color: "green" }}
+        className="bg-white"
+      />
 
-      <Card>
-        <CardContent className='p-4 flex items-center'>
-          <div className='bg-[#f9f3ff] p-3 rounded-full mr-6 ml-2'>
-            <Clock className='h-6 w-6 text-[#5c2d91]' />
-          </div>
-          <div>
-            <p className='text-sm text-gray-500'>Pending</p>
-            <div className='flex items-center'>
-              <h3 className='text-2xl font-bold mr-2'>
-                {ticketStats.pendingTickets}
-              </h3>
-            </div>
-            <p className='text-xs text-gray-500'>Awaiting resources</p>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        title="Pending"
+        value={ticketStats.pendingTickets}
+        description="Awaiting resources"
+        icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
+        iconBgColor="bg-[#f9f3ff]"
+        badge={{ value: "-5%", color: "red" }}
+        className="bg-white"
+      />
     </div>
   );
 

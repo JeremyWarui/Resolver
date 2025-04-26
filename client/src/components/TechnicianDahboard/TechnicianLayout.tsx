@@ -1,4 +1,4 @@
-import { SetStateAction, useState } from 'react';
+import { useState } from 'react';
 import TechSideBar, { Section } from './TechSideBar';
 import Header from '../Common/Header';
 import TechnicianDashboard from './TechDashboard';
@@ -44,10 +44,6 @@ const TechnicianLayout = () => {
           ? 'Report'
           : 'Settings';
 
-  const handleNavigate = (sectionId: Section['id']) => {
-    setActiveSection(sectionId);
-  };
-
   return (
     <div className='flex h-screen bg-gray-100'>
       {/* Sidebar with controlled active state */}
@@ -78,7 +74,7 @@ const TechnicianLayout = () => {
               </div>
               <TechTicketsTable 
                 defaultFilter="all" 
-                onNavigate={handleNavigate}
+                onNavigate={setActiveSection}
               />
             </div>
           )}
