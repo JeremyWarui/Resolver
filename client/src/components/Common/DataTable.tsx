@@ -15,9 +15,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   SlidersHorizontal,
-  MoreHorizontal,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

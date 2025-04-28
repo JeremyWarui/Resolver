@@ -72,6 +72,8 @@ const typeDefs = gql`
     ticketStats(user: String): TicketStats!
     technicianStats: TechnicianStats!
     
+    userTicketStats(username: String!): UserTicketStats!
+    
     currentUser: User!
   }
 
@@ -84,6 +86,19 @@ const typeDefs = gql`
       location_detail: String!
       priority: String!
     ): Ticket
+  }
+
+  type StatusCount {
+    status: String!
+    count: Int!
+  }
+
+  type UserTicketStats {
+    openTickets: Int!
+    assignedTickets: Int!
+    resolvedTickets: Int!
+    pendingTickets: Int!
+    statusBreakdown: [StatusCount!]!
   }
 
   type User {
@@ -374,6 +389,61 @@ const resolvers = {
             break;
         }
       });
+      
+      return stats;
+    },
+
+    userTicketStats: (_, { username }) => {
+      if (!username) {
+        throw new Error('Username is required');
+      }
+      
+      // Filter tickets by the specified username
+      const userTickets = data.tickets.filter(ticket => ticket.raisedBy === username);
+      
+      // Calculate ticket stats
+      const stats = {
+        openTickets: 0,
+        assignedTickets: 0,
+        resolvedTickets: 0,
+        pendingTickets: 0,
+        statusBreakdown: []
+      };
+      
+      // Count tickets by status
+      const statusCounts = {};
+      
+      userTickets.forEach(ticket => {
+        switch (ticket.status) {
+          case 'open':
+            stats.openTickets++;
+            break;
+          case 'assigned':
+            stats.assignedTickets++;
+            break;
+          case 'resolved':
+            stats.resolvedTickets++;
+            break;
+          case 'pending':
+            stats.pendingTickets++;
+            break;
+          default:
+            break;
+        }
+        
+        // Add to status breakdown
+        if (statusCounts[ticket.status]) {
+          statusCounts[ticket.status]++;
+        } else {
+          statusCounts[ticket.status] = 1;
+        }
+      });
+      
+      // Convert status counts to array of objects
+      stats.statusBreakdown = Object.keys(statusCounts).map(status => ({
+        status,
+        count: statusCounts[status]
+      }));
       
       return stats;
     },

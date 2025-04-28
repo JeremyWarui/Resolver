@@ -23,7 +23,6 @@ import DataTable from "@/components/Common/DataTable";
 import TechTicketDetails from "./TechTicketDetails";
 
 // Import hooks
-import useGraphQLTechnicianTickets from "@/hooks/useGraphQLTechnicianTickets";
 import useUpdateTicket from "@/hooks/useUpdateTicket";
 import { Section } from './TechSideBar';
 
@@ -358,8 +357,8 @@ function TechTickets({ onNavigate, defaultFilter = "open" }: TechTicketsProps) {
         variant="tech"
         columns={columns}
         data={dataWithSearchField}
-        title="Your Assigned Tickets"
-        subtitle="Manage tickets assigned to you"
+        title="Tickets"
+        subtitle=""
         searchPlaceholder="Search tickets..."
         emptyStateMessage="No tickets found with the selected filter"
         emptyStateDescription="Try changing your filter or check back later"

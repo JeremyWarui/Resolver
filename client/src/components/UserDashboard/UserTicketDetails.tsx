@@ -32,15 +32,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 
-// Define ticket status options
-const statusOptions = [
-  'open',
-  'assigned',
-  'in progress',
-  'pending',
-  'resolved',
-];
-
 // Define sections
 const sectionOptions = [
   'HVAC',
@@ -62,8 +53,6 @@ const ticketFormSchema = z.object({
     .min(10, { message: 'Description must be at least 10 characters.' }),
   section: z.string().min(1, { message: 'Please select a section.' }),
   facility: z.string().min(1, { message: 'Please enter a facility.' }),
-  status: z.string().min(1, { message: 'Please select a status.' }),
-  assignedTo: z.string().optional(),
 });
 
 interface TicketDetailDialogProps {
@@ -71,7 +60,6 @@ interface TicketDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   ticket: any; // Type this better based on your ticket structure
   onUpdate?: (updatedTicket: any) => Promise<void>;
-  isAdmin?: boolean;
   technicians?: { id: string; name: string }[];
 }
 
@@ -80,7 +68,6 @@ export default function TicketDetailDialog({
   onOpenChange,
   ticket,
   onUpdate,
-  isAdmin = false,
   technicians = [],
 }: TicketDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -94,8 +81,6 @@ export default function TicketDetailDialog({
       description: ticket?.description || '',
       section: ticket?.section || '',
       facility: ticket?.facility || '',
-      status: ticket?.status || 'open',
-      assignedTo: ticket?.assignedTo || '',
     },
   });
 
@@ -107,8 +92,6 @@ export default function TicketDetailDialog({
         description: ticket.description || '',
         section: ticket.section || '',
         facility: ticket.facility || '',
-        status: ticket.status || 'open',
-        assignedTo: ticket.assignedTo || '',
       });
     }
   }, [ticket, form]);
@@ -141,8 +124,6 @@ export default function TicketDetailDialog({
       description: ticket?.description || '',
       section: ticket?.section || '',
       facility: ticket?.facility || '',
-      status: ticket?.status || 'open',
-      assignedTo: ticket?.assignedTo || '',
     });
   };
 
@@ -161,7 +142,6 @@ export default function TicketDetailDialog({
         <DialogHeader>
           <DialogTitle>
             Ticket - {ticket.ticket_no}
-            {/* {isEditing ? 'Edit Ticket' : 'Ticket Details'} */}
             <Badge
               variant='outline'
               className={
@@ -259,68 +239,6 @@ export default function TicketDetailDialog({
                   )}
                 />
               </div>
-              <hr />
-
-              {isAdmin && (
-                <div className='grid grid-cols-2 gap-4'>
-                  <FormField
-                    control={form.control}
-                    name='status'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select status' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {statusOptions.map((status) => (
-                              <SelectItem key={status} value={status}>
-                                {status}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name='assignedTo'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assigned To</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select technician' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value=''>Not Assigned</SelectItem>
-                            {technicians.map((tech) => (
-                              <SelectItem key={tech.id} value={tech.name}>
-                                {tech.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
 
               <DialogFooter className='pt-4'>
                 <Button
@@ -403,7 +321,7 @@ export default function TicketDetailDialog({
               <Button variant='outline' onClick={() => onOpenChange(false)}>
                 Close
               </Button>
-              {(isAdmin || ticket.raisedBy === 'John Doe') && onUpdate && (
+              {ticket.raisedBy === 'John Doe' && onUpdate && (
                 <Button onClick={() => setIsEditing(true)}>Edit Ticket</Button>
               )}
             </DialogFooter>

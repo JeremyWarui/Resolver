@@ -13,13 +13,10 @@ import {
 } from '@tanstack/react-table';
 import {
   ChevronDown,
-  MoreHorizontal,
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   Eye,
-  Printer,
-  Edit,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -27,9 +24,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -51,7 +45,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-import TicketDetails from '@/components/Common/TicketDetails';
+import TicketDetails from '@/components/UserDashboard/UserTicketDetails';
 
 // Import GraphQL hook instead of services
 import useGraphQLTickets from '@/hooks/useGraphQLTickets';
@@ -78,7 +72,7 @@ interface PostedTicketsTableProps {
   currentUser?: string;
 }
 
-function PostedTicketsTable({ currentUser = null }: PostedTicketsTableProps) {
+function PostedTicketsTable({ currentUser = '' }: PostedTicketsTableProps) {
   // Table state and filters
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'id', desc: true }, // Default sorting by ID in descending order
@@ -409,33 +403,18 @@ function PostedTicketsTable({ currentUser = null }: PostedTicketsTableProps) {
       cell: ({ row }) => {
         const ticket = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='ghost' className='h-8 w-8 p-0'>
-                <span className='sr-only'>Open menu</span>
-                <MoreHorizontal className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end' className='w-[200px]'>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedTicket(ticket);
-                  setIsTicketDialogOpen(true);
-                }}
-              >
-                <Eye className='mr-2 h-4 w-4' />
-                View details
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {/* <DropdownMenuItem
-                onClick={() => alert(`Print ticket ${ticket.id}`)}
-              >
-                <Printer className='mr-2 h-4 w-4' />
-                Print
-              </DropdownMenuItem> */}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center space-x-1"
+            onClick={() => {
+              setSelectedTicket(ticket);
+              setIsTicketDialogOpen(true);
+            }}
+          >
+            <Eye className="mr-1 h-4 w-4" />
+            <span>View</span>
+          </Button>
         );
       },
     },
@@ -742,7 +721,6 @@ function PostedTicketsTable({ currentUser = null }: PostedTicketsTableProps) {
           onOpenChange={setIsTicketDialogOpen}
           ticket={selectedTicket}
           onUpdate={handleTicketUpdate}
-          isAdmin={false} // Set based on user role
           technicians={allTechniciansData}
         />
       )}

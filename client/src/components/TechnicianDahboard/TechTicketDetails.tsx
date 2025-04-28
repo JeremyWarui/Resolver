@@ -29,22 +29,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { 
-  Loader2, 
-  CheckCircle, 
-  Clock, 
-  Calendar, 
-  MessageSquare, 
-  User, 
+import {
+  Loader2,
+  CheckCircle,
+  Clock,
+  Calendar,
+  MessageSquare,
+  User,
   PlayCircle,
   ClipboardList,
-  FileText
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Define form schema for comments
 const commentsSchema = z.object({
-  note: z.string().min(5, { message: 'Comment must be at least 5 characters.' }),
+  note: z
+    .string()
+    .min(5, { message: 'Comment must be at least 5 characters.' }),
 });
 
 // Define form schema for status update
@@ -60,31 +62,6 @@ interface TechTicketDetailsProps {
   ticket: any;
   onUpdate?: (updatedTicket: any) => Promise<void>;
 }
-
-// Sample comments data - in a real app, this would come from an API
-const sampleComments = [
-  {
-    id: 1,
-    ticketId: 4,
-    technician: 'Lisa Johnson',
-    timestamp: '2025-04-23T09:15:00Z',
-    note: 'Initial assessment complete. The projector displays distorted colors when connected to laptops. Testing with different cables.',
-  },
-  {
-    id: 2, 
-    ticketId: 5,
-    technician: 'Lisa Johnson',
-    timestamp: '2025-04-22T16:45:00Z',
-    note: 'Elevator control panel appears to be malfunctioning. Contacted manufacturer for service manual.',
-  },
-  {
-    id: 3,
-    ticketId: 5,
-    technician: 'Lisa Johnson',
-    timestamp: '2025-04-23T10:30:00Z',
-    note: 'Received service manual. Identified possible issue with door sensor. Ordering replacement parts.',
-  }
-];
 
 // Sample activity timeline data
 const sampleActivities = [
@@ -122,7 +99,7 @@ const TechTicketDetails = ({
   const [activeTab, setActiveTab] = useState('details');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  
+
   // Initialize the comments form
   const commentsForm = useForm<z.infer<typeof commentsSchema>>({
     resolver: zodResolver(commentsSchema),
@@ -141,35 +118,41 @@ const TechTicketDetails = ({
     },
   });
 
-  // Filter comments for this specific ticket
-  const ticketComments = sampleComments.filter(note => note.ticketId === ticket?.id);
-  
+  // Get ticket comments directly from the ticket object
+  const ticketComments = useMemo(
+    () => ticket?.comments || [],
+    [ticket?.comments]
+  );
+
   // Filter activities for this specific ticket
-  const ticketActivities = sampleActivities.filter(activity => activity.ticketId === ticket?.id);
+  const ticketActivities = sampleActivities.filter(
+    (activity) => activity.ticketId === ticket?.id
+  );
 
   // Combine comments and activities for the timeline view, sorted by timestamp
   const timelineItems = useMemo(() => {
     const combined = [
-      ...ticketComments.map(comment => ({
+      ...ticketComments.map((comment) => ({
         id: `comment-${comment.id}`,
-        timestamp: comment.timestamp,
+        timestamp: comment.createdAt,
         type: 'comment',
         user: comment.technician,
-        content: comment.note
+        content: comment.text,
       })),
-      ...ticketActivities.map(activity => ({
+      ...ticketActivities.map((activity) => ({
         id: `activity-${activity.id}`,
         timestamp: activity.timestamp,
         type: activity.type,
         user: activity.user,
         from: activity.from,
-        to: activity.to
-      }))
+        to: activity.to,
+      })),
     ];
-    
+
     // Sort by timestamp, newest first
-    return combined.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    return combined.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   }, [ticketComments, ticketActivities]);
 
@@ -179,10 +162,10 @@ const TechTicketDetails = ({
     try {
       // In a real app, you would call an API to save the note
       console.log('Adding comment:', values.note);
-      
+
       // Show success message
       toast.success('Comment added successfully');
-      
+
       // Reset form
       commentsForm.reset({ note: '' });
     } catch (error) {
@@ -194,7 +177,9 @@ const TechTicketDetails = ({
   };
 
   // Handle form submission for status update
-  const onSubmitStatusUpdate = async (values: z.infer<typeof statusUpdateSchema>) => {
+  const onSubmitStatusUpdate = async (
+    values: z.infer<typeof statusUpdateSchema>
+  ) => {
     setIsUpdatingStatus(true);
     try {
       // Build the update payload
@@ -271,8 +256,8 @@ const TechTicketDetails = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className='md:max-w-[800px] py-6 px-6'>
-        <DialogHeader className="pb-2 border-b">
-          <DialogTitle className="flex items-center">
+        <DialogHeader className='pb-2 border-b'>
+          <DialogTitle className='flex items-center'>
             <span>Ticket {ticket.ticket_no}</span>
             <Badge
               variant='outline'
@@ -282,71 +267,82 @@ const TechTicketDetails = ({
             </Badge>
             <Badge
               variant='outline'
-              className="bg-purple-100 text-purple-800 border-purple-200 ml-2"
+              className='bg-purple-100 text-purple-800 border-purple-200 ml-2'
             >
               {ticket.priority} priority
             </Badge>
           </DialogTitle>
-          <DialogDescription className="flex items-center space-x-1">
-            <Calendar className="h-3 w-3 mr-1" /> 
+          <DialogDescription className='flex items-center space-x-1'>
+            <Calendar className='h-3 w-3 mr-1' />
             <span>Created: {formatDate(ticket.createdAt)}</span>
-            <span className="mx-2">•</span>
-            <User className="h-3 w-3 mr-1" />
+            <span className='mx-2'>•</span>
+            <User className='h-3 w-3 mr-1' />
             <span>Raised by: {ticket.raisedBy}</span>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="details" className="flex items-center">
-                <FileText className="h-4 w-4 mr-2" />
+        <div className='mt-4'>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className='w-full'
+          >
+            <TabsList className='grid grid-cols-3 mb-4'>
+              <TabsTrigger value='details' className='flex items-center'>
+                <FileText className='h-4 w-4 mr-2' />
                 Details
               </TabsTrigger>
-              <TabsTrigger value="comments" className="flex items-center">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Comments {ticketComments.length > 0 ? `(${ticketComments.length})` : ''}
+              <TabsTrigger value='comments' className='flex items-center'>
+                <MessageSquare className='h-4 w-4 mr-2' />
+                Comments{' '}
+                {ticketComments.length > 0 ? `(${ticketComments.length})` : ''}
               </TabsTrigger>
-              <TabsTrigger value="update" className="flex items-center">
-                <ClipboardList className="h-4 w-4 mr-2" />
+              <TabsTrigger value='update' className='flex items-center'>
+                <ClipboardList className='h-4 w-4 mr-2' />
                 Update Status
               </TabsTrigger>
             </TabsList>
 
-            <div className="min-h-[350px]">
+            <div className='min-h-[350px]'>
               {/* Ticket Details Tab */}
-              <TabsContent value="details" className="space-y-4">
+              <TabsContent value='details' className='space-y-4'>
                 <div>
-                  <h3 className="text-lg font-medium">Title</h3>
+                  <h3 className='text-lg font-medium'>Title</h3>
                   <p>{ticket.title}</p>
                 </div>
-                
+
                 <div>
-                  <h3 className="text-lg font-medium">Description</h3>
-                  <p className="whitespace-pre-wrap">{ticket.description || 'No description provided.'}</p>
+                  <h3 className='text-lg font-medium'>Description</h3>
+                  <p className='whitespace-pre-wrap'>
+                    {ticket.description || 'No description provided.'}
+                  </p>
                 </div>
-                
+
                 <hr />
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className='grid grid-cols-3 gap-4'>
                   <div>
-                    <h3 className="text-md font-medium">Section</h3>
-                    <p className="text-sm">{ticket.section}</p>
+                    <h3 className='text-md font-medium'>Section</h3>
+                    <p className='text-sm'>{ticket.section}</p>
                   </div>
                   <div>
-                    <h3 className="text-md font-medium">Facility</h3>
-                    <p className="text-sm">{ticket.facilityName}</p>
+                    <h3 className='text-md font-medium'>Facility</h3>
+                    <p className='text-sm'>{ticket.facilityName}</p>
+                  </div>
+                  <div>
+                    <h3 className='text-md font-medium'>Location</h3>
+                    <p className='text-sm'>{ticket.location}</p>
                   </div>
                 </div>
 
                 {/* Display resolution if resolved */}
                 {ticket.status === 'resolved' && ticket.resolution && (
-                  <div className="mt-4 border-t pt-4">
-                    <h3 className="text-lg font-medium text-green-700 flex items-center">
-                      <CheckCircle className="h-5 w-5 mr-2" />
+                  <div className='mt-4 border-t pt-4'>
+                    <h3 className='text-lg font-medium text-green-700 flex items-center'>
+                      <CheckCircle className='h-5 w-5 mr-2' />
                       Resolution
                     </h3>
-                    <p className="text-sm bg-green-50 p-3 rounded border border-green-200 mt-2">
+                    <p className='text-sm bg-green-50 p-3 rounded border border-green-200 mt-2'>
                       {ticket.resolution}
                     </p>
                   </div>
@@ -354,39 +350,44 @@ const TechTicketDetails = ({
 
                 {/* Display pending reason if pending */}
                 {ticket.status === 'pending' && ticket.pendingReason && (
-                  <div className="mt-4 border-t pt-4">
-                    <h3 className="text-lg font-medium text-gray-700 flex items-center">
-                      <Clock className="h-5 w-5 mr-2" />
+                  <div className='mt-4 border-t pt-4'>
+                    <h3 className='text-lg font-medium text-gray-700 flex items-center'>
+                      <Clock className='h-5 w-5 mr-2' />
                       Pending Reason
                     </h3>
-                    <p className="text-sm bg-gray-50 p-3 rounded border border-gray-200 mt-2">
+                    <p className='text-sm bg-gray-50 p-3 rounded border border-gray-200 mt-2'>
                       {ticket.pendingReason}
                     </p>
                   </div>
                 )}
               </TabsContent>
 
-              {/* Comments Tab (Renamed from Timeline) */}
-              <TabsContent value="comments" className="space-y-4">
+              {/* Comments Tab */}
+              <TabsContent value='comments' className='space-y-2'>
                 <Form {...commentsForm}>
-                  <form onSubmit={commentsForm.handleSubmit(onSubmitComment)} className="mb-6">
+                  <form
+                    onSubmit={commentsForm.handleSubmit(onSubmitComment)}
+                    className='mb-6'
+                  >
                     <FormField
                       control={commentsForm.control}
-                      name="note"
+                      name='note'
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Add Comment</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Enter details about work performed, findings, or next steps..." 
-                              className="min-h-[100px]"
-                              {...field} 
+                            <Textarea
+                              placeholder='Enter details about work performed, findings, or next steps...'
+                              className='min-h-[80px]'
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
-                          <div className="flex justify-end mt-2">
-                            <Button type="submit" disabled={isSubmittingNote}>
-                              {isSubmittingNote && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          <div className='flex justify-end mt-2'>
+                            <Button type='submit' disabled={isSubmittingNote}>
+                              {isSubmittingNote && (
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                              )}
                               Add Comment
                             </Button>
                           </div>
@@ -396,11 +397,11 @@ const TechTicketDetails = ({
                   </form>
                 </Form>
 
-                <div className="space-y-1 max-h-[100px]">
+                <div className="space-y-1">
                   <h3 className="text-lg font-medium border-b pb-2">Comments History</h3>
                   
                   {ticketComments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-6 bg-gray-50 rounded text-center max-h-[200px]">
+                    <div className="flex flex-col items-start justify-center py-2 bg-gray-50 rounded text-center">
                       <MessageSquare className="h-5 w-10 text-gray-300 mb-1" />
                       <p className="text-gray-500 font-medium">No comments yet</p>
                       <p className="text-sm text-gray-400 max-w-sm mt-1">
@@ -408,33 +409,38 @@ const TechTicketDetails = ({
                       </p>
                     </div>
                   ) : (
-                    <div className="divide-y">
-                      {ticketComments.map((comment) => (
-                        <div key={comment.id} className="py-3">
+                    <div className="border rounded-md bg-white overflow-y-auto max-h-[120px] scrollbar-thin">
+                      {ticketComments.map((comment, index) => (
+                        <div 
+                          key={comment.id} 
+                          className={`py-3 px-4 ${index !== 0 ? 'border-t border-gray-200' : ''}`}
+                        >
                           <div className="flex justify-between items-center mb-1">
                             <span className="font-medium text-sm flex items-center">
                               <User className="h-3 w-3 mr-1 text-blue-600" />
                               {comment.technician}
                             </span>
-                            <span className="text-xs text-gray-500" title={formatDate(comment.timestamp)}>
-                              {formatRelativeTime(comment.timestamp)}
+                            <span className="text-xs text-gray-500" title={formatDate(comment.createdAt)}>
+                              {formatRelativeTime(comment.createdAt)}
                             </span>
                           </div>
-                          <p className="text-sm pl-4">{comment.note}</p>
+                          <p className="text-sm pl-4">{comment.text}</p>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               </TabsContent>
-
               {/* Update Status Tab */}
-              <TabsContent value="update" className="space-y-4">
+              <TabsContent value='update' className='space-y-4'>
                 <Form {...statusForm}>
-                  <form onSubmit={statusForm.handleSubmit(onSubmitStatusUpdate)} className="space-y-4">
+                  <form
+                    onSubmit={statusForm.handleSubmit(onSubmitStatusUpdate)}
+                    className='space-y-4'
+                  >
                     <FormField
                       control={statusForm.control}
-                      name="status"
+                      name='status'
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Update Ticket Status</FormLabel>
@@ -443,33 +449,34 @@ const TechTicketDetails = ({
                               onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Update the status of this ticket" />
+                              <SelectTrigger className='w-full'>
+                                <SelectValue placeholder='Update the status of this ticket' />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="in progress">
-                                  <div className="flex items-center">
-                                    <PlayCircle className="mr-2 h-4 w-4 text-orange-600" />
+                                <SelectItem value='in progress'>
+                                  <div className='flex items-center'>
+                                    <PlayCircle className='mr-2 h-4 w-4 text-orange-600' />
                                     <span>In Progress</span>
                                   </div>
                                 </SelectItem>
-                                <SelectItem value="pending">
-                                  <div className="flex items-center">
-                                    <Clock className="mr-2 h-4 w-4 text-gray-600" />
+                                <SelectItem value='pending'>
+                                  <div className='flex items-center'>
+                                    <Clock className='mr-2 h-4 w-4 text-gray-600' />
                                     <span>Pending</span>
                                   </div>
                                 </SelectItem>
-                                <SelectItem value="resolved">
-                                  <div className="flex items-center">
-                                    <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                <SelectItem value='resolved'>
+                                  <div className='flex items-center'>
+                                    <CheckCircle className='mr-2 h-4 w-4 text-green-600' />
                                     <span>Resolved</span>
                                   </div>
                                 </SelectItem>
                               </SelectContent>
                             </Select>
                           </FormControl>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Change the status to reflect the current state of this ticket
+                          <p className='text-xs text-gray-500 mt-1'>
+                            Change the status to reflect the current state of
+                            this ticket
                           </p>
                           <FormMessage />
                         </FormItem>
@@ -477,17 +484,17 @@ const TechTicketDetails = ({
                     />
 
                     {/* Conditional fields based on status */}
-                    {statusForm.watch("status") === "pending" && (
+                    {statusForm.watch('status') === 'pending' && (
                       <FormField
                         control={statusForm.control}
-                        name="reason"
+                        name='reason'
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Reason for Pending</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Explain why this ticket is being put on hold..."
-                                {...field} 
+                              <Textarea
+                                placeholder='Explain why this ticket is being put on hold...'
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -496,17 +503,17 @@ const TechTicketDetails = ({
                       />
                     )}
 
-                    {statusForm.watch("status") === "resolved" && (
+                    {statusForm.watch('status') === 'resolved' && (
                       <FormField
                         control={statusForm.control}
-                        name="resolution"
+                        name='resolution'
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Resolution Details</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Describe how the issue was resolved..."
-                                {...field} 
+                              <Textarea
+                                placeholder='Describe how the issue was resolved...'
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -515,9 +522,11 @@ const TechTicketDetails = ({
                       />
                     )}
 
-                    <div className="pt-4 flex justify-end">
-                      <Button type="submit" disabled={isUpdatingStatus}>
-                        {isUpdatingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <div className='pt-4 flex justify-end'>
+                      <Button type='submit' disabled={isUpdatingStatus}>
+                        {isUpdatingStatus && (
+                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        )}
                         Update Status
                       </Button>
                     </div>
@@ -528,8 +537,8 @@ const TechTicketDetails = ({
           </Tabs>
         </div>
 
-        <DialogFooter className="mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className='mt-2 pt-3 border-t'>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
             Close
           </Button>
         </DialogFooter>

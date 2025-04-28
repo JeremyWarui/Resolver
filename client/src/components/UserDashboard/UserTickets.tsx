@@ -1,19 +1,91 @@
 import { Button } from '@/components/ui/button';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Filter, AlertTriangle, Wrench, CheckCircle, Clock } from 'lucide-react';
 import PostedTicketsTable from './PostedTicketsTable';
-import StatsCards from '../Common/StatsCards';
-import { useState } from 'react';
+import StatCard from '../Common/StatCard';
 import { useGraphQLUserData } from '@/hooks/useGraphQLUserData';
+import useGraphQLUserTicketStats from '@/hooks/useGraphQLUserTicketStats';
 
 // Define props to receive the section change function
 interface UserTicketsProps {
   onNavigate?: (section: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings') => void;
 }
 
+// Create a dedicated component for user ticket stats to optimize loading
+const UserStatsCards = ({ username }: { username: string }) => {
+  // Use dedicated hook that only fetches user-specific ticket stats
+  const { userTicketStats, loading } = useGraphQLUserTicketStats({ 
+    username
+  });
+
+  // Create a skeleton loader for a stat card
+  const SkeletonStatCard = () => (
+    <div className="bg-white rounded-md shadow overflow-hidden">
+      <div className="p-4 flex items-center">
+        <div className="mr-6 ml-2">
+          <div className="h-12 w-12 rounded-full bg-gray-200 animate-pulse"></div>
+        </div>
+        <div className="w-full">
+          <div className="h-4 w-24 mb-2 bg-gray-200 animate-pulse"></div>
+          <div className="h-7 w-16 mb-2 bg-gray-200 animate-pulse"></div>
+          <div className="h-3 w-32 bg-gray-200 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Show loading skeleton if data is loading
+  if (loading) {
+    return (
+      <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonStatCard key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
+      <StatCard
+        title="Open Tickets"
+        value={userTicketStats.openTickets}
+        description='Your open tickets'
+        icon={<AlertTriangle className='h-6 w-6 text-[#0078d4]' />}
+        iconBgColor="bg-[#e5f2fc]"
+        className="bg-white"
+      />
+
+      <StatCard
+        title="Assigned Tickets"
+        value={userTicketStats.assignedTickets}
+        description='Your assigned tickets'
+        icon={<Wrench className='h-6 w-6 text-[#0078d4]' />}
+        iconBgColor="bg-[#e5f2fc]"
+        className="bg-white"
+      />
+
+      <StatCard
+        title="Resolved Tickets"
+        value={userTicketStats.resolvedTickets}
+        description='Your resolved tickets'
+        icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
+        iconBgColor="bg-[#e5f9e5]"
+        className="bg-white"
+      />
+
+      <StatCard
+        title="Pending Tickets"
+        value={userTicketStats.pendingTickets || 0}
+        description='Your pending tickets'
+        icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
+        iconBgColor="bg-[#f9f3ff]"
+        className="bg-white"
+      />
+    </div>
+  );
+};
+
 const UserTickets = ({ onNavigate }: UserTicketsProps) => {
-  // State to control create ticket modal visibility
-  const [showCreateTicket, setShowCreateTicket] = useState(false);
-  
   // Get current user data
   const { userData, loading: userLoading } = useGraphQLUserData();
   const currentUser = userData?.name || '';
@@ -45,8 +117,10 @@ const UserTickets = ({ onNavigate }: UserTicketsProps) => {
           </Button>
         </div>
       </div>
-      {/* Stats Cards - Filter to show only current user's tickets stats */}
-      <StatsCards showTicketsStatsOnly currentUser={currentUser} />
+      
+      {/* Use dedicated user stats component with our new hook */}
+      {<UserStatsCards username={currentUser} />}
+      
       {/* Tickets table - Filter to show only current user's tickets */}
       <PostedTicketsTable currentUser={currentUser} />
     </div>

@@ -68,7 +68,7 @@ const TechnicianLayout = () => {
             <div className="p-4 bg-gray-50 space-y-6">
               <div className="flex justify-between mb-2">
                 <div>
-                  <h2 className="text-2xl font-semibold text-gray-800">Assigned Tickets</h2>
+                  <h2 className="text-2xl font-semibold text-gray-800">Your Assigned Tickets</h2>
                   <p className="text-sm text-gray-600">View and manage all tickets assigned to you</p>
                 </div>
               </div>

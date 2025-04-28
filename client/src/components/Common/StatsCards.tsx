@@ -8,7 +8,7 @@ import StatCard from './StatCard';
 interface StatsCardsProps {
   showTechnicianStatsOnly?: boolean;
   showTicketsStatsOnly?: boolean;
-  currentUser?: string;
+  currentUser?: string | null;
 }
 
 const StatsCards = ({ 
@@ -172,8 +172,8 @@ const StatsCards = ({
   return (
     <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
       {/* Conditional rendering based on props */}
-      {!showTicketsStatsOnly && <TechnicianStats />}
       {!showTechnicianStatsOnly && <TicketStats />}
+      {!showTicketsStatsOnly && <TechnicianStats />}
     </div>
   );
 };
