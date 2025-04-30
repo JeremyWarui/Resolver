@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 // Import DataTable component
 import DataTable from "@/components/Common/DataTable";
@@ -37,6 +38,9 @@ import DataTable from "@/components/Common/DataTable";
 // Import GraphQL hook instead of services
 import useGraphQLTickets from "@/hooks/useGraphQLTickets";
 import useGraphQLTechnicians from "@/hooks/useGraphQLTechnicians";
+
+// Import the AdminTicketDetails component
+import AdminTicketDetails from "./AdminTicketDetails";
 
 const allStatuses = [
   "open",
@@ -89,13 +93,18 @@ function AllTicketsTable() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [technicianFilter, setTechnicianFilter] = useState("all");
+  
+  // State for ticket details dialog
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
 
   // Use GraphQL hooks instead of fetching directly
   const { 
     tickets, 
     totalTickets, 
     sections, 
-    loading: ticketsLoading 
+    loading: ticketsLoading,
+    refetch: refetchTickets
   } = useGraphQLTickets({
     page: pageIndex,
     pageSize,
@@ -159,7 +168,33 @@ function AllTicketsTable() {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
   };
-
+  
+  // Function to handle viewing ticket details
+  const handleViewTicket = (ticket) => {
+    setSelectedTicket(ticket);
+    setIsTicketDialogOpen(true);
+  };
+  
+  // Function to handle ticket update
+  const handleTicketUpdate = async (updatedTicket) => {
+    try {
+      // In a real application, you'd call your API here
+      // For now, we'll just show a success message
+      toast.success(`Updated ticket #${updatedTicket.ticket_no}`, {
+        description: "Ticket has been updated successfully",
+      });
+      
+      // Close the dialog
+      setIsTicketDialogOpen(false);
+      
+      // Refetch tickets to update the list
+      refetchTickets();
+    } catch (error) {
+      console.error("Failed to update ticket:", error);
+      toast.error("Failed to update ticket");
+    }
+  };
+  
   // Define table columns
   const columns: ColumnDef<any>[] = [
     {
@@ -324,13 +359,16 @@ function AllTicketsTable() {
             <DropdownMenuContent align="end" className="w-[200px]">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => alert(`View details for ticket ${ticket.id}`)}
+                onClick={() => handleViewTicket(ticket)}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => alert(`Edit ticket ${ticket.id}`)}
+                onClick={() => {
+                  handleViewTicket(ticket);
+                  // Set activeTab to 'edit' when available
+                }}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit ticket
@@ -344,9 +382,10 @@ function AllTicketsTable() {
                   {allAvailableTechnicians.map((tech) => (
                     <DropdownMenuItem
                       key={tech}
-                      onClick={() =>
-                        alert(`Assigned ticket ${ticket.id} to ${tech}`)
-                      }
+                      onClick={() => {
+                        toast.success(`Assigned ticket ${ticket.id} to ${tech}`);
+                        refetchTickets();
+                      }}
                     >
                       {tech}
                     </DropdownMenuItem>
@@ -362,9 +401,10 @@ function AllTicketsTable() {
                   {allStatuses.map((status) => (
                     <DropdownMenuItem
                       key={status}
-                      onClick={() =>
-                        alert(`Changed ticket ${ticket.id} status to ${status}`)
-                      }
+                      onClick={() => {
+                        toast.success(`Changed ticket ${ticket.id} status to ${status}`);
+                        refetchTickets();
+                      }}
                     >
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </DropdownMenuItem>
@@ -373,13 +413,18 @@ function AllTicketsTable() {
               </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => alert(`Print ticket ${ticket.id}`)}
+                onClick={() => {
+                  handleViewTicket(ticket);
+                  // Programmatically trigger print when available
+                }}
               >
                 <Printer className="mr-2 h-4 w-4" />
                 Print
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => alert(`Delete ticket ${ticket.id}`)}
+                onClick={() => {
+                  toast.error(`Delete ticket ${ticket.id}`);
+                }}
                 className="text-red-600 focus:text-red-600"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -501,25 +546,40 @@ function AllTicketsTable() {
   };
 
   return (
-    <DataTable
-      variant="admin"
-      columns={columns}
-      data={dataWithSectionNames}
-      searchPlaceholder="Search by ID or title..."
-      emptyStateMessage="No tickets found"
-      emptyStateDescription="Try changing your filters or check back later"
-      defaultSorting={[{ id: 'id', desc: true }]}
-      defaultPageSize={pageSize}
-      initialColumnVisibility={columnVisibility}
-      filterOptions={statusFilterOptions}
-      additionalFilters={additionalFilters}
-      manualPagination={true}
-      totalItems={totalTickets}
-      loading={loading}
-      onPageChange={handlePageChange}
-      onPageSizeChange={handlePageSizeChange}
-      onColumnVisibilityChange={handleColumnVisibilityChange}
-    />
+    <>
+      <DataTable
+        variant="admin"
+        columns={columns}
+        data={dataWithSectionNames}
+        searchPlaceholder="Search by ID or title..."
+        emptyStateMessage="No tickets found"
+        emptyStateDescription="Try changing your filters or check back later"
+        defaultSorting={[{ id: 'id', desc: true }]}
+        defaultPageSize={pageSize}
+        initialColumnVisibility={columnVisibility}
+        filterOptions={statusFilterOptions}
+        additionalFilters={additionalFilters}
+        manualPagination={true}
+        totalItems={totalTickets}
+        loading={loading}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onColumnVisibilityChange={handleColumnVisibilityChange}
+        onRowClick={handleViewTicket}
+      />
+      
+      {/* Ticket details dialog */}
+      {selectedTicket && (
+        <AdminTicketDetails
+          isOpen={isTicketDialogOpen}
+          onOpenChange={setIsTicketDialogOpen}
+          ticket={selectedTicket}
+          onUpdate={handleTicketUpdate}
+          technicians={allTechniciansData}
+          sections={sections}
+        />
+      )}
+    </>
   );
 }
 
