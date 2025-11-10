@@ -28,8 +28,8 @@ import {
   Plus,
 } from "lucide-react";
 
-// Import GraphQL hook
-import useGraphQLFacilities from "@/hooks/useGraphQLFacilities";
+// Import REST API hooks
+import useFacilities from "@/hooks/facilities/useFacilities";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,17 +62,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Define the facility type
-export type Facility = {
-  id: string;
-  name: string;
-  type: string;
-  status: "operational" | "maintenance" | "closed";
-  openTickets: number;
-  resolvedTickets: number;
-  closedTickets: number;
-};
+import type { Facility } from "@/types";
 
 // List of status options
 const statusOptions = ["operational", "maintenance", "closed"];
@@ -91,118 +81,6 @@ const allFacilityTypes = [
   "Landscape"
 ];
 
-// Sample data for facilities - will be enhanced with GraphQL data
-const facilitiesData: Facility[] = [
-  {
-    id: "FAC-001",
-    name: "Main Building",
-    type: "Office",
-    status: "operational",
-    openTickets: 3,
-    resolvedTickets: 10,
-    closedTickets: 2,
-  },
-  {
-    id: "FAC-002",
-    name: "Admin Block",
-    type: "Office",
-    status: "operational",
-    openTickets: 2,
-    resolvedTickets: 5,
-    closedTickets: 1,
-  },
-  {
-    id: "FAC-003",
-    name: "Residential Area",
-    type: "Housing",
-    status: "maintenance",
-    openTickets: 5,
-    resolvedTickets: 2,
-    closedTickets: 0,
-  },
-  {
-    id: "FAC-004",
-    name: "Workshop",
-    type: "Industrial",
-    status: "operational",
-    openTickets: 1,
-    resolvedTickets: 8,
-    closedTickets: 3,
-  },
-  {
-    id: "FAC-005",
-    name: "Tower Block",
-    type: "Mixed Use",
-    status: "operational",
-    openTickets: 4,
-    resolvedTickets: 12,
-    closedTickets: 4,
-  },
-  {
-    id: "FAC-006",
-    name: "Meeting Center",
-    type: "Conference",
-    status: "maintenance",
-    openTickets: 2,
-    resolvedTickets: 3,
-    closedTickets: 1,
-  },
-  {
-    id: "FAC-007",
-    name: "IT Center",
-    type: "Technical",
-    status: "operational",
-    openTickets: 3,
-    resolvedTickets: 7,
-    closedTickets: 2,
-  },
-  {
-    id: "FAC-008",
-    name: "Parking Garage",
-    type: "Parking",
-    status: "operational",
-    openTickets: 1,
-    resolvedTickets: 15,
-    closedTickets: 5,
-  },
-  {
-    id: "FAC-009",
-    name: "Cafeteria",
-    type: "Food Service",
-    status: "operational",
-    openTickets: 2,
-    resolvedTickets: 6,
-    closedTickets: 0,
-  },
-  {
-    id: "FAC-010",
-    name: "East Wing",
-    type: "Office",
-    status: "closed",
-    openTickets: 0,
-    resolvedTickets: 0,
-    closedTickets: 0,
-  },
-  {
-    id: "FAC-011",
-    name: "Main Entrance",
-    type: "Reception",
-    status: "operational",
-    openTickets: 1,
-    resolvedTickets: 4,
-    closedTickets: 1,
-  },
-  {
-    id: "FAC-012",
-    name: "Exterior Grounds",
-    type: "Landscape",
-    status: "maintenance",
-    openTickets: 3,
-    resolvedTickets: 1,
-    closedTickets: 0,
-  },
-];
-
 function FacilitiesTable() {
   // State for sorting, filtering, and column visibility
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -212,43 +90,17 @@ function FacilitiesTable() {
     name: true,
     type: true,
     status: true,
-    openTickets: false,
-    resolvedTickets: false,
-    closedTickets: false,
   });
   const [rowSelection, setRowSelection] = useState({});
   const [searchValue, setSearchValue] = useState("");
   const [typeFilter, setTypeFilter] = useState<string | null>("all");
 
-  // Use GraphQL hook to fetch facilities
-  const { facilities: graphQLFacilities, loading } = useGraphQLFacilities();
-  
-  // Combine GraphQL facilities data with our extended facility data
-  const facilities = useMemo(() => {
-    // If we have GraphQL facilities data, enhance it with our additional properties
-    if (graphQLFacilities.length > 0) {
-      return graphQLFacilities.map(facility => {
-        // Find matching facility in our sample data or create default values
-        const existingFacility = facilitiesData.find(f => f.id === facility.id);
-        
-        return {
-          ...facility,
-          type: existingFacility?.type || "Office",
-          status: existingFacility?.status || "operational",
-          openTickets: existingFacility?.openTickets || Math.floor(Math.random() * 5),
-          resolvedTickets: existingFacility?.resolvedTickets || Math.floor(Math.random() * 10) + 5,
-          closedTickets: existingFacility?.closedTickets || Math.floor(Math.random() * 3)
-        };
-      });
-    }
-    
-    // Fall back to sample data if GraphQL data is not available
-    return facilitiesData;
-  }, [graphQLFacilities]);
+  // Use REST API hook to fetch facilities
+  const { facilities, loading } = useFacilities();
   
   // Get unique values for filter dropdowns
   const uniqueStatuses = useMemo(
-    () => [...new Set(facilities.map((facility) => facility.status))],
+    () => [...new Set(facilities.map((facility) => facility.status).filter(Boolean))],
     [facilities]
   );
 
@@ -261,12 +113,12 @@ function FacilitiesTable() {
       
     return filteredFacilities.map((facility) => ({
       ...facility,
-      searchField: `${facility.id.toLowerCase()} ${facility.name.toLowerCase()}`,
+      searchField: `${String(facility.id).toLowerCase()} ${facility.name.toLowerCase()}`,
     }));
   }, [typeFilter, facilities]);
 
   // Define columns in the specified order
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<Facility>[] = [
     {
       accessorKey: "id",
       header: ({ column }) => (
@@ -591,9 +443,9 @@ function FacilitiesTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                {uniqueStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                {uniqueStatuses.filter(s => s).map((status) => (
+                  <SelectItem key={status} value={status!}>
+                    {status!.charAt(0).toUpperCase() + status!.slice(1)}
                   </SelectItem>
                 ))}
               </SelectContent>

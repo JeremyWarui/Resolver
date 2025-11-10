@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useQuery, useMutation, gql } from '@apollo/client';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -27,9 +26,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
-// Import GraphQL hooks
-import useGraphQLFacilities from '@/hooks/useGraphQLFacilities';
-import useGraphQLTickets from '@/hooks/useGraphQLTickets';
+// Import REST API hooks
+import useFacilities from '@/hooks/facilities/useFacilities';
+import useTickets from '@/hooks/tickets/useTickets';
+import useCreateTicket from '@/hooks/tickets/useCreateTicket';
 
 
 // Define form schema using Zod
@@ -46,51 +46,21 @@ const formSchema = z.object({
   facility_id: z.string({
     required_error: 'Please select a facility.',
   }),
-  location_detail: z.string().min(3, {
-    message: 'Please provide location details.',
-  }),
-  priority: z.enum(['low', 'medium', 'high'], {
-    required_error: 'Please select a priority level.',
-  }),
 });
-
-// GraphQL mutation for creating a ticket
-const CREATE_TICKET = gql`
-  mutation CreateTicket(
-    $title: String!
-    $description: String!
-    $section_id: ID!
-    $facility_id: ID!
-    $location_detail: String!
-    $priority: String!
-  ) {
-    createTicket(
-      title: $title
-      description: $description
-      section_id: $section_id
-      facility_id: $facility_id
-      location_detail: $location_detail
-      priority: $priority
-    ) {
-      id
-      ticket_no
-    }
-  }
-`;
 
 const CreateTicket = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch facilities using the existing hook
-  const { facilities, loading: facilitiesLoading } = useGraphQLFacilities();
+  // Fetch facilities using the REST API hook
+  const { facilities, loading: facilitiesLoading } = useFacilities();
 
   // Get sections from the tickets hook (since it returns sections)
-  const { sections, loading: sectionsLoading } = useGraphQLTickets({
-    pageSize: 1, // Just need minimal data to get sections
+  const { sections, loading: sectionsLoading } = useTickets({
+    page_size: 1, // Just need minimal data to get sections
   });
 
-  // Setup mutation
-  const [createTicket] = useMutation(CREATE_TICKET);
+  // Setup create ticket hook
+  const { createTicket } = useCreateTicket();
 
   // Initialize form with default values
   const form = useForm<z.infer<typeof formSchema>>({
@@ -100,8 +70,6 @@ const CreateTicket = () => {
       description: '',
       section_id: '',
       facility_id: '',
-      location_detail: '',
-      priority: 'low', // Default priority
     },
   });
 
@@ -111,18 +79,17 @@ const CreateTicket = () => {
     console.log('Form submission started with values:', values);
 
     try {
-      console.log('Attempting to call createTicket mutation...');
+      console.log('Attempting to create ticket...');
       const result = await createTicket({
-        variables: {
-          ...values,
-          // The status will be set to "open" by default on the server
-        },
+        ...values,
+        section_id: Number(values.section_id),
+        facility_id: Number(values.facility_id),
       });
-      console.log('Mutation result:', result);
+      console.log('Create ticket result:', result);
 
       // Show success message using Sonner toast
       toast.success('Ticket Created', {
-        description: `Ticket ${result.data?.createTicket?.ticket_no || 'was'} successfully created.`,
+        description: `Ticket ${result.ticket_no || 'was'} successfully created.`,
       });
 
       // Reset form after successful submission
@@ -220,7 +187,7 @@ const CreateTicket = () => {
                           </FormControl>
                           <SelectContent>
                             {sections.map((section) => (
-                              <SelectItem key={section.id} value={section.id}>
+                              <SelectItem key={section.id} value={String(section.id)}>
                                 {section.name}
                               </SelectItem>
                             ))}
@@ -253,7 +220,7 @@ const CreateTicket = () => {
                           </FormControl>
                           <SelectContent>
                             {facilities.map((facility) => (
-                              <SelectItem key={facility.id} value={facility.id}>
+                              <SelectItem key={facility.id} value={String(facility.id)}>
                                 {facility.name}
                               </SelectItem>
                             ))}
@@ -261,57 +228,6 @@ const CreateTicket = () => {
                         </Select>
                         <FormDescription>
                           The building or facility where the issue is located.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Location Details */}
-                  <FormField
-                    control={form.control}
-                    name='location_detail'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location Details</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Room number, floor, specific area'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Specific location details (room number, area, etc.)
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Priority */}
-                  <FormField
-                    control={form.control}
-                    name='priority'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Priority</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select priority level' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value='low'>Low</SelectItem>
-                            <SelectItem value='medium'>Medium</SelectItem>
-                            <SelectItem value='high'>High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          How urgent is this issue?
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

@@ -1,14 +1,14 @@
 import { AlertTriangle, Wrench, CheckCircle, Clock, Users, UserCheck, UserX } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-// Import GraphQL hook instead of service
-import useGraphQLStats from '@/hooks/useGraphQLStats';
+// Import REST API hook
+import useStats from '@/hooks/analytics/useStats';
 import StatCard from './StatCard';
 
 // Define props interface for the component
 interface StatsCardsProps {
   showTechnicianStatsOnly?: boolean;
   showTicketsStatsOnly?: boolean;
-  currentUser?: string | null;
+  currentUser?: number | null;
 }
 
 const StatsCards = ({ 
@@ -16,9 +16,11 @@ const StatsCards = ({
   showTicketsStatsOnly = false,
   currentUser = null
 }: StatsCardsProps) => {
-  // Use GraphQL hook to fetch stats data, passing the currentUser for filtering if provided
-  const { ticketStats, technicianStats, loading } = useGraphQLStats({ 
-    user: currentUser 
+  // Use REST API hook to fetch stats data, passing the currentUser for filtering if provided
+  const { ticketStats, technicianStats, loading } = useStats({ 
+    user: currentUser,
+    fetchTicketStats: !showTechnicianStatsOnly,
+    fetchTechnicianStats: !showTicketsStatsOnly,
   });
 
   // Create a skeleton loader for a stat card
@@ -94,7 +96,7 @@ const StatsCards = ({
 
       <StatCard
         title="Off Duty"
-        value={technicianStats.offDuty}
+        value={technicianStats.off_duty}
         description="Not available"
         icon={<UserX className='h-6 w-6 text-[#797775]' />}
         iconBgColor="bg-[#f5f5f5]"
@@ -113,7 +115,7 @@ const StatsCards = ({
     <>
       <StatCard
         title="Open Tickets"
-        value={ticketStats.openTickets}
+        value={ticketStats.open_tickets}
         description={currentUser ? 'Your open tickets' : 'Requires attention'}
         icon={<AlertTriangle className='h-6 w-6 text-[#0078d4]' />}
         iconBgColor="bg-[#e5f2fc]"
@@ -127,7 +129,7 @@ const StatsCards = ({
 
       <StatCard
         title="Assigned Tickets"
-        value={ticketStats.assignedTickets}
+        value={ticketStats.assigned_tickets}
         description={currentUser ? 'Your assigned tickets' : 'In progress'}
         icon={<Wrench className='h-6 w-6 text-[#0078d4]' />}
         iconBgColor="bg-[#e5f2fc]"
@@ -141,7 +143,7 @@ const StatsCards = ({
 
       <StatCard
         title="Resolved Tickets"
-        value={ticketStats.resolvedTickets}
+        value={ticketStats.resolved_tickets}
         description={currentUser ? 'Your resolved tickets' : 'This month'}
         icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
         iconBgColor="bg-[#e5f9e5]"
@@ -155,7 +157,7 @@ const StatsCards = ({
 
       <StatCard
         title="Pending Tickets"
-        value={ticketStats.pendingTickets || 0}
+        value={ticketStats.pending_tickets || 0}
         description={currentUser ? 'Your pending tickets' : 'Awaiting parts/approval'}
         icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
         iconBgColor="bg-[#f9f3ff]"

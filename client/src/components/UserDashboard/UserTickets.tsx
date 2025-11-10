@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Plus, Filter, AlertTriangle, Wrench, CheckCircle, Clock } from 'lucide-react';
 import PostedTicketsTable from './PostedTicketsTable';
 import StatCard from '../Common/StatCard';
-import { useGraphQLUserData } from '@/hooks/useGraphQLUserData';
-import useGraphQLUserTicketStats from '@/hooks/useGraphQLUserTicketStats';
+import useUserData from '@/hooks/users/useUserData';
+import useStats from '@/hooks/analytics/useStats';
 
 // Define props to receive the section change function
 interface UserTicketsProps {
@@ -11,10 +11,12 @@ interface UserTicketsProps {
 }
 
 // Create a dedicated component for user ticket stats to optimize loading
-const UserStatsCards = ({ username }: { username: string }) => {
+const UserStatsCards = ({ userId }: { userId: number }) => {
   // Use dedicated hook that only fetches user-specific ticket stats
-  const { userTicketStats, loading } = useGraphQLUserTicketStats({ 
-    username
+  const { ticketStats, loading } = useStats({ 
+    user: userId,
+    fetchTicketStats: true,
+    fetchTechnicianStats: false,
   });
 
   // Create a skeleton loader for a stat card
@@ -48,7 +50,7 @@ const UserStatsCards = ({ username }: { username: string }) => {
     <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
       <StatCard
         title="Open Tickets"
-        value={userTicketStats.openTickets}
+        value={ticketStats.open_tickets}
         description='Your open tickets'
         icon={<AlertTriangle className='h-6 w-6 text-[#0078d4]' />}
         iconBgColor="bg-[#e5f2fc]"
@@ -57,7 +59,7 @@ const UserStatsCards = ({ username }: { username: string }) => {
 
       <StatCard
         title="Assigned Tickets"
-        value={userTicketStats.assignedTickets}
+        value={ticketStats.assigned_tickets}
         description='Your assigned tickets'
         icon={<Wrench className='h-6 w-6 text-[#0078d4]' />}
         iconBgColor="bg-[#e5f2fc]"
@@ -66,7 +68,7 @@ const UserStatsCards = ({ username }: { username: string }) => {
 
       <StatCard
         title="Resolved Tickets"
-        value={userTicketStats.resolvedTickets}
+        value={ticketStats.resolved_tickets}
         description='Your resolved tickets'
         icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
         iconBgColor="bg-[#e5f9e5]"
@@ -75,7 +77,7 @@ const UserStatsCards = ({ username }: { username: string }) => {
 
       <StatCard
         title="Pending Tickets"
-        value={userTicketStats.pendingTickets || 0}
+        value={ticketStats.pending_tickets || 0}
         description='Your pending tickets'
         icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
         iconBgColor="bg-[#f9f3ff]"
@@ -87,8 +89,8 @@ const UserStatsCards = ({ username }: { username: string }) => {
 
 const UserTickets = ({ onNavigate }: UserTicketsProps) => {
   // Get current user data
-  const { userData, loading: userLoading } = useGraphQLUserData();
-  const currentUser = userData?.name || '';
+  const { userData } = useUserData();
+  const currentUserId = userData?.id || 1;
 
   return (
     <div className='flex-1 overflow-y-auto p-4 bg-gray-50'>
@@ -119,10 +121,10 @@ const UserTickets = ({ onNavigate }: UserTicketsProps) => {
       </div>
       
       {/* Use dedicated user stats component with our new hook */}
-      {<UserStatsCards username={currentUser} />}
+      <UserStatsCards userId={currentUserId} />
       
       {/* Tickets table - Filter to show only current user's tickets */}
-      <PostedTicketsTable currentUser={currentUser} />
+      <PostedTicketsTable currentUser={currentUserId} />
     </div>
   );
 };

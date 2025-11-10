@@ -19,15 +19,12 @@ import {
   ChevronRight,
   Eye,
   Trash2,
-  Clock,
-  CheckCircle,
-  XCircle,
   Users,
   Plus,
 } from "lucide-react";
 
-// Import GraphQL hook instead of service
-import useGraphQLTechnicians from "@/hooks/useGraphQLTechnicians";
+// Import REST API hooks
+import useTechnicians from "@/hooks/technicians/useTechnicians";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,9 +34,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -58,40 +52,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Define the technician type
-export type Technician = {
-  id: string;
-  technician_no: string;
-  name: string;
-  phone: string;
-  username: string;
-  section: string;
-  availability: "available" | "busy" | "off-duty";
-  completedTasks: number;
-  assignedTasks: number;
-  email: string;
-  specialization: string;
-  joinDate: string;
-};
-
-// List of availability statuses
-const availabilityOptions = ["available", "busy", "off-duty"];
-
-// List of all sections - this ensures sections are always available in the dropdown
-const allSections = [
-  "HVAC", 
-  "IT", 
-  "Plumbing", 
-  "Electrical", 
-  "Structural", 
-  "Mechanical", 
-  "Kitchen", 
-  "Grounds", 
-  "Security"
-];
+import type { Technician } from "@/types";
 
 function TechniciansTable() {
   // State for sorting, filtering, and column visibility
@@ -114,39 +76,42 @@ function TechniciansTable() {
   // Pagination and filters state
   const [pageIndex, setPageIndex] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(10);
-  const [availabilityFilter, setAvailabilityFilter] = useState<string | null>("all");
   const [sectionFilter, setSectionFilter] = useState<string | null>("all");
   
   // Get sorted field and direction from the sorting state
   const sortField = sorting.length > 0 ? sorting[0].id : undefined;
   const sortDirection = sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined;
 
-  // Use GraphQL hook to fetch technicians
+  // Use REST API hook to fetch technicians
   const { 
     technicians, 
-    totalTechnicians, 
+    totalTechnicians,
+    sections,
     loading: isLoading
-  } = useGraphQLTechnicians({
-    page: pageIndex,
-    pageSize,
-    availability: availabilityFilter === "all" ? null : availabilityFilter,
-    section: sectionFilter === "all" ? null : sectionFilter,
-    sortField,
-    sortDirection
+  } = useTechnicians({
+    page: pageIndex + 1,
+    page_size: pageSize,
+    sections: sectionFilter === "all" ? undefined : Number(sectionFilter),
+    ordering: sortField && sortDirection ? `${sortDirection === 'desc' ? '-' : ''}${sortField}` : undefined
   });
 
   // Add a searchable field to each technician that combines ID and name
   const dataWithSearchField = useMemo(() => {
     return technicians.map((tech) => ({
       ...tech,
-      searchField: `${tech.technician_no.toLowerCase()} ${tech.name.toLowerCase()}`,
+      name: `${tech.first_name} ${tech.last_name}`,
+      searchField: `${tech.id} ${tech.first_name} ${tech.last_name} ${tech.email}`.toLowerCase(),
+      sectionNames: tech.sections.map(sectionId => {
+        const section = sections.find(s => s.id === sectionId);
+        return section?.name || '';
+      }).filter(Boolean).join(', ')
     }));
-  }, [technicians]);
+  }, [technicians, sections]);
 
   // Define columns in the specified order
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<Technician & { name: string; searchField: string; sectionNames: string }>[] = [
     {
-      accessorKey: "technician_no", // Changed from id to technician_no
+      accessorKey: "id",
       header: ({ column }) => (
         <div className="flex items-center space-x-1">
           <span>Tech ID</span>
@@ -159,7 +124,7 @@ function TechniciansTable() {
           </Button>
         </div>
       ),
-      cell: ({ row }) => <div>{row.getValue("technician_no")}</div>,
+      cell: ({ row }) => <div>{row.getValue("id")}</div>,
     },
     {
       accessorKey: "name",
@@ -180,10 +145,10 @@ function TechniciansTable() {
       ),
     },
     {
-      accessorKey: "section",
+      accessorKey: "sectionNames",
       header: ({ column }) => (
         <div className="flex items-center space-x-1">
-          <span>Section</span>
+          <span>Sections</span>
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting()}
@@ -193,88 +158,13 @@ function TechniciansTable() {
           </Button>
         </div>
       ),
-      cell: ({ row }) => <div>{row.getValue("section")}</div>,
-    },
-    {
-      accessorKey: "availability",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Availability</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => {
-        const availability = row.getValue("availability") as string;
-        return (
-          <Badge
-            variant="outline"
-            className={
-              availability === "available"
-                ? "bg-green-100 text-green-800 border-green-200"
-                : availability === "busy"
-                  ? "bg-orange-100 text-orange-800 border-orange-200"
-                  : "bg-gray-100 text-gray-800 border-gray-200"
-            }
-          >
-            {availability}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "completedTasks",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Completed</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">{row.getValue("completedTasks")}</div>
-      ),
-    },
-    {
-      accessorKey: "assignedTasks",
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Assigned</span>
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting()}
-            className="p-0 h-4 w-4"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="text-center">{row.getValue("assignedTasks")}</div>
-      ),
+      cell: ({ row }) => <div>{row.getValue("sectionNames") || 'N/A'}</div>,
     },
     // Hidden columns by default
     {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => <div>{row.getValue("email")}</div>,
-      enableSorting: false,
-    },
-
-    {
-      accessorKey: "specialization",
-      header: "Specialization",
-      cell: ({ row }) => <div>{row.getValue("specialization")}</div>,
       enableSorting: false,
     },
     // Hidden column for search
@@ -301,44 +191,16 @@ function TechniciansTable() {
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
               <DropdownMenuItem
-                onClick={() => alert(`View details for ${technician.name}`)}
+                onClick={() => alert(`View details for ${technician.first_name} ${technician.last_name}`)}
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
 
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Clock className="mr-2 h-4 w-4" />
-                  Change availability
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {availabilityOptions.map((status) => (
-                    <DropdownMenuItem
-                      key={status}
-                      onClick={() =>
-                        alert(
-                          `Changed ${technician.name}'s availability to ${status}`
-                        )
-                      }
-                    >
-                      {status === "available" ? (
-                        <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                      ) : status === "busy" ? (
-                        <Clock className="mr-2 h-4 w-4 text-orange-600" />
-                      ) : (
-                        <XCircle className="mr-2 h-4 w-4 text-gray-600" />
-                      )}
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
-                onClick={() => alert(`Delete ${technician.name}`)}
+                onClick={() => alert(`Delete ${technician.first_name} ${technician.last_name}`)}
                 className="text-red-600 focus:text-red-600"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -449,32 +311,9 @@ function TechniciansTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sections</SelectItem>
-                {allSections.map((section) => (
-                  <SelectItem key={section} value={section}>
-                    {section}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              onValueChange={(value) => {
-                setAvailabilityFilter(value);
-                setPageIndex(0); // Reset to first page when filter changes
-              }}
-              value={availabilityFilter || "all"}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by availability">
-                  {availabilityFilter === "all" || !availabilityFilter ? "All Statuses" : 
-                   availabilityFilter.charAt(0).toUpperCase() + availabilityFilter.slice(1)}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {availabilityOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                {sections.map((section) => (
+                  <SelectItem key={section.id} value={String(section.id)}>
+                    {section.name}
                   </SelectItem>
                 ))}
               </SelectContent>

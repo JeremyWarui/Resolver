@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
 import StatsCards from "@/components/Common/StatsCards";
 import PostedTicketsTable from "./PostedTicketsTable";
-import { useGraphQLUserData } from "@/hooks/useGraphQLUserData";
+import useUserData from "@/hooks/users/useUserData";
 
 // Define props to receive the section change function
 interface UserDashboardProps {
@@ -11,13 +11,15 @@ interface UserDashboardProps {
 
 const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
   // Get current user data for the welcome message only
-  const { userData, loading: userLoading } = useGraphQLUserData();
+  const { userData, loading: userLoading } = useUserData();
   
   return (
     <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
       <div className="flex justify-between mb-2">
         <div>
-          <p className="text-md text-gray-600">Welcome back, {userLoading ? '...' : (userData?.name)} 👋</p>
+          <p className="text-md text-gray-600">
+            Welcome back, {userLoading ? '...' : userData ? `${userData.first_name} ${userData.last_name}` : 'User'} 👋
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button
