@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate} from "react-router-dom";
 import AdminLayout from "./components/AdminDashboard/AdminLayout";
 import UserLayout from "./components/UserDashboard/UserLayout";
-import TechnicianLayout from "./components/TechnicianDahboard/TechnicianLayout";
+import TechnicianLayout from "./components/TechnicianDashboard/TechnicianLayout";
 import { Toaster } from "./components/ui/sonner";
 
 const App = () => {

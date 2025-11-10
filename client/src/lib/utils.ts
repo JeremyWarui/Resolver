@@ -1,6 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+// Re-export utilities from the utils folder
+// This file exists to maintain compatibility with shadcn/ui components
+// that expect utilities at @/lib/utils
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+export { cn } from '@/utils/cn';
