@@ -7,6 +7,8 @@ import MainContent from "./Dashboard/DashboardLayout";
 import TicketsPage from "./TicketsPage/TicketsPage";
 import TechniciansPage from "./Technicians/TechniciansPage";
 import FacilitiesPage from "./Facilities/FacilitiesPage";
+import ReportsPage from "./Reports/ReportsPage";
+import TicketQueuePage from "./TicketQueue/TicketQueuePage";
 
 // A placeholder component for sections not yet implemented
 function ComingSoonSection({ section }: { section: string }) {
@@ -41,15 +43,19 @@ export default function AdminLayout() {
       ? "Dashboard"
       : activeSection === "tickets"
         ? "Tickets"
-        : activeSection === "schedule"
-          ? "Schedule"
-          : activeSection === "technicians"
-            ? "Technicians"
-            : activeSection === "facilities"
-              ? "Facilities"
-              : activeSection === "inventory"
-                ? "Inventory Management"
-                : "Settings";
+        : activeSection === "queue"
+          ? "Ticket Queue"
+          : activeSection === "reports"
+            ? "Reports & Analytics"
+            : activeSection === "schedule"
+              ? "Schedule"
+              : activeSection === "technicians"
+                ? "Technicians"
+                : activeSection === "facilities"
+                  ? "Facilities"
+                  : activeSection === "inventory"
+                    ? "Inventory Management"
+                    : "Settings";
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -72,6 +78,8 @@ export default function AdminLayout() {
         <main className="flex-1 overflow-y-auto">
           {activeSection === "dashboard" && <MainContent />}
           {activeSection === "tickets" && <TicketsPage />}
+          {activeSection === "queue" && <TicketQueuePage />}
+          {activeSection === "reports" && <ReportsPage />}
           {activeSection === "technicians" && <TechniciansPage />}
           {activeSection === "facilities" && <FacilitiesPage />}
           {activeSection === "schedule" && (

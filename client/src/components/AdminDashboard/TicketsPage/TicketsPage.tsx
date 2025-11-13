@@ -40,7 +40,7 @@ const TicketsPage = () => {
           </Button>
         </div>
       </div>
-      <StatsCards showTicketsStatsOnly />
+      <StatsCards />
       <TicketsTable />
     </div>
   );

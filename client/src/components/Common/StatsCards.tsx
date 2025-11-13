@@ -1,27 +1,11 @@
-import { AlertTriangle, Wrench, CheckCircle, Clock, Users, UserCheck, UserX } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, FileText } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-// Import REST API hook
-import useStats from '@/hooks/analytics/useStats';
+import { useAdminAnalytics } from '@/hooks/analytics';
 import StatCard from './StatCard';
 
-// Define props interface for the component
-interface StatsCardsProps {
-  showTechnicianStatsOnly?: boolean;
-  showTicketsStatsOnly?: boolean;
-  currentUser?: number | null;
-}
-
-const StatsCards = ({ 
-  showTechnicianStatsOnly = false, 
-  showTicketsStatsOnly = false,
-  currentUser = null
-}: StatsCardsProps) => {
-  // Use REST API hook to fetch stats data, passing the currentUser for filtering if provided
-  const { ticketStats, technicianStats, loading } = useStats({ 
-    user: currentUser,
-    fetchTicketStats: !showTechnicianStatsOnly,
-    fetchTechnicianStats: !showTicketsStatsOnly,
-  });
+const StatsCards = () => {
+  // Use admin analytics hook to fetch real data from backend
+  const { data: analytics, loading } = useAdminAnalytics();
 
   // Create a skeleton loader for a stat card
   const SkeletonStatCard = () => (
@@ -39,8 +23,8 @@ const StatsCards = ({
     </div>
   );
   
-  // Determine how many cards to show in loading state based on which stats to display
-  const loadingCardsCount = showTechnicianStatsOnly ? 4 : (showTicketsStatsOnly ? 4 : 8);
+  // Determine how many cards to show in loading state
+  const loadingCardsCount = 4; // Always show 4 ticket stat cards for admin
   
   // Show loading skeleton if data is loading
   if (loading) {
@@ -53,129 +37,88 @@ const StatsCards = ({
     );
   }
 
-  // Create separate technician stats component
-  const TechnicianStats = () => (
-    <>
-      <StatCard
-        title="Total Technicians"
-        value={technicianStats.total}
-        description="Registered technicians"
-        icon={<Users className='h-6 w-6 text-[#0078d4]' />}
-        iconBgColor="bg-[#e5f2fc]"
-        className="bg-white"
-        isLoading={loading}
-      />
+  // Extract system overview data after loading
+  const systemOverview = analytics?.system_overview;
 
-      <StatCard
-        title="Available"
-        value={technicianStats.available}
-        description="Ready for assignment"
-        icon={<UserCheck className='h-6 w-6 text-[#107c10]' />}
-        iconBgColor="bg-[#e5f9e5]"
-        badge={{ 
-          value: "+8%", 
-          color: "blue" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
+  // Create ticket stats component with real data from backend
+  const TicketStats = () => {
+    // Calculate in-progress tickets (assigned + in_progress status)
+    const inProgressTickets = systemOverview 
+      ? systemOverview.total_tickets - systemOverview.open_tickets - systemOverview.resolved_tickets
+      : 0;
 
-      <StatCard
-        title="Busy"
-        value={technicianStats.busy}
-        description="Currently working"
-        icon={<Clock className='h-6 w-6 text-[#ca5010]' />}
-        iconBgColor="bg-[#fcf0e5]"
-        badge={{ 
-          value: "+12%", 
-          color: "amber" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
+    // Calculate percentage changes (you can enhance this with historical data)
+    const resolutionRate = systemOverview?.resolution_rate || 0;
+    const newTickets24h = systemOverview?.new_tickets_24h || 0;
+    const ticketsThisWeek = systemOverview?.tickets_past_week || 0;
+    const ticketsThisMonth = systemOverview?.tickets_past_month || 0;
 
-      <StatCard
-        title="Off Duty"
-        value={technicianStats.off_duty}
-        description="Not available"
-        icon={<UserX className='h-6 w-6 text-[#797775]' />}
-        iconBgColor="bg-[#f5f5f5]"
-        badge={{ 
-          value: "-5%", 
-          color: "red" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
-    </>
-  );
+    return (
+      <>
+        <StatCard
+          title="Total Tickets"
+          value={systemOverview?.total_tickets || 0}
+          description="All tickets in system"
+          icon={<FileText className='h-6 w-6 text-[#0078d4]' />}
+          iconBgColor="bg-[#e5f2fc]"
+          badge={{ 
+            value: `${ticketsThisMonth} this month`, 
+            color: "blue" 
+          }}
+          className="bg-white"
+          isLoading={loading}
+        />
 
-  // Create separate ticket stats component
-  const TicketStats = () => (
-    <>
-      <StatCard
-        title="Open Tickets"
-        value={ticketStats.open_tickets}
-        description={currentUser ? 'Your open tickets' : 'Requires attention'}
-        icon={<AlertTriangle className='h-6 w-6 text-[#0078d4]' />}
-        iconBgColor="bg-[#e5f2fc]"
-        badge={{ 
-          value: "+12%", 
-          color: "amber" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
+        <StatCard
+          title="Open Tickets"
+          value={systemOverview?.open_tickets || 0}
+          description="Awaiting assignment"
+          icon={<AlertTriangle className='h-6 w-6 text-[#ca5010]' />}
+          iconBgColor="bg-[#fcf0e5]"
+          badge={{ 
+            value: `${ticketsThisWeek} this week`, 
+            color: "amber" 
+          }}
+          className="bg-white"
+          isLoading={loading}
+        />
 
-      <StatCard
-        title="Assigned Tickets"
-        value={ticketStats.assigned_tickets}
-        description={currentUser ? 'Your assigned tickets' : 'In progress'}
-        icon={<Wrench className='h-6 w-6 text-[#0078d4]' />}
-        iconBgColor="bg-[#e5f2fc]"
-        badge={{ 
-          value: "+8%", 
-          color: "blue" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
+        <StatCard
+          title="Resolved Tickets"
+          value={systemOverview?.resolved_tickets || 0}
+          description={`${resolutionRate.toFixed(0)}% resolution rate`}
+          icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
+          iconBgColor="bg-[#e5f9e5]"
+          badge={{ 
+            value: `${resolutionRate.toFixed(0)}% rate`, 
+            color: resolutionRate > 70 ? "green" : "amber"
+          }}
+          className="bg-white"
+          isLoading={loading}
+        />
 
-      <StatCard
-        title="Resolved Tickets"
-        value={ticketStats.resolved_tickets}
-        description={currentUser ? 'Your resolved tickets' : 'This month'}
-        icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
-        iconBgColor="bg-[#e5f9e5]"
-        badge={{ 
-          value: "+24%", 
-          color: "green" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
-
-      <StatCard
-        title="Pending Tickets"
-        value={ticketStats.pending_tickets || 0}
-        description={currentUser ? 'Your pending tickets' : 'Awaiting parts/approval'}
-        icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
-        iconBgColor="bg-[#f9f3ff]"
-        badge={{ 
-          value: "-5%", 
-          color: "red" 
-        }}
-        className="bg-white"
-        isLoading={loading}
-      />
-    </>
-  );
+        <StatCard
+          title="In Progress"
+          value={inProgressTickets}
+          description={systemOverview?.avg_resolution_time_hours 
+            ? `Avg: ${systemOverview.avg_resolution_time_hours.toFixed(0)}h resolution` 
+            : 'Being worked on'}
+          icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
+          iconBgColor="bg-[#f9f3ff]"
+          badge={{ 
+            value: `${newTickets24h} new today`, 
+            color: "purple"
+          }}
+          className="bg-white"
+          isLoading={loading}
+        />
+      </>
+    );
+  };
 
   return (
     <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
-      {/* Conditional rendering based on props */}
-      {!showTechnicianStatsOnly && <TicketStats />}
-      {!showTicketsStatsOnly && <TechnicianStats />}
+      <TicketStats />
     </div>
   );
 };

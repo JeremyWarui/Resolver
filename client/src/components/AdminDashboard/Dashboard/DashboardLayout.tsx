@@ -43,7 +43,7 @@ const MainContent = () => {
       </div>
 
       {/* Stats Cards */}
-      <StatsCards showTicketsStatsOnly/>
+      <StatsCards />
       {/* Charts - First Row */}
       <ChartSection />
       {/* Charts and Tables - Second Row */}

@@ -28,6 +28,7 @@ import {
   Legend,
 } from "recharts";
 import { ChevronDown } from "lucide-react";
+import { useTicketAnalytics } from "@/hooks/analytics";
 
 // Sample data for weekly tickets
 const weeklyTicketsData = [
@@ -48,21 +49,23 @@ const monthlyTicketsData = [
   { name: "Week 4", tickets: 62 },
 ];
 
-// Sample data for ticket categories
-const categoryData = [
-  { name: "Electrical", value: 35 },
-  { name: "Plumbing", value: 25 },
-  { name: "IT", value: 20 },
-  { name: "HVAC", value: 15 },
-  { name: "Structural", value: 5 },
-];
-
 // FluentUI theme colors
 const COLORS = ["#0078d4", "#107c10", "#ffaa44", "#d13438", "#5c2d91"];
 
 const ChartSection = () => {
   const [ticketTimeframe, setTicketTimeframe] = useState("week");
-  const [categoryTimeframe, setCategoryTimeframe] = useState("week");
+  const [categoryTimeframe, setCategoryTimeframe] = useState<'day' | 'week' | 'month'>("week");
+
+  // Fetch ticket analytics for section distribution
+  const { data: analyticsData, loading: analyticsLoading } = useTicketAnalytics({
+    timeframe: categoryTimeframe,
+  });
+
+  // Transform section distribution data for pie chart
+  const categoryData = analyticsData?.section_distribution.map(section => ({
+    name: section.name,
+    value: section.ticket_count,
+  })) || [];
   return (
     <div className="grid grid-cols-7 gap-2 mb-2">
       {/* Charts - First Row */}
@@ -177,59 +180,64 @@ const ChartSection = () => {
           </DropdownMenu>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  // fill='#0078d4'
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ percent }) => {
-                    return `${(percent * 100).toFixed(0)}%`;
-                  }}
-                  labelLine={false}
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Legend
-                  layout="vertical"
-                  verticalAlign="middle"
-                  align="right"
-                  wrapperStyle={{ fontSize: "12px" }}
-                  formatter={(value) => {
-                    return <span style={{ fontSize: "10px" }}>{value}</span>;
-                  }}
-                />
-                <RechartsTooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-                          <p className="text-xs font-medium text-gray-800">{`${payload[0].name}`}</p>
-                          <p className="text-xs text-gray-600">{`Tickets: ${payload[0].value}`}</p>
-                          {/* <p className='text-xs text-gray-600'>{`Percentage: ${(
-                            (payload[0].value / 100) *
-                            100
-                          ).toFixed(0)}%`}</p> */}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {analyticsLoading ? (
+            <div className="h-[250px] w-full flex items-center justify-center">
+              <p className="text-sm text-muted-foreground">Loading categories...</p>
+            </div>
+          ) : categoryData.length === 0 ? (
+            <div className="h-[250px] w-full flex items-center justify-center">
+              <p className="text-sm text-muted-foreground">No data available</p>
+            </div>
+          ) : (
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ percent }) => {
+                      return `${(percent * 100).toFixed(0)}%`;
+                    }}
+                    labelLine={false}
+                  >
+                    {categoryData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Legend
+                    layout="vertical"
+                    verticalAlign="middle"
+                    align="right"
+                    wrapperStyle={{ fontSize: "12px" }}
+                    formatter={(value) => {
+                      return <span style={{ fontSize: "10px" }}>{value}</span>;
+                    }}
+                  />
+                  <RechartsTooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
+                            <p className="text-xs font-medium text-gray-800">{`${payload[0].name}`}</p>
+                            <p className="text-xs text-gray-600">{`Tickets: ${payload[0].value}`}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

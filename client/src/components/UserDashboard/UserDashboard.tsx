@@ -41,8 +41,8 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
         </div>
       </div>
 
-      {/* Stats Cards - Show overall stats for all tickets */}
-      <StatsCards showTicketsStatsOnly />
+      {/* Stats Cards - Show ticket stats */}
+      <StatsCards />
       
       {/* All tickets in the system - no user filter */}
       <PostedTicketsTable />
