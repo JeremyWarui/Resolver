@@ -75,10 +75,14 @@ export interface UseTicketTableResult {
   sectionFilter: number | null;
   technicianFilter: number | null;
   userFilter: number | null;
+  unassignedFilter: boolean;
+  overdueFilter: boolean;
   setStatusFilter: (status: string) => void;
   setSectionFilter: (section: number | null) => void;
   setTechnicianFilter: (technician: number | null) => void;
   setUserFilter: (user: number | null) => void;
+  setUnassignedFilter: (unassigned: boolean) => void;
+  setOverdueFilter: (overdue: boolean) => void;
   
   // Dialog State
   selectedTicket: Ticket | null;
@@ -179,6 +183,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   const [sectionFilter, setSectionFilter] = useState<number | null>(null);
   const [technicianFilter, setTechnicianFilter] = useState<number | null>(null);
   const [userFilter, setUserFilter] = useState<number | null>(null);
+  const [unassignedFilter, setUnassignedFilter] = useState<boolean>(false);
+  const [overdueFilter, setOverdueFilter] = useState<boolean>(false);
 
   // Dialog state
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -194,6 +200,16 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
       section: sectionFilter || undefined,
       ordering,
     };
+
+    // Add unassigned filter (assigned_to__isnull=True in Django)
+    if (unassignedFilter) {
+      params.assigned_to__isnull = true;
+    }
+
+    // Add overdue filter
+    if (overdueFilter) {
+      params.is_overdue = true;
+    }
 
     // Role-based filtering
     if (role === 'user') {
@@ -216,6 +232,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     sectionFilter,
     technicianFilter,
     userFilter,
+    unassignedFilter,
+    overdueFilter,
     ordering,
   ]);
 
@@ -342,10 +360,14 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     sectionFilter,
     technicianFilter,
     userFilter,
+    unassignedFilter,
+    overdueFilter,
     setStatusFilter,
     setSectionFilter,
     setTechnicianFilter,
     setUserFilter,
+    setUnassignedFilter,
+    setOverdueFilter,
 
     // Dialog
     selectedTicket,

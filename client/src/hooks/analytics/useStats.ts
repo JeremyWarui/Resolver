@@ -52,7 +52,7 @@ export const useStats = (params: UseStatsParams = {}): UseStatsResult => {
 
       if (fetchTicketStats) {
         promises.push(
-          analyticsService.getTicketAnalytics(user !== null ? { user } : undefined)
+          analyticsService.getTicketAnalytics(user !== null ? { raised_by: user } : undefined)
         );
       }
 

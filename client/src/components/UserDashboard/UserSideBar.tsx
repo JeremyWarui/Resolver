@@ -1,14 +1,15 @@
 import {
-  BarChart,
-  PenSquareIcon as Pen,
+  LayoutDashboard,
+  PlusCircle,
   Settings,
   ClipboardList,
+  ClipboardCheck,
   LogOut,
 } from 'lucide-react';
 import NavButton from '@/components/Common/NavButton';
 
 export interface Section {
-  id: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings';
+  id: 'dashboard' | 'postedTickets' | 'userTickets' | 'submitTicket' | 'settings';
   label: string;
   icon: React.ElementType;
 }
@@ -19,9 +20,10 @@ interface SideBarProps {
 }
 const UserSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const sections: Section[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart },
-    { id: 'userTickets', label: 'My Tickets', icon: ClipboardList },
-    { id: 'submitTicket', label: 'Post Ticket', icon: Pen},
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'postedTickets', label: 'Posted Tickets', icon: ClipboardList },
+    { id: 'userTickets', label: 'My Tickets', icon: ClipboardCheck },
+    { id: 'submitTicket', label: 'New Ticket', icon: PlusCircle},
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

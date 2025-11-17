@@ -2,13 +2,6 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, Eye, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 // Utility function to truncate text
 const truncateText = (text: string, maxLength: number) => {
@@ -295,60 +288,31 @@ export function AdminActionsColumn<T>(options: {
   };
 }
 
-export function technicianActionsColumn<T>(options: {
-  handleBeginWork: (ticketId: number, ticketNo: string, event?: React.MouseEvent) => void;
-  handleUpdateStatus: (ticketId: number, newStatus: string, event?: React.MouseEvent) => void;
-  handleReopen: (ticketId: number, event?: React.MouseEvent) => void;
+export function technicianViewColumn<T>(options: {
+  setSelectedTicket: (ticket: any) => void;
+  setIsTicketDialogOpen: (open: boolean) => void;
 }): ColumnDef<T> {
   return {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
-      const ticket = row.original as T & { id: number; ticket_no: string; status: string };
-      const status = ticket.status;
-
-    if (status === "open" || status === "assigned") {
+      const ticket = row.original;
+      
       return (
         <Button
           variant="default"
           size="sm"
-          onClick={(e) => options.handleBeginWork(ticket.id, ticket.ticket_no, e)}
-          className="bg-blue-600 hover:bg-blue-700"
+          onClick={(e) => {
+            e.stopPropagation();
+            options.setSelectedTicket(ticket);
+            options.setIsTicketDialogOpen(true);
+          }}
+          className="bg-[#0078d4] hover:bg-[#106ebe]"
         >
-          Begin Work
+          <Eye className="mr-1 h-4 w-4" />
+          View
         </Button>
       );
-    }
-
-    if (status === "in_progress") {
-      return (
-        <Select
-          onValueChange={(value) => options.handleUpdateStatus(ticket.id, value)}
-        >
-          <SelectTrigger className="w-[130px] h-9">
-            <SelectValue placeholder="Update Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Mark Pending</SelectItem>
-            <SelectItem value="resolved">Mark Resolved</SelectItem>
-          </SelectContent>
-        </Select>
-      );
-    }
-
-    if (status === "pending") {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(e) => options.handleReopen(ticket.id, e)}
-        >
-          Reopen
-        </Button>
-      );
-    }
-
-    return <div className="text-sm text-muted-foreground">No actions</div>;
-  },
-};
+    },
+  };
 }

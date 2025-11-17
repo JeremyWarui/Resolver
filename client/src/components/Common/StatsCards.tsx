@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, FileText, AlertCircle } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminAnalytics } from '@/hooks/analytics';
 import StatCard from './StatCard';
@@ -24,12 +24,12 @@ const StatsCards = () => {
   );
   
   // Determine how many cards to show in loading state
-  const loadingCardsCount = 4; // Always show 4 ticket stat cards for admin
+  const loadingCardsCount = 5; // 5 ticket stat cards for admin (including overdue)
   
   // Show loading skeleton if data is loading
   if (loading) {
     return (
-      <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
+      <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-2'>
         {Array.from({ length: loadingCardsCount }).map((_, i) => (
           <SkeletonStatCard key={i} />
         ))}
@@ -52,6 +52,7 @@ const StatsCards = () => {
     const newTickets24h = systemOverview?.new_tickets_24h || 0;
     const ticketsThisWeek = systemOverview?.tickets_past_week || 0;
     const ticketsThisMonth = systemOverview?.tickets_past_month || 0;
+    const overdueCount = analytics?.overdue_tickets?.length || 0;
 
     return (
       <>
@@ -112,12 +113,26 @@ const StatsCards = () => {
           className="bg-white"
           isLoading={loading}
         />
+
+        <StatCard
+          title="Overdue Tickets"
+          value={overdueCount}
+          description={overdueCount > 0 ? 'Need immediate attention' : 'All on track'}
+          icon={<AlertCircle className='h-6 w-6 text-[#d13438]' />}
+          iconBgColor="bg-[#fde7e9]"
+          badge={{ 
+            value: overdueCount > 0 ? `${overdueCount} overdue` : 'On track', 
+            color: overdueCount > 0 ? "red" : "green"
+          }}
+          className="bg-white"
+          isLoading={loading}
+        />
       </>
     );
   };
 
   return (
-    <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
+    <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-2'>
       <TicketStats />
     </div>
   );

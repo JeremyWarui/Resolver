@@ -56,6 +56,7 @@ export interface DataTableProps<TData, TValue> {
   filterOptions?: FilterOption[];
   variant?: "admin" | "user" | "tech";
   onRowClick?: (row: TData) => void;
+  selectedRowId?: number | null;
   totalItems?: number;
   loading?: boolean;
   manualPagination?: boolean;
@@ -79,6 +80,7 @@ const DataTable = <TData, TValue>({
   filterOptions,
   variant = "admin",
   onRowClick,
+  selectedRowId,
   totalItems,
   loading = false,
   manualPagination = false,
@@ -269,14 +271,13 @@ const DataTable = <TData, TValue>({
     table,
     columns,
     onRowClick,
-    isAdminVariant,
+    selectedRowId,
     actualTotalItems,
     pageSize,
     pageIndex,
     handlePageSizeChange,
     handlePageChange,
     loading,
-    data,
     emptyStateMessage,
     emptyStateDescription,
   };

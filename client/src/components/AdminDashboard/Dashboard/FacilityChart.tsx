@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -29,49 +29,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-type TimePeriodData = {
-  [key in "today" | "week" | "month"]: { name: string; value: number }[];
-};
-
-// Sample data for facilities
-const timePeriodsData: TimePeriodData = {
-  today: [
-    { name: "Mekatilili", value: 15 },
-    { name: "Admin Block", value: 8 },
-    { name: "Habel Nyamu", value: 12 },
-    { name: "Sacho", value: 3 },
-    { name: "Wamalwa", value: 5 },
-    { name: "Margaret", value: 7 },
-    { name: "Residential Area", value: 9 },
-    { name: "Sawe", value: 6 },
-    { name: "Maasai Mara", value: 2 },
-  ],
-  week: [
-    { name: "Mekatilili", value: 35 },
-    { name: "Admin Block", value: 18 },
-    { name: "Habel Nyamu", value: 22 },
-    { name: "Sacho", value: 6 },
-    { name: "Wamalwa", value: 8 },
-    { name: "Margaret", value: 12 },
-    { name: "Residential Area", value: 15 },
-    { name: "Sawe", value: 10 },
-    { name: "Maasai Mara", value: 3 },
-  ],
-  month: [
-    { name: "Mekatilili", value: 60 },
-    { name: "Admin Block", value: 25 },
-    { name: "Habel Nyamu", value: 30 },
-    { name: "Sacho", value: 8 },
-    { name: "Wamalwa", value: 10 },
-    { name: "Margaret", value: 15 },
-    { name: "Residential Area", value: 20 },
-    { name: "Sawe", value: 18 },
-    { name: "Maasai Mara", value: 4 },
-  ],
-};
+import { useTicketAnalytics } from "@/hooks/analytics";
 
 const timePeriodLabels = {
-  today: "Today",
+  day: "Today",
   week: "This Week",
   month: "This Month",
 };
@@ -86,13 +47,29 @@ const chartConfig = {
   },
 } satisfies ChartConfig; 
 
-type TimePeriod = "today" | "week" | "month";
+type TimePeriod = "day" | "week" | "month";
 export function FacilityChart() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("month");
 
-  const facilityData: { name: string; value: number }[] = timePeriodsData[timePeriod];
+  // Fetch facility distribution data
+  const { data: analyticsData, loading } = useTicketAnalytics({
+    timeframe: timePeriod,
+  });
+
+  // Transform facility distribution data
+  const facilityData = useMemo(() => {
+    if (!analyticsData?.facility_distribution) return [];
+    return analyticsData.facility_distribution.map(facility => ({
+      name: facility.name,
+      value: facility.ticket_count,
+    }));
+  }, [analyticsData]);
+
   // Find the maximum value in the current data
-  const maxValue = Math.max(...facilityData.map((item) => item.value));
+  const maxValue = useMemo(() => {
+    if (facilityData.length === 0) return 10;
+    return Math.max(...facilityData.map((item) => item.value));
+  }, [facilityData]);
   return (
     <Card className="py-7 px-2">
       <CardHeader className="flex flex-row justify-between pb-5">
@@ -108,7 +85,7 @@ export function FacilityChart() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTimePeriod("today")}>
+            <DropdownMenuItem onClick={() => setTimePeriod("day")}>
               Today
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setTimePeriod("week")}>
@@ -121,6 +98,15 @@ export function FacilityChart() {
         </DropdownMenu>
       </CardHeader>
       <CardContent>
+        {loading ? (
+          <div className="h-[250px] flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">Loading facility data...</p>
+          </div>
+        ) : facilityData.length === 0 ? (
+          <div className="h-[250px] flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">No data available</p>
+          </div>
+        ) : (
         <ChartContainer config={chartConfig} className="min-w-[500px]">
           <BarChart
             accessibilityLayer
@@ -168,6 +154,7 @@ export function FacilityChart() {
             </Bar>
           </BarChart>
         </ChartContainer>
+        )}
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="leading-none text-muted-foreground">

@@ -1,4 +1,4 @@
-import { flexRender, type Table as TableType, type ColumnDef } from "@tanstack/react-table";
+import { flexRender, type Table as TanStackTable, type ColumnDef } from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -17,35 +17,42 @@ import {
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface RenderTableContentProps<TData, TValue = unknown> {
-  table: TableType<TData>;
-  columns: ColumnDef<TData, TValue>[];
+interface TableContentProps<TData> {
+  table: TanStackTable<TData>;
+  columns: ColumnDef<TData>[];
   onRowClick?: (row: TData) => void;
-  isAdminVariant: boolean;
+  selectedRowId?: number | null;
+  loading?: boolean;
+  emptyStateMessage: string;
+  emptyStateDescription: string;
   actualTotalItems: number;
   pageSize: number;
   pageIndex: number;
   handlePageSizeChange: (size: number) => void;
-  handlePageChange: (index: number) => void;
-  loading: boolean;
-  data: TData[];
-  emptyStateMessage: string;
-  emptyStateDescription: string;
+  handlePageChange: (page: number) => void;
 }
 
-export function RenderTableContent<TData, TValue = unknown>({
+export function RenderTableContent<TData>({
   table,
   columns,
   onRowClick,
+  selectedRowId,
+  loading,
+  emptyStateMessage,
+  emptyStateDescription,
   actualTotalItems,
   pageSize,
   pageIndex,
   handlePageSizeChange,
   handlePageChange,
-  loading,
-  emptyStateMessage,
-  emptyStateDescription,
-}: RenderTableContentProps<TData, TValue>) {
+}: TableContentProps<TData>) {
+  // Type guard to check if row has id property
+  const getRowId = (row: TData): number | null => {
+    if (row && typeof row === 'object' && 'id' in row) {
+      return (row as { id: number }).id;
+    }
+    return null;
+  };
   if (loading) {
     return <div className="py-8 text-center">Loading...</div>;
   }
@@ -72,23 +79,30 @@ export function RenderTableContent<TData, TValue = unknown>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={() => onRowClick && onRowClick(row.original)}
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const rowId = getRowId(row.original);
+                const isSelected = rowId !== null && rowId === selectedRowId;
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    onClick={() => onRowClick && onRowClick(row.original)}
+                    className={`
+                      ${onRowClick ? "cursor-pointer hover:bg-gray-100 transition-colors duration-150" : ""}
+                      ${isSelected ? "bg-blue-50 border-l-4 border-l-blue-500" : ""}
+                    `}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell

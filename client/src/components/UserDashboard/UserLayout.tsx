@@ -5,6 +5,7 @@ import Header from '../Common/Header';
 // Import your view components (or use placeholders)
 import UserDashboard from './UserDashboard';
 import UserTickets from './UserTickets';
+import PostedTickets from './PostedTickets';
 import CreateTicket from './CreateTicket';
 
 // A placeholder component for sections not yet implemented
@@ -33,23 +34,36 @@ function ComingSoonSection({ section }: { section: string }) {
 const UserLayout = () => {
   const [activeSection, setActiveSection] =
     useState<Section['id']>('dashboard');
+  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
 
   // Determine header title based on the active section.
   const headerTitle =
     activeSection === 'dashboard'
       ? 'Dashboard'
-      : activeSection === 'userTickets'
-        ? 'My Tickets'
-        : activeSection === 'submitTicket'
-          ? 'New Ticket'
-          : 'Settings';
+      : activeSection === 'postedTickets'
+        ? 'Posted Tickets'
+        : activeSection === 'userTickets'
+          ? 'My Tickets'
+          : activeSection === 'submitTicket'
+            ? 'New Ticket'
+            : 'Settings';
+
+  // Handle section changes - if "submitTicket" is selected, open the modal
+  const handleSectionChange = (section: Section['id']) => {
+    if (section === 'submitTicket') {
+      setIsCreateTicketOpen(true);
+      // Keep on current section instead of changing to submitTicket
+      return;
+    }
+    setActiveSection(section);
+  };
 
   return (
     <div className='flex h-screen bg-gray-100'>
       {/* Sidebar with controlled active state */}
       <UserSideBar
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={handleSectionChange}
       />
 
       {/* Main Content Area */}
@@ -63,14 +77,20 @@ const UserLayout = () => {
           }}
         />
         <main className='flex-1 overflow-y-auto'>
-          {activeSection === 'dashboard' && <UserDashboard onNavigate={setActiveSection} />}
-          {activeSection === 'userTickets' && <UserTickets onNavigate={setActiveSection}/>}
-          {activeSection === 'submitTicket' && <CreateTicket />}
+          {activeSection === 'dashboard' && <UserDashboard onNavigate={handleSectionChange} />}
+          {activeSection === 'postedTickets' && <PostedTickets onNavigate={handleSectionChange} />}
+          {activeSection === 'userTickets' && <UserTickets onNavigate={handleSectionChange}/>}
           {activeSection === 'settings' && (
             <ComingSoonSection section='Settings' />
           )}
         </main>
       </div>
+
+      {/* Create Ticket Modal */}
+      <CreateTicket 
+        isOpen={isCreateTicketOpen} 
+        onOpenChange={setIsCreateTicketOpen}
+      />
     </div>
   );
 };

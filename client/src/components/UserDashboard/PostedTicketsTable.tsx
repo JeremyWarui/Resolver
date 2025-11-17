@@ -7,14 +7,15 @@ import { createTicketColumnVisibility } from '@/components/Common/DataTable/util
 // Import DataTable component
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { UserTableHeader } from '../Common/DataTable/utils/TableHeaders';
-import TicketDetails from '@/components/Common/DataTable/TicketDetails';
+import { UserTicketDetailsSidebar } from './UserTicketDetailsSidebar';
 
 // Add interface for component props
 interface PostedTicketsTableProps {
   currentUser?: number;
+  viewOnly?: boolean; // New prop to indicate view-only mode
 }
 
-function PostedTicketsTable({ currentUser }: PostedTicketsTableProps) {
+function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTableProps) {
   // ✨ All state, data fetching, and handlers consolidated in one hook
   const table = useTicketTable({
     role: 'user',
@@ -61,19 +62,19 @@ function PostedTicketsTable({ currentUser }: PostedTicketsTableProps) {
         onPageChange={table.handlePageChange}
         onPageSizeChange={table.handlePageSizeChange}
         onRowClick={table.handleViewTicket}
+        selectedRowId={table.selectedTicket?.id || null}
         renderHeader={UserTableHeader}
       />
 
-      {/* Add the ticket detail dialog */}
+      {/* Ticket details sidebar */}
       {table.selectedTicket && (
-        <TicketDetails.UserTicketDetailsComponent
+        <UserTicketDetailsSidebar
           isOpen={table.isTicketDialogOpen}
           onOpenChange={table.setIsTicketDialogOpen}
           ticket={table.selectedTicket}
-          sections={table.sections}
-          facilities={table.facilities}
-          onUpdate={table.handleTicketUpdate}
           currentUser={table.selectedTicket.raised_by}
+          onUpdate={table.handleTicketUpdate}
+          viewOnly={viewOnly}
         />
       )}
     </>

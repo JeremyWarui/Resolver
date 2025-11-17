@@ -8,7 +8,6 @@ import {
   PenToolIcon as Tool,
   LogOut,
   FileText,
-  AlertTriangle,
 } from 'lucide-react';
 import NavButton from './NavButton';
 
@@ -16,7 +15,6 @@ export interface Section {
   id:
     | 'dashboard'
     | 'tickets'
-    | 'queue'
     | 'reports'
     | 'schedule'
     | 'technicians'
@@ -37,7 +35,6 @@ const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const sections: Section[] = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart },
     { id: 'tickets', label: 'Tickets', icon: ClipboardList },
-    { id: 'queue', label: 'Ticket Queue', icon: AlertTriangle },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'schedule', label: 'Schedule', icon: CalendarIcon },
     { id: 'technicians', label: 'Technicians', icon: Users },

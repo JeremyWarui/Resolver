@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import TechSideBar, { Section } from './TechSideBar';
 import Header from '../Common/Header';
-import TechnicianDashboard from './TechDashboard';
-import TechTicketsTable from './TechTickets';
+import TechTicketsPage from './TechTicketsPage';
 import TechReport from './TechReport';
 
 // Import your view components (or use placeholders)
@@ -39,9 +38,9 @@ const TechnicianLayout = () => {
     activeSection === 'dashboard'
       ? 'Dashboard'
       : activeSection === 'assignedTickets'
-        ? 'Assigned Tickets'
+        ? 'My Tickets'
         : activeSection === 'report'
-          ? 'Report'
+          ? 'Reports'
           : 'Settings';
 
   return (
@@ -63,21 +62,8 @@ const TechnicianLayout = () => {
           }}
         />
         <main className='flex-1 overflow-y-auto'>
-          {activeSection === 'dashboard' && <TechnicianDashboard />}
-          {activeSection === 'assignedTickets' && (
-            <div className="p-4 bg-gray-50 space-y-6">
-              <div className="flex justify-between mb-2">
-                <div>
-                  <h2 className="text-2xl font-semibold text-gray-800">Your Assigned Tickets</h2>
-                  <p className="text-sm text-gray-600">View and manage all tickets assigned to you</p>
-                </div>
-              </div>
-              <TechTicketsTable 
-                defaultFilter="all" 
-                onNavigate={setActiveSection}
-              />
-            </div>
-          )}
+          {activeSection === 'dashboard' && <TechTicketsPage />}
+          {activeSection === 'assignedTickets' && <TechTicketsPage />}
           {activeSection === 'report' && <TechReport />}
           {activeSection === 'settings' && (
             <ComingSoonSection section='Settings' />

@@ -39,6 +39,7 @@ export interface TicketAnalyticsParams {
   timeframe?: 'day' | 'week' | 'month'; // default: 'day'
   facility_id?: number;
   section_id?: number;
+  raised_by?: number; // Filter by user who raised the ticket
   group_by?: 'day' | 'week' | 'month'; // default: 'day'
   days?: number; // default: 30
 }

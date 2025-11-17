@@ -117,6 +117,7 @@ export const TechTableHeader = ({
   searchValue,
   searchPlaceholder,
   renderFilters,
+  renderColumnVisibilityDropdown,
 }: TableHeaderProps) => {
   return (
     <>
@@ -135,6 +136,7 @@ export const TechTableHeader = ({
         <div className="flex flex-col gap-4 md:flex-row">
           {renderFilters()}
         </div>
+        {renderColumnVisibilityDropdown()}
       </div>
     </>
   );

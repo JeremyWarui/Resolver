@@ -8,8 +8,8 @@ import { createTicketColumnVisibility } from "@/components/Common/DataTable/util
 import DataTable from "@/components/Common/DataTable/DataTable";
 import { AdminTableHeader } from "../../Common/DataTable/utils/TableHeaders";
 
-// Import the AdminTicketDetails component
-import TicketDetails from "@/components/Common/DataTable/TicketDetails";
+// Import the new Sidebar component
+import { TicketDetailsSidebar } from "@/components/Common/DataTable";
 
 export default function RecentTicketsTable() {
   // ✨ All state, data fetching, and handlers consolidated in one hook
@@ -74,18 +74,19 @@ export default function RecentTicketsTable() {
         onPageChange={table.handlePageChange}
         onPageSizeChange={table.handlePageSizeChange}
         onRowClick={table.handleViewTicket}
+        selectedRowId={table.selectedTicket?.id || null}
         renderHeader={AdminTableHeader}
       />
 
-      {/* Ticket details dialog */}
+      {/* Ticket details sidebar */}
       {table.selectedTicket && (
-        <TicketDetails.AdminTicketDetailsComponent
+        <TicketDetailsSidebar
           isOpen={table.isTicketDialogOpen}
           onOpenChange={table.setIsTicketDialogOpen}
           ticket={table.selectedTicket}
+          technicians={table.technicians}
+          role="admin"
           onUpdate={table.handleTicketUpdate}
-          sections={table.sections}
-          facilities={table.facilities}
         />
       )}
     </>

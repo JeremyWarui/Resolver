@@ -50,6 +50,7 @@ export interface Ticket {
   created_at: string;
   updated_at: string;
   resolved_at?: string | null; // read-only: automatically set when status changes to resolved/closed
+  pending_reason?: string | null; // Reason provided when ticket is marked as pending
   comments?: Comment[];
   feedback?: Feedback;
 }
@@ -75,6 +76,7 @@ export interface UpdateTicketPayload {
   facility_id?: number;
   status?: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
   assigned_to_id?: number | null;
+  pending_reason?: string | null;
 }
 
 export interface TicketsParams {
@@ -83,7 +85,9 @@ export interface TicketsParams {
   status?: string;
   section?: number;
   assigned_to?: number;
+  assigned_to__isnull?: boolean; // For filtering unassigned tickets
   raised_by?: number;
   ordering?: string;
   search?: string;
+  is_overdue?: boolean; // For filtering overdue tickets (backend implementation needed)
 }

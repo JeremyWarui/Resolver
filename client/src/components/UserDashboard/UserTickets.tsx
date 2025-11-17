@@ -1,23 +1,58 @@
 import { Button } from '@/components/ui/button';
 import { Plus, Filter, AlertTriangle, Wrench, CheckCircle, Clock } from 'lucide-react';
+import { useMemo } from 'react';
 import PostedTicketsTable from './PostedTicketsTable';
 import StatCard from '../Common/StatCard';
 import useUserData from '@/hooks/users/useUserData';
-import useStats from '@/hooks/analytics/useStats';
+import { useTickets } from '@/hooks/tickets';
 
 // Define props to receive the section change function
 interface UserTicketsProps {
-  onNavigate?: (section: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings') => void;
+  onNavigate?: (section: 'dashboard' | 'postedTickets' | 'userTickets' | 'submitTicket' | 'settings') => void;
 }
 
-// Create a dedicated component for user ticket stats to optimize loading
+// Create a dedicated component for user ticket stats
 const UserStatsCards = ({ userId }: { userId: number }) => {
-  // Use dedicated hook that only fetches user-specific ticket stats
-  const { ticketStats, loading } = useStats({ 
-    user: userId,
-    fetchTicketStats: true,
-    fetchTechnicianStats: false,
+  // Fetch tickets directly for the specific user
+  const { tickets, loading } = useTickets({ 
+    raised_by: userId,
+    page_size: 100,
+    ordering: '-created_at',
   });
+
+  // Calculate stats from actual ticket data
+  const ticketStats = useMemo(() => {
+    if (!tickets || tickets.length === 0) {
+      return {
+        open: 0,
+        assigned: 0,
+        in_progress: 0,
+        pending: 0,
+        resolved: 0,
+        closed: 0,
+        total: 0,
+      };
+    }
+
+    const stats = {
+      open: 0,
+      assigned: 0,
+      in_progress: 0,
+      pending: 0,
+      resolved: 0,
+      closed: 0,
+      total: tickets.length,
+    };
+
+    tickets.forEach((ticket) => {
+      const status = ticket.status.toLowerCase();
+      if (status in stats) {
+        stats[status as keyof typeof stats]++;
+      }
+    });
+
+    return stats;
+  }, [tickets]);
 
   // Create a skeleton loader for a stat card
   const SkeletonStatCard = () => (
@@ -50,35 +85,35 @@ const UserStatsCards = ({ userId }: { userId: number }) => {
     <div className='grid grid-cols-2 md:grid-cols-4 gap-3 mb-2'>
       <StatCard
         title="Open Tickets"
-        value={ticketStats.open_tickets}
-        description='Your open tickets'
-        icon={<AlertTriangle className='h-6 w-6 text-[#0078d4]' />}
-        iconBgColor="bg-[#e5f2fc]"
+        value={ticketStats.open}
+        description='Awaiting assignment'
+        icon={<AlertTriangle className='h-6 w-6 text-[#ff8c00]' />}
+        iconBgColor="bg-[#fff4e5]"
         className="bg-white"
       />
 
       <StatCard
-        title="Assigned Tickets"
-        value={ticketStats.assigned_tickets}
-        description='Your assigned tickets'
+        title="In Progress"
+        value={ticketStats.in_progress + ticketStats.assigned}
+        description='Being worked on'
         icon={<Wrench className='h-6 w-6 text-[#0078d4]' />}
         iconBgColor="bg-[#e5f2fc]"
         className="bg-white"
       />
 
       <StatCard
-        title="Resolved Tickets"
-        value={ticketStats.resolved_tickets}
-        description='Your resolved tickets'
+        title="Resolved"
+        value={ticketStats.resolved}
+        description='Successfully resolved'
         icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
         iconBgColor="bg-[#e5f9e5]"
         className="bg-white"
       />
 
       <StatCard
-        title="Pending Tickets"
-        value={ticketStats.pending_tickets || 0}
-        description='Your pending tickets'
+        title="Pending"
+        value={ticketStats.pending}
+        description='Waiting for action'
         icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
         iconBgColor="bg-[#f9f3ff]"
         className="bg-white"

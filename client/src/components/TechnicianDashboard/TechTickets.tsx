@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { useMemo } from "react";
 
 // Import DRY utilities
 import { useTicketTable } from "@/hooks/tickets";
@@ -10,109 +10,68 @@ import { createTicketColumnVisibility } from "@/components/Common/DataTable/util
 import DataTable from "@/components/Common/DataTable/DataTable";
 import { TechTableHeader } from "../Common/DataTable/utils/TableHeaders";
 
-// Import the technician-specific ticket details component
-import TicketDetails from "@/components/Common/DataTable/TicketDetails";
+// Import the sidebar component
+import { TicketDetailsSidebar } from "@/components/Common/DataTable";
+import type { TechQuickFilterType } from "./QuickFilterButtons";
 
-import type { Ticket } from "@/types";
-
-// Define props type to receive defaultFilter
+// Define props type to receive activeQuickFilter for client-side filtering
 type TechTicketsProps = {
-  defaultFilter?: string;
+  activeQuickFilter?: TechQuickFilterType;
   currentTechnicianId?: number;
 };
 
 function TechTickets({ 
-  defaultFilter = "open",
+  activeQuickFilter = 'assigned',
   currentTechnicianId 
 }: TechTicketsProps) {
-  // ✨ All state, data fetching, and handlers consolidated in one hook
+  const technicianId = currentTechnicianId ?? 3;
+  
   const table = useTicketTable({
     role: 'technician',
-    currentUserId: currentTechnicianId,
-    defaultStatusFilter: defaultFilter,
-    defaultPageSize: 10,
+    currentUserId: technicianId,
+    defaultStatusFilter: 'all', // Fetch all statuses, filter client-side
+    defaultPageSize: 100, // Fetch more for client-side filtering
     ordering: '-created_at',
+    fetchUsers: true, // Fetch users for 'raised_by' column
   });
 
-  // Technician-specific workflow action handlers
-  const handleBeginWork = async (ticketId: number, ticketNo: string, event?: React.MouseEvent) => {
-    if (event) event.stopPropagation();
-    
-    try {
-      const ticketToUpdate = table.tickets.find(t => t.id === ticketId);
-      if (!ticketToUpdate) return;
-
-      await table.updateTicket({
-        ...ticketToUpdate,
-        status: "in_progress",
-      });
-      
-      toast.success(`Started work on #${ticketNo}`, {
-        description: "Ticket status changed to 'In Progress'",
-      });
-    } catch (error) {
-      toast.error("Failed to update ticket status");
-      console.error("Error updating ticket status:", error);
+  // ✨ Client-side filtering based on activeQuickFilter
+  const filteredTickets = useMemo(() => {
+    if (activeQuickFilter === 'all') {
+      return table.tickets;
     }
-  };
+    return table.tickets.filter(ticket => ticket.status === activeQuickFilter);
+  }, [table.tickets, activeQuickFilter]);
 
-  const handleUpdateStatus = async (ticketId: number, newStatus: string, event?: React.MouseEvent) => {
-    if (event) event.stopPropagation();
-    
-    try {
-      const ticketToUpdate = table.tickets.find(t => t.id === ticketId);
-      if (!ticketToUpdate) return;
+    // Use filtered tickets for table data
+  const filteredTableData = useMemo(() => {
+    return filteredTickets.map((ticket) => {
+      // Find the user who raised this ticket to get their full name
+      const raisedByUser = table.users.find(u => u.username === ticket.raised_by);
+      const raisedByName = raisedByUser 
+        ? `${raisedByUser.first_name} ${raisedByUser.last_name}`
+        : ticket.raised_by || "Unknown";
       
-      await table.updateTicket({
-        ...ticketToUpdate,
-        status: newStatus as Ticket["status"],
-      });
-      
-      if (newStatus === "resolved") {
-        toast.success(`Resolved ticket #${ticketToUpdate.ticket_no}`, {
-          description: "Ticket status changed to 'Resolved'",
-        });
-      } else if (newStatus === "pending") {
-        toast.success(`Marked ticket #${ticketToUpdate.ticket_no} as pending`, {
-          description: "Ticket status changed to 'Pending'",
-        });
-      }
-    } catch (error) {
-      toast.error("Failed to update ticket status");
-      console.error("Error updating ticket status:", error);
-    }
-  };
+      return {
+        ...ticket,
+        sectionName: ticket.section || "N/A",
+        facilityName: ticket.facility || "N/A",
+        raisedByName: raisedByName, // Fix: Changed from raisedBy to raisedByName
+        assignedTo: ticket.assigned_to
+          ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}`
+          : "Unassigned",
+        // Add search field for global filtering
+        searchField: `${ticket.ticket_no} ${ticket.title} ${ticket.description || ""} ${ticket.section} ${ticket.facility} ${raisedByName} ${ticket.status}`.toLowerCase(),
+      };
+    });
+  }, [filteredTickets, table.users]);
 
-  const handleReopen = async (ticketId: number, event?: React.MouseEvent) => {
-    if (event) event.stopPropagation();
-    
-    try {
-      const ticketToUpdate = table.tickets.find(t => t.id === ticketId);
-      if (!ticketToUpdate) return;
-
-      await table.updateTicket({
-        ...ticketToUpdate,
-        status: "in_progress",
-      });
-
-      toast.success(`Reopened work on ticket #${ticketToUpdate.ticket_no}`, {
-        description: "Ticket status changed to 'In Progress'",
-      });
-    } catch (error) {
-      toast.error("Failed to update ticket status");
-      console.error("Error updating ticket status:", error);
-    }
-  };
-
-  // ✨ Generate columns with workflow actions
+  // ✨ Generate columns with view button
   const columns = createTicketTableColumns({
     role: 'technician',
     allStatuses: table.allStatuses,
     setSelectedTicket: table.setSelectedTicket,
     setIsTicketDialogOpen: table.setIsTicketDialogOpen,
-    onBeginWork: handleBeginWork,
-    onUpdateStatus: handleUpdateStatus,
-    onReopen: handleReopen,
   });
 
   // ✨ Generate filters
@@ -123,7 +82,9 @@ function TechTickets({
     includeUser: false,
   });
 
-  // ✨ Generate column visibility config
+  // ✨ Generate column visibility config for technician
+  // Shows: Ticket ID, Title, Facility, Raised By, Status, Created At, Updated At
+  // Hidden by default: Section, Assigned To, Description
   const columnVisibility = createTicketColumnVisibility({ role: 'technician' });
 
   return (
@@ -131,27 +92,30 @@ function TechTickets({
       <DataTable
         variant="tech"
         columns={columns}
-        data={table.tableData}
-        title="Assigned Tickets"
-        subtitle=""
+        data={filteredTableData}
+        title="My Tickets"
+        subtitle={`Showing ${filteredTickets.length} ticket${filteredTickets.length !== 1 ? 's' : ''}`}
         {...table.commonTableProps}
-        defaultPageSize={table.pageSize}
+        defaultPageSize={10}
         initialColumnVisibility={columnVisibility}
         filterOptions={filters}
-        totalItems={table.totalTickets}
+        totalItems={filteredTickets.length}
         loading={table.loading}
         onPageChange={table.handlePageChange}
         onPageSizeChange={table.handlePageSizeChange}
         onRowClick={table.handleViewTicket}
+        selectedRowId={table.selectedTicket?.id || null}
         renderHeader={TechTableHeader}
+        manualPagination={false} // Client-side pagination for filtered data
       />
       
-      {/* Ticket details dialog */}
+      {/* Ticket details sidebar */}
       {table.selectedTicket && (
-        <TicketDetails.TechnicianTicketDetailsComponent
+        <TicketDetailsSidebar
           isOpen={table.isTicketDialogOpen}
           onOpenChange={table.setIsTicketDialogOpen}
           ticket={table.selectedTicket}
+          role="technician"
           onUpdate={table.handleTicketUpdate}
         />
       )}

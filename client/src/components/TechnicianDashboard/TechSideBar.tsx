@@ -1,6 +1,6 @@
 import {
-  BarChart,
-  PenSquareIcon as Pen,
+  LayoutDashboard,
+  FileText,
   Settings,
   ClipboardList,
   LogOut,
@@ -19,9 +19,9 @@ interface SideBarProps {
 }
 const TechSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const sections: Section[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart },
-    { id: 'assignedTickets', label: 'Assigned Tickets', icon: ClipboardList },
-    { id: 'report', label: 'Report', icon: Pen},
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'assignedTickets', label: 'My Tickets', icon: ClipboardList },
+    { id: 'report', label: 'Reports', icon: FileText},
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

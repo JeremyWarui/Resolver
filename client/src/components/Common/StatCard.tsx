@@ -26,7 +26,7 @@ const StatCard: React.FC<StatCardProps> = ({
   value,
   icon,
   iconBgColor = "bg-gray-50",
-  iconColor,
+  iconColor: _iconColor,
   badge,
   description,
   className = "",

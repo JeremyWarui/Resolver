@@ -6,9 +6,16 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,7 +30,6 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
 // Import REST API hooks
@@ -48,7 +54,12 @@ const formSchema = z.object({
   }),
 });
 
-const CreateTicket = () => {
+interface CreateTicketProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const CreateTicket = ({ isOpen, onOpenChange }: CreateTicketProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch facilities using the REST API hook
@@ -94,6 +105,7 @@ const CreateTicket = () => {
 
       // Reset form after successful submission
       form.reset();
+      onOpenChange(false); // Close modal on success
     } catch (error) {
       console.error('Error creating ticket:', error);
       toast.error('Error', {
@@ -105,157 +117,148 @@ const CreateTicket = () => {
   }
 
   return (
-    <div className='flex-1 overflow-y-auto p-4 bg-gray-50'>
-      <div className='flex items-center space-x-2'>
-        <p className='text-sm text-gray-600'>
-          Fill out the form below to raise a new ticket.
-        </p>
-      </div>
-      <div className='mt-4'>
-        <Card className='w-full py-6 '>
-          <CardHeader>
-            <CardTitle className='pb-4'>Create New Ticket</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className=' grid grid-cols-2 gap-8 space-y-6'
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className='sm:max-w-[600px]'>
+        <DialogHeader>
+          <DialogTitle>New Ticket</DialogTitle>
+          <DialogDescription>
+            Fill out the form below to create a new maintenance ticket.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='space-y-4'
+          >
+            {/* Title */}
+            <FormField
+              control={form.control}
+              name='title'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder='Brief description of the issue'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Description */}
+            <FormField
+              control={form.control}
+              name='description'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder='Provide details about the issue'
+                      className='min-h-[100px]'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Section */}
+            <FormField
+              control={form.control}
+              name='section_id'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Section</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={sectionsLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select the appropriate section' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sections.map((section) => (
+                        <SelectItem key={section.id} value={String(section.id)}>
+                          {section.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Facility */}
+            <FormField
+              control={form.control}
+              name='facility_id'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Facility</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={facilitiesLoading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select a facility' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {facilities.map((facility) => (
+                        <SelectItem key={facility.id} value={String(facility.id)}>
+                          {facility.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  onOpenChange(false);
+                  form.reset();
+                }}
+                disabled={isSubmitting}
               >
-                <div className='flex flex-col space-y-8'>
-                  {/* Title */}
-                  <FormField
-                    control={form.control}
-                    name='title'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Brief description of the issue'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          A short title that describes the issue.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Description */}
-                  <FormField
-                    control={form.control}
-                    name='description'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder='Provide details about the issue'
-                            className='min-h-[120px]'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Detailed description of the problem.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className='flex flex-col gap-2.5 space-y-6'>
-                  {/* Section */}
-                  <FormField
-                    control={form.control}
-                    name='section_id'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Section</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={sectionsLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select the appropriate section' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {sections.map((section) => (
-                              <SelectItem key={section.id} value={String(section.id)}>
-                                {section.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          The Section responsible for handling this issue.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Facility */}
-                  <FormField
-                    control={form.control}
-                    name='facility_id'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Facility</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={facilitiesLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Select a facility' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {facilities.map((facility) => (
-                              <SelectItem key={facility.id} value={String(facility.id)}>
-                                {facility.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          The building or facility where the issue is located.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Submit button */}
-                <Button
-                  type='submit'
-                  className='w-full md:w-auto bg-[#0078d4] hover:bg-[#106ebe]'
-                  disabled={isSubmitting} // Re-enable this to prevent multiple submissions
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Ticket'
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+                Cancel
+              </Button>
+              <Button
+                type='submit'
+                className='bg-blue-600 hover:bg-blue-700'
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Ticket'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

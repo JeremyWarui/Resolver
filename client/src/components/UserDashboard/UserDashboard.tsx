@@ -6,7 +6,7 @@ import useUserData from "@/hooks/users/useUserData";
 
 // Define props to receive the section change function
 interface UserDashboardProps {
-  onNavigate?: (section: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings') => void;
+  onNavigate?: (section: 'dashboard' | 'postedTickets' | 'userTickets' | 'submitTicket' | 'settings') => void;
 }
 
 const UserDashboard = ({ onNavigate }: UserDashboardProps) => {

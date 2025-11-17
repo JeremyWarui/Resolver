@@ -108,22 +108,6 @@ export default function TicketMetricsReport() {
         </div>
       </div>
 
-      {/* Summary Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-blue-900">Ticket Summary</CardTitle>
-          <CardDescription className="text-blue-700">
-            {analytics.ticket_counts.period}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-4xl font-bold text-blue-900">
-            {analytics.ticket_counts.count}
-          </div>
-          <p className="text-sm text-blue-700 mt-1">Total Tickets</p>
-        </CardContent>
-      </Card>
-
       {/* First Row: Status Distribution (Donut) + Sections Chart (Bar) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Status Distribution - Donut Chart */}

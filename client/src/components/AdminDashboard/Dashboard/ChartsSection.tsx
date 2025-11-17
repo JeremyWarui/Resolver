@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -30,36 +30,46 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useTicketAnalytics } from "@/hooks/analytics";
 
-// Sample data for weekly tickets
-const weeklyTicketsData = [
-  { name: "Mon", tickets: 12 },
-  { name: "Tue", tickets: 19 },
-  { name: "Wed", tickets: 15 },
-  { name: "Thu", tickets: 8 },
-  { name: "Fri", tickets: 22 },
-  { name: "Sat", tickets: 6 },
-  { name: "Sun", tickets: 4 },
-];
-
-// Sample data for monthly tickets
-const monthlyTicketsData = [
-  { name: "Week 1", tickets: 45 },
-  { name: "Week 2", tickets: 52 },
-  { name: "Week 3", tickets: 49 },
-  { name: "Week 4", tickets: 62 },
-];
-
 // FluentUI theme colors
 const COLORS = ["#0078d4", "#107c10", "#ffaa44", "#d13438", "#5c2d91"];
 
 const ChartSection = () => {
-  const [ticketTimeframe, setTicketTimeframe] = useState("week");
+  const [ticketTimeframe, setTicketTimeframe] = useState<'week' | 'month'>("week");
   const [categoryTimeframe, setCategoryTimeframe] = useState<'day' | 'week' | 'month'>("week");
 
   // Fetch ticket analytics for section distribution
   const { data: analyticsData, loading: analyticsLoading } = useTicketAnalytics({
     timeframe: categoryTimeframe,
   });
+
+  // Fetch trend data for tickets raised chart (7 days for week, 30 days for month)
+  const { data: trendData, loading: trendLoading } = useTicketAnalytics({
+    days: ticketTimeframe === 'week' ? 7 : 30,
+    group_by: ticketTimeframe === 'week' ? 'day' : 'week',
+  });
+
+  // Transform trend data for bar chart
+  const ticketsRaisedData = useMemo(() => {
+    if (!trendData?.trend_data) return [];
+    
+    if (ticketTimeframe === 'week') {
+      // For weekly view, show last 7 days with day names
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return trendData.trend_data.slice(-7).map(item => {
+        const date = new Date(item.period);
+        return {
+          name: dayNames[date.getDay()],
+          tickets: item.count,
+        };
+      });
+    } else {
+      // For monthly view, show last 4 weeks
+      return trendData.trend_data.slice(-4).map((item, index) => ({
+        name: `Week ${index + 1}`,
+        tickets: item.count,
+      }));
+    }
+  }, [trendData, ticketTimeframe]);
 
   // Transform section distribution data for pie chart
   const categoryData = analyticsData?.section_distribution.map(section => ({
@@ -93,14 +103,19 @@ const ChartSection = () => {
           </DropdownMenu>
         </CardHeader>
         <CardContent className="p-5 pt-1">
-          <div className="h-[250px] w-full">
+          {trendLoading ? (
+            <div className="h-[250px] w-full flex items-center justify-center">
+              <p className="text-sm text-muted-foreground">Loading ticket data...</p>
+            </div>
+          ) : ticketsRaisedData.length === 0 ? (
+            <div className="h-[250px] w-full flex items-center justify-center">
+              <p className="text-sm text-muted-foreground">No data available</p>
+            </div>
+          ) : (
+            <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RechartsBarChart
-                data={
-                  ticketTimeframe === "week"
-                    ? weeklyTicketsData
-                    : monthlyTicketsData
-                }
+                data={ticketsRaisedData}
                 margin={{ top: 10, right: 10, left: 0, bottom: 20 }}
                 barCategoryGap={50}
               >
@@ -143,7 +158,8 @@ const ChartSection = () => {
                 />
               </RechartsBarChart>
             </ResponsiveContainer>
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
       {/* Ticket Categories Chart */}
