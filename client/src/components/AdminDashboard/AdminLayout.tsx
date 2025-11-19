@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SideBar, { Section } from "../Common/Sidebar";
 import Header from "../Common/Header";
+import { useUserData } from "@/hooks/users";
 
 // Import your view components (or use placeholders)
 import MainContent from "./Dashboard/DashboardLayout";
@@ -35,6 +36,9 @@ function ComingSoonSection({ section }: { section: string }) {
 export default function AdminLayout() {
   const [activeSection, setActiveSection] =
     useState<Section["id"]>("dashboard");
+  
+  // Fetch current user data
+  const { userData } = useUserData();
 
   // Determine header title based on the active section.
   const headerTitle =
@@ -67,6 +71,7 @@ export default function AdminLayout() {
         <Header
           title={headerTitle}
           searchPlaceholder="Search..."
+          currentUser={userData}
           onSearchChange={(value) => {
             // Optionally, handle search changes here (e.g. propagate down to your view)
             console.log("Search:", value);

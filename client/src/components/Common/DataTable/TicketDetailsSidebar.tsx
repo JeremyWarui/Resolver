@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Sheet,
@@ -20,11 +20,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Calendar, User, Loader2 } from 'lucide-react';
-import type { Ticket } from '@/types';
+import type { Ticket, Section, Technician } from '@/types';
 import { formatDate } from '@/utils/date';
 import { getStatusBadgeVariant } from './utils/TicketDetailsUtils';
 import { TicketComments } from './sidebar/TicketComments';
 import { TechnicianSelect } from '@/components/Common/TechnicianSelect';
+import { techniciansService } from '@/api/services';
 
 export interface TicketDetailsSidebarProps {
   isOpen: boolean;
@@ -35,7 +36,10 @@ export interface TicketDetailsSidebarProps {
     first_name: string;
     last_name: string;
     username: string;
+    sections: number[];
   }[];
+  sections?: Section[]; // For looking up section ID from section name
+  users?: { id: number; username: string; first_name: string; last_name: string; }[]; // For displaying raised_by full name
   currentUser?: string;
   role?: 'admin' | 'user' | 'technician';
   onUpdate?: (updatedTicket: Ticket) => Promise<void>;
@@ -45,12 +49,45 @@ export function TicketDetailsSidebar({
   isOpen,
   onOpenChange,
   ticket,
-  technicians = [],
   role = 'user',
+  users = [],
   onUpdate,
 }: TicketDetailsSidebarProps) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [sectionTechnicians, setSectionTechnicians] = useState<Technician[]>([]);
+  const [loadingTechnicians, setLoadingTechnicians] = useState(false);
+  
+  // Get raised_by user's full name
+  // Priority 1: Use raisedByName if it's already computed in tableData
+  // Priority 2: Look up from users array
+  // Priority 3: Fall back to username
+  const ticketWithName = ticket as Ticket & { raisedByName?: string };
+  const raisedByUser = users.find(u => u.username === ticket.raised_by);
+  const raisedByName = ticketWithName.raisedByName || 
+    (raisedByUser ? `${raisedByUser.first_name} ${raisedByUser.last_name}` : ticket.raised_by);
+  
+  // Use section_id_value from backend for filtering
+  const sectionId = ticket.section_id_value;
+  
+  // Fetch technicians filtered by section when in edit mode
+  useEffect(() => {
+    if (mode === 'edit' && role === 'admin' && sectionId) {
+      setLoadingTechnicians(true);
+      techniciansService.getTechnicians({ sections: sectionId })
+        .then(response => {
+          setSectionTechnicians(response.results);
+        })
+        .catch(error => {
+          console.error('Error fetching section technicians:', error);
+          toast.error('Failed to load technicians for this section');
+          setSectionTechnicians([]);
+        })
+        .finally(() => {
+          setLoadingTechnicians(false);
+        });
+    }
+  }, [mode, role, sectionId]);
   
   // Pending reason state for technicians
   const [showPendingForm, setShowPendingForm] = useState(false);
@@ -227,7 +264,7 @@ export function TicketDetailsSidebar({
           <div className='flex items-center gap-4 text-sm text-gray-600'>
             <div className='flex items-center gap-1.5'>
               <User className='h-4 w-4' />
-              <span>Raised by: {ticket.raised_by}</span>
+              <span>Raised by: {raisedByName}</span>
             </div>
             <div className='flex items-center gap-1.5'>
               <Calendar className='h-4 w-4' />
@@ -286,7 +323,7 @@ export function TicketDetailsSidebar({
                     {/* Raised By */}
                     <div className='px-4 py-3 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-600'>Raised by</span>
-                      <span className='text-sm text-gray-900'>{ticket.raised_by}</span>
+                      <span className='text-sm text-gray-900'>{raisedByName}</span>
                     </div>
                     
                     {/* Date Created */}
@@ -332,9 +369,11 @@ export function TicketDetailsSidebar({
                       <div className='px-4 py-3 flex items-center justify-between'>
                         <span className='text-sm font-medium text-gray-600'>Assigned to</span>
                         <span className='text-sm text-gray-900'>
-                          {ticket.assigned_to 
-                            ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}` 
-                            : 'Unassigned'}
+                          {ticket.assigned_to_name
+                            ? ticket.assigned_to_name
+                            : (ticket.assigned_to 
+                              ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}` 
+                              : 'Unassigned')}
                         </span>
                       </div>
                     )}
@@ -352,17 +391,28 @@ export function TicketDetailsSidebar({
                       {/* Assign To - Only show for open and pending tickets */}
                       {shouldShowAssignedToField() && (
                         <div className='px-4 py-3'>
-                          <div className='flex items-center gap-4'>
-                            <label className='text-sm font-medium text-gray-700 min-w-[120px]'>
+                          <div className='space-y-2'>
+                            <label className='text-sm font-medium text-gray-700'>
                               Assigned to:
                             </label>
-                            <div className='flex-1'>
-                              <TechnicianSelect
-                                value={editedAssignedToId}
-                                onValueChange={setEditedAssignedToId}
-                                technicians={technicians}
-                              />
-                            </div>
+                            {loadingTechnicians ? (
+                              <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                <Loader2 className='h-4 w-4 animate-spin' />
+                                Loading technicians in {ticket.section}...
+                              </div>
+                            ) : (
+                              <>
+                                <TechnicianSelect
+                                  value={editedAssignedToId}
+                                  onValueChange={setEditedAssignedToId}
+                                  technicians={sectionTechnicians}
+                                />
+                                <p className='text-xs text-muted-foreground'>
+                                  Showing only technicians in <span className='font-medium'>{ticket.section}</span> section
+                                  {sectionTechnicians.length > 0 && ` (${sectionTechnicians.length} available)`}
+                                </p>
+                              </>
+                            )}
                           </div>
                         </div>
                       )}

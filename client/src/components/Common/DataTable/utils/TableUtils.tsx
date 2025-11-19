@@ -191,10 +191,20 @@ export const assignedToColumn = <T,>(header: string = "Assigned To"): ColumnDef<
   accessorKey: "assigned_to",
   header,
   cell: ({ row }) => {
-    const assignedTo = row.getValue("assigned_to");
-    if (!assignedTo) return <div>Unassigned</div>;
+    const ticket = row.original as any;
     
-    // Handle both string and object types
+    // Priority 1: Use optimized assigned_to_name string (new backend format)
+    if (ticket.assigned_to_name) {
+      return <div>{ticket.assigned_to_name}</div>;
+    }
+    
+    // Priority 2: Check if unassigned
+    if (!ticket.assigned_to && !ticket.assigned_to_id) {
+      return <div>Unassigned</div>;
+    }
+    
+    // Priority 3: Backward compatibility - handle old object format
+    const assignedTo = row.getValue("assigned_to");
     if (typeof assignedTo === "object" && assignedTo !== null) {
       const user = assignedTo as { username?: string; first_name?: string; last_name?: string };
       const fullName = user.first_name && user.last_name 
@@ -202,7 +212,13 @@ export const assignedToColumn = <T,>(header: string = "Assigned To"): ColumnDef<
         : user.username || "N/A";
       return <div>{fullName}</div>;
     }
-    return <div>{String(assignedTo)}</div>;
+    
+    // Priority 4: Handle string format
+    if (typeof assignedTo === "string") {
+      return <div>{assignedTo}</div>;
+    }
+    
+    return <div>Unassigned</div>;
   },
   enableSorting: false,
 });

@@ -3,6 +3,7 @@ import TechSideBar, { Section } from './TechSideBar';
 import Header from '../Common/Header';
 import TechTicketsPage from './TechTicketsPage';
 import TechReport from './TechReport';
+import { useUserData } from '@/hooks/users';
 
 // Import your view components (or use placeholders)
 
@@ -32,6 +33,9 @@ function ComingSoonSection({ section }: { section: string }) {
 const TechnicianLayout = () => {
   const [activeSection, setActiveSection] =
     useState<Section['id']>('dashboard');
+  
+  // Fetch current user data
+  const { userData } = useUserData();
 
   // Determine header title based on the active section.
   const headerTitle =
@@ -56,14 +60,15 @@ const TechnicianLayout = () => {
         <Header
           title={headerTitle}
           searchPlaceholder='Search...'
+          currentUser={userData}
           onSearchChange={(value) => {
             // Optionally, handle search changes here (e.g. propagate down to your view)
             console.log('Search:', value);
           }}
         />
         <main className='flex-1 overflow-y-auto'>
-          {activeSection === 'dashboard' && <TechTicketsPage />}
-          {activeSection === 'assignedTickets' && <TechTicketsPage />}
+          {activeSection === 'dashboard' && <TechTicketsPage userData={userData} />}
+          {activeSection === 'assignedTickets' && <TechTicketsPage userData={userData} />}
           {activeSection === 'report' && <TechReport />}
           {activeSection === 'settings' && (
             <ComingSoonSection section='Settings' />

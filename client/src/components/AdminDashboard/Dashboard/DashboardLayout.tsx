@@ -17,6 +17,7 @@ import FacilityAndWorkload from "./FacilityAndWorkload";
 import RecentTicketsTable from "./RecentTickets";
 import reportsService from "@/api/services/reportsService";
 import type { GenerateReportParams } from "@/api/services/reportsService";
+import useUserData from "@/hooks/users/useUserData";
 
 const MainContent = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -24,6 +25,9 @@ const MainContent = () => {
   const [selectedReportType, setSelectedReportType] = useState<GenerateReportParams['report_type'] | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // Get current user data for the welcome message
+  const { userData, loading: userLoading } = useUserData();
 
   const handleExport = async () => {
     if (!selectedReportType) {
@@ -84,7 +88,9 @@ const MainContent = () => {
           <h2 className="text-xl font-semibold text-gray-800">
             Maintenance Overview
           </h2>
-          <p className="text-sm text-gray-600">Welcome back, 👋</p>
+          <p className="text-sm text-gray-600">
+            Welcome back, {userLoading ? '...' : userData?.first_name || 'Admin'} 👋
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button

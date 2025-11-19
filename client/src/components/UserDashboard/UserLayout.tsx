@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import UserSideBar, { Section } from './UserSideBar';
 import Header from '../Common/Header';
+import { useUserData } from '@/hooks/users';
 
 // Import your view components (or use placeholders)
 import UserDashboard from './UserDashboard';
@@ -35,6 +36,15 @@ const UserLayout = () => {
   const [activeSection, setActiveSection] =
     useState<Section['id']>('dashboard');
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
+  const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
+  
+  // Fetch current user data
+  const { userData } = useUserData();
+
+  // Callback to refresh ticket tables after creating a ticket
+  const handleTicketCreated = () => {
+    setTicketRefreshKey(prev => prev + 1);
+  };
 
   // Determine header title based on the active section.
   const headerTitle =
@@ -71,15 +81,16 @@ const UserLayout = () => {
         <Header
           title={headerTitle}
           searchPlaceholder='Search...'
+          currentUser={userData}
           onSearchChange={(value) => {
             // Optionally, handle search changes here (e.g. propagate down to your view)
             console.log('Search:', value);
           }}
         />
         <main className='flex-1 overflow-y-auto'>
-          {activeSection === 'dashboard' && <UserDashboard onNavigate={handleSectionChange} />}
-          {activeSection === 'postedTickets' && <PostedTickets onNavigate={handleSectionChange} />}
-          {activeSection === 'userTickets' && <UserTickets onNavigate={handleSectionChange}/>}
+          {activeSection === 'dashboard' && <UserDashboard key={`dashboard-${ticketRefreshKey}`} onNavigate={handleSectionChange} />}
+          {activeSection === 'postedTickets' && <PostedTickets key={`posted-${ticketRefreshKey}`} onNavigate={handleSectionChange} />}
+          {activeSection === 'userTickets' && <UserTickets key={`user-${ticketRefreshKey}`} onNavigate={handleSectionChange}/>}
           {activeSection === 'settings' && (
             <ComingSoonSection section='Settings' />
           )}
@@ -90,6 +101,7 @@ const UserLayout = () => {
       <CreateTicket 
         isOpen={isCreateTicketOpen} 
         onOpenChange={setIsCreateTicketOpen}
+        onSuccess={handleTicketCreated}
       />
     </div>
   );

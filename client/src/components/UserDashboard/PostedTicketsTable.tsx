@@ -24,7 +24,7 @@ function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTabl
     fetchUsers: true, // Enable users fetching for raised_by filter
     fetchFacilities: true,
     defaultPageSize: 10,
-    ordering: '-id',
+    ordering: '-updated_at',
   });
 
   // ✨ Generate columns with one function call

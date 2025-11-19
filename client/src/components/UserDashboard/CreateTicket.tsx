@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -36,30 +35,16 @@ import { Loader2 } from 'lucide-react';
 import useFacilities from '@/hooks/facilities/useFacilities';
 import useTickets from '@/hooks/tickets/useTickets';
 import useCreateTicket from '@/hooks/tickets/useCreateTicket';
+import { createTicketSchema, type CreateTicketFormValues } from '@/utils/ticketValidation';
 
-
-// Define form schema using Zod
-const formSchema = z.object({
-  title: z.string().min(5, {
-    message: 'Title must be at least 5 characters.',
-  }),
-  description: z.string().min(10, {
-    message: 'Description must be at least 10 characters.',
-  }),
-  section_id: z.string({
-    required_error: 'Please select a section.',
-  }),
-  facility_id: z.string({
-    required_error: 'Please select a facility.',
-  }),
-});
 
 interface CreateTicketProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void; // Optional callback after successful creation
 }
 
-const CreateTicket = ({ isOpen, onOpenChange }: CreateTicketProps) => {
+const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch facilities using the REST API hook
@@ -74,8 +59,8 @@ const CreateTicket = ({ isOpen, onOpenChange }: CreateTicketProps) => {
   const { createTicket } = useCreateTicket();
 
   // Initialize form with default values
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CreateTicketFormValues>({
+    resolver: zodResolver(createTicketSchema),
     defaultValues: {
       title: '',
       description: '',
@@ -85,7 +70,7 @@ const CreateTicket = ({ isOpen, onOpenChange }: CreateTicketProps) => {
   });
 
   // Handle form submission
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: CreateTicketFormValues) {
     setIsSubmitting(true);
     console.log('Form submission started with values:', values);
 
@@ -106,6 +91,9 @@ const CreateTicket = ({ isOpen, onOpenChange }: CreateTicketProps) => {
       // Reset form after successful submission
       form.reset();
       onOpenChange(false); // Close modal on success
+      
+      // Call onSuccess callback if provided (for refetching ticket list)
+      onSuccess?.();
     } catch (error) {
       console.error('Error creating ticket:', error);
       toast.error('Error', {

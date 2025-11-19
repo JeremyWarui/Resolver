@@ -9,17 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { User } from "@/types";
 
 export interface HeaderProps {
   title: string;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
+  currentUser?: User | null;
 }
 
 const Header = ({
   title,
   searchPlaceholder = "Search...",
   onSearchChange,
+  currentUser,
 }: HeaderProps) => {
   const [searchValue, setSearchValue] = useState("");
 
@@ -28,6 +31,18 @@ const Header = ({
     setSearchValue(value);
     onSearchChange?.(value);
   };
+
+  // Generate initials from user's name
+  const getInitials = () => {
+    if (!currentUser) return "U";
+    const first = currentUser.first_name?.[0] || "";
+    const last = currentUser.last_name?.[0] || "";
+    return `${first}${last}`.toUpperCase() || "U";
+  };
+
+  const userName = currentUser 
+    ? `${currentUser.first_name} ${currentUser.last_name}`.trim() || currentUser.username
+    : "User";
 
   return (
     <header className="bg-white border-b border-gray-200 flex items-center justify-between p-5">
@@ -55,13 +70,15 @@ const Header = ({
               <Avatar className="h-8 w-8">
                 <AvatarImage
                   src="/placeholder.svg?height=32&width=32"
-                  alt="User"
+                  alt={userName}
                 />
-                <AvatarFallback>MO</AvatarFallback>
+                <AvatarFallback>{getInitials()}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <div className="px-2 py-1.5 text-sm font-medium">{userName}</div>
+            <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />

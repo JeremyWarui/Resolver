@@ -370,9 +370,11 @@ export function UserTicketDetailsSidebar({
                         </label>
                         <div className='flex-1'>
                           <span className='text-sm text-gray-900'>
-                            {ticket.assigned_to 
-                              ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}` 
-                              : 'Not assigned yet'}
+                            {ticket.assigned_to_name
+                              ? ticket.assigned_to_name
+                              : (ticket.assigned_to 
+                                ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}` 
+                                : 'Not assigned yet')}
                           </span>
                         </div>
                       </div>

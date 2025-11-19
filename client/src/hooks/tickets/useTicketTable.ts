@@ -5,6 +5,7 @@ import useTechnicians from '../technicians/useTechnicians';
 import { useUsers } from '../users';
 import useFacilities from '../facilities/useFacilities';
 import useUpdateTicket from './useUpdateTicket';
+import { extractWritableFields } from '@/utils/ticketHelpers';
 import type { Ticket, Section, Facility, Technician, User, TicketsParams } from '@/types';
 
 /**
@@ -113,7 +114,7 @@ export interface UseTicketTableResult {
   handleTicketUpdate: (updatedTicket: Ticket) => Promise<void>;
   handlePageChange: (newPageIndex: number) => void;
   handlePageSizeChange: (newPageSize: number) => void;
-  updateTicket: (ticket: Ticket) => Promise<void>;
+  updateTicket: (ticket: Ticket) => Promise<Ticket>;
   refetch: () => void;
   
   // Constants
@@ -303,10 +304,27 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
    */
   const handleTicketUpdate = async (updatedTicket: Ticket) => {
     try {
-      await updateTicket(updatedTicket);
-      toast.success(`Updated ticket #${updatedTicket.ticket_no}`, {
+      // Extract only writable fields from the ticket object
+      // This prevents sending read-only fields (section, facility, raised_by, etc.) to the API
+      const updatePayload = {
+        id: updatedTicket.id,
+        ...extractWritableFields(updatedTicket),
+      };
+      
+      console.log('Updating ticket with payload:', updatePayload);
+      
+      // Update ticket via API and get the updated ticket back
+      const result = await updateTicket(updatePayload);
+      
+      console.log('Ticket updated successfully:', result);
+      
+      toast.success(`Updated ticket #${result.ticket_no}`, {
         description: 'Ticket has been updated successfully',
       });
+      
+      // Refetch tickets to sync UI with backend
+      refetch();
+      
       setIsTicketDialogOpen(false);
     } catch (error) {
       console.error('Failed to update ticket:', error);
@@ -336,7 +354,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     searchPlaceholder: 'Search by ID or title...',
     emptyStateMessage: 'No tickets found',
     emptyStateDescription: 'Try changing your filters or check back later',
-    defaultSorting: [{ id: 'ticket_no', desc: true }],
+    defaultSorting: [{ id: 'updated_at', desc: true }],
     manualPagination: true,
   };
 

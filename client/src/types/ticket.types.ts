@@ -42,11 +42,14 @@ export interface Ticket {
   status: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
   section_id?: number; // write-only
   section: string; // read-only: section name
+  section_id_value: number; // read-only: section ID for filtering
   facility_id?: number; // write-only
   facility: string; // read-only: facility name
+  facility_id_value: number; // read-only: facility ID for filtering
   raised_by: string; // read-only: username
   assigned_to_id?: number | null; // write-only
-  assigned_to: AssignedUser | null; // read-only: full user object
+  assigned_to: AssignedUser | null; // read-only: full user object (DEPRECATED - use assigned_to_name)
+  assigned_to_name?: string | null; // read-only: "FirstName LastName" string (optimized - no extra query)
   created_at: string;
   updated_at: string;
   resolved_at?: string | null; // read-only: automatically set when status changes to resolved/closed

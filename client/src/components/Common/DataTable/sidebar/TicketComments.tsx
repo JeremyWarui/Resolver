@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,10 +16,7 @@ import type { Ticket, Comment } from "@/types";
 import { formatDate } from "@/utils/date";
 import ticketsService from '@/api/services/ticketsService';
 import { toast } from 'sonner';
-
-const commentFormSchema = z.object({
-  comment: z.string().min(1, { message: "Comment cannot be empty." }),
-});
+import { ticketCommentSchema, type TicketCommentFormValues } from '@/utils/ticketValidation';
 
 interface TicketCommentsProps {
   ticket: Ticket;
@@ -31,14 +27,14 @@ export function TicketComments({ ticket }: TicketCommentsProps) {
   const [comments, setComments] = useState(ticket.comments || []);
   const isClosed = ticket.status === 'closed';
 
-  const form = useForm<z.infer<typeof commentFormSchema>>({
-    resolver: zodResolver(commentFormSchema),
+  const form = useForm<TicketCommentFormValues>({
+    resolver: zodResolver(ticketCommentSchema),
     defaultValues: {
       comment: "",
     },
   });
 
-  const handleSubmit = async (values: z.infer<typeof commentFormSchema>) => {
+  const handleSubmit = async (values: TicketCommentFormValues) => {
     setIsSubmitting(true);
     try {
       const created = await ticketsService.addTicketComment(ticket.id, values.comment);

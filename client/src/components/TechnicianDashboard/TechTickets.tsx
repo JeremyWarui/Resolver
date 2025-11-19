@@ -13,16 +13,22 @@ import { TechTableHeader } from "../Common/DataTable/utils/TableHeaders";
 // Import the sidebar component
 import { TicketDetailsSidebar } from "@/components/Common/DataTable";
 import type { TechQuickFilterType } from "./QuickFilterButtons";
+import TechnicianStatsCards from "./TechnicianStatsCards";
+import TechQuickFilterButtons from "./QuickFilterButtons";
 
 // Define props type to receive activeQuickFilter for client-side filtering
 type TechTicketsProps = {
   activeQuickFilter?: TechQuickFilterType;
   currentTechnicianId?: number;
+  onFilterChange?: (filter: TechQuickFilterType) => void;
+  onStatCardClick?: (filter: TechQuickFilterType) => void;
 };
 
 function TechTickets({ 
   activeQuickFilter = 'assigned',
-  currentTechnicianId 
+  currentTechnicianId,
+  onFilterChange,
+  onStatCardClick,
 }: TechTicketsProps) {
   const technicianId = currentTechnicianId ?? 3;
   
@@ -31,17 +37,36 @@ function TechTickets({
     currentUserId: technicianId,
     defaultStatusFilter: 'all', // Fetch all statuses, filter client-side
     defaultPageSize: 100, // Fetch more for client-side filtering
-    ordering: '-created_at',
+    ordering: '-updated_at',
     fetchUsers: true, // Fetch users for 'raised_by' column
   });
 
   // ✨ Client-side filtering based on activeQuickFilter
   const filteredTickets = useMemo(() => {
-    if (activeQuickFilter === 'all') {
-      return table.tickets;
+    let filtered = table.tickets;
+    
+    if (activeQuickFilter !== 'all') {
+      filtered = table.tickets.filter(ticket => ticket.status === activeQuickFilter);
     }
-    return table.tickets.filter(ticket => ticket.status === activeQuickFilter);
+    
+    // Ensure tickets are sorted by updated_at (most recent first)
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.updated_at).getTime();
+      const dateB = new Date(b.updated_at).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
   }, [table.tickets, activeQuickFilter]);
+
+  // Calculate filter counts from actual tickets
+  const filterCounts = useMemo(() => {
+    return {
+      all: table.tickets.length,
+      assigned: table.tickets.filter(t => t.status === 'assigned').length,
+      in_progress: table.tickets.filter(t => t.status === 'in_progress').length,
+      pending: table.tickets.filter(t => t.status === 'pending').length,
+      resolved: table.tickets.filter(t => t.status === 'resolved').length,
+    };
+  }, [table.tickets]);
 
     // Use filtered tickets for table data
   const filteredTableData = useMemo(() => {
@@ -57,9 +82,11 @@ function TechTickets({
         sectionName: ticket.section || "N/A",
         facilityName: ticket.facility || "N/A",
         raisedByName: raisedByName, // Fix: Changed from raisedBy to raisedByName
-        assignedTo: ticket.assigned_to
-          ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}`
-          : "Unassigned",
+        assignedTo: ticket.assigned_to_name
+          ? ticket.assigned_to_name
+          : (ticket.assigned_to
+            ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}`
+            : "Unassigned"),
         // Add search field for global filtering
         searchField: `${ticket.ticket_no} ${ticket.title} ${ticket.description || ""} ${ticket.section} ${ticket.facility} ${raisedByName} ${ticket.status}`.toLowerCase(),
       };
@@ -89,6 +116,20 @@ function TechTickets({
 
   return (
     <>
+      {/* Stats Cards - Clickable to filter */}
+      <TechnicianStatsCards 
+        counts={filterCounts} 
+        loading={table.loading}
+        onCardClick={onStatCardClick}
+      />
+      
+      {/* Quick Filter Buttons */}
+      <TechQuickFilterButtons 
+        activeFilter={activeQuickFilter}
+        onFilterChange={onFilterChange || (() => {})}
+        counts={filterCounts}
+      />
+      
       <DataTable
         variant="tech"
         columns={columns}
@@ -115,6 +156,8 @@ function TechTickets({
           isOpen={table.isTicketDialogOpen}
           onOpenChange={table.setIsTicketDialogOpen}
           ticket={table.selectedTicket}
+          sections={table.sections}
+          users={table.users}
           role="technician"
           onUpdate={table.handleTicketUpdate}
         />

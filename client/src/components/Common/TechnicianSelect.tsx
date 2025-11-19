@@ -11,6 +11,7 @@ interface Technician {
   first_name: string;
   last_name: string;
   username: string;
+  sections: number[]; // Array of section IDs
 }
 
 interface TechnicianSelectProps {
@@ -26,6 +27,7 @@ interface TechnicianSelectProps {
 /**
  * Reusable technician select dropdown component
  * Provides consistent technician selection across the application
+ * Note: Technicians should be pre-filtered by the parent component using backend API
  */
 export function TechnicianSelect({
   value,
@@ -33,7 +35,7 @@ export function TechnicianSelect({
   technicians,
   disabled = false,
   placeholder = "Select technician",
-  className = "w-64",
+  className = "w-full",
   includeUnassigned = true,
 }: TechnicianSelectProps) {
   const handleValueChange = (val: string) => {
@@ -48,10 +50,10 @@ export function TechnicianSelect({
     <Select
       onValueChange={handleValueChange}
       value={value?.toString() || (includeUnassigned ? "unassigned" : "")}
-      disabled={disabled}
+      disabled={disabled || technicians.length === 0}
     >
       <SelectTrigger className={className}>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={technicians.length === 0 ? "No technicians available" : placeholder} />
       </SelectTrigger>
       <SelectContent>
         {includeUnassigned && (
@@ -59,7 +61,7 @@ export function TechnicianSelect({
         )}
         {technicians.map((tech) => (
           <SelectItem key={tech.id} value={tech.id.toString()}>
-            {tech.first_name} {tech.last_name}
+            {tech.first_name} {tech.last_name} (@{tech.username})
           </SelectItem>
         ))}
       </SelectContent>

@@ -19,7 +19,7 @@ export default function RecentTicketsTable() {
     fetchUsers: true,
     fetchFacilities: true,
     defaultPageSize: 10,
-    ordering: '-created_at', // Most recent first
+    ordering: '-updated_at', // Most recently updated first
   });
 
   // ✨ Generate columns with one function call
@@ -85,6 +85,7 @@ export default function RecentTicketsTable() {
           onOpenChange={table.setIsTicketDialogOpen}
           ticket={table.selectedTicket}
           technicians={table.technicians}
+          sections={table.sections}
           role="admin"
           onUpdate={table.handleTicketUpdate}
         />

@@ -1,55 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import TechTicketsTable from "./TechTickets";
-import TechnicianStatsCards from "./TechnicianStatsCards";
-import TechQuickFilterButtons, { type TechQuickFilterType } from "./QuickFilterButtons";
-import { useTickets } from "@/hooks/tickets";
-import useUserData from "@/hooks/users/useUserData";
+import type { TechQuickFilterType } from "./QuickFilterButtons";
+import type { User } from "@/types";
 
-const TechTicketsPage = () => {
+interface TechTicketsPageProps {
+  userData?: User | null;
+}
+
+const TechTicketsPage = ({ userData }: TechTicketsPageProps) => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<TechQuickFilterType>('assigned');
-  
-  // Get current technician data
-  const { loading: userLoading } = useUserData();
   
   // TESTING: Force technician ID 3 (Alex Smith) for testing purposes
   const simulatedTechnicianId = 3;
-  
-  // Fetch all tickets assigned to this technician
-  const { tickets: myTickets, loading: ticketsLoading } = useTickets({ 
-    assigned_to: simulatedTechnicianId,
-    page_size: 100, // Reasonable limit for one technician
-    ordering: '-created_at',
-  });
-  
-  const loading = userLoading || ticketsLoading;
-
-  // Calculate accurate counts from actual ticket data (client-side)
-  const filterCounts = useMemo(() => {
-    console.log('🎯 TechTicketsPage - Calculating counts from', myTickets.length, 'tickets');
-    
-    if (!myTickets.length) {
-      console.log('🎯 TechTicketsPage - No tickets, returning zeros');
-      return {
-        all: 0,
-        assigned: 0,
-        in_progress: 0,
-        pending: 0,
-        resolved: 0,
-      };
-    }
-
-    const counts = {
-      all: myTickets.length,
-      assigned: myTickets.filter(t => t.status === 'assigned').length,
-      in_progress: myTickets.filter(t => t.status === 'in_progress').length,
-      pending: myTickets.filter(t => t.status === 'pending').length,
-      resolved: myTickets.filter(t => t.status === 'resolved').length,
-    };
-    
-    return counts;
-  }, [myTickets]);
 
   // Handle stat card clicks to change filter
   const handleStatCardClick = (filter: TechQuickFilterType) => {
@@ -62,7 +26,7 @@ const TechTicketsPage = () => {
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">My Tickets</h1>
           <p className="text-sm text-gray-600">
-            Manage your assigned work
+            Welcome back, {userData?.first_name || 'Technician'} 👋 Manage your assigned work
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -76,25 +40,13 @@ const TechTicketsPage = () => {
           </Button>
         </div>
       </div>
-
-      {/* Stats Cards - Clickable to filter */}
-      <TechnicianStatsCards 
-        counts={filterCounts} 
-        loading={loading}
-        onCardClick={handleStatCardClick}
-      />
       
-      {/* Quick Filter Buttons */}
-      <TechQuickFilterButtons 
-        activeFilter={activeQuickFilter}
-        onFilterChange={setActiveQuickFilter}
-        counts={filterCounts}
-      />
-      
-      {/* Tickets Table with active filter */}
+      {/* Tickets Table with active filter - includes stats cards and quick filters */}
       <TechTicketsTable 
         activeQuickFilter={activeQuickFilter}
         currentTechnicianId={simulatedTechnicianId}
+        onFilterChange={setActiveQuickFilter}
+        onStatCardClick={handleStatCardClick}
       />
     </div>
   );
