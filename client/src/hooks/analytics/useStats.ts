@@ -1,5 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import analyticsService, { TicketAnalytics, TechnicianAnalytics } from '@/api/services/analyticsService';
+import analyticsService from '@/api/services/analyticsService';
+
+// Local types for useStats hook (not the same as API analytics types)
+interface TicketStatsLocal {
+  open_tickets: number;
+  assigned_tickets: number;
+  resolved_tickets: number;
+  pending_tickets: number;
+}
+
+interface TechnicianStatsLocal {
+  available: number;
+  busy: number;
+  off_duty: number;
+  total: number;
+}
 
 interface UseStatsParams {
   user?: number | null;
@@ -8,21 +23,21 @@ interface UseStatsParams {
 }
 
 interface UseStatsResult {
-  ticketStats: TicketAnalytics;
-  technicianStats: TechnicianAnalytics;
+  ticketStats: TicketStatsLocal;
+  technicianStats: TechnicianStatsLocal;
   loading: boolean;
   error: Error | null;
   refetch: () => void;
 }
 
-const emptyTicketStats: TicketAnalytics = {
+const emptyTicketStats: TicketStatsLocal = {
   open_tickets: 0,
   assigned_tickets: 0,
   resolved_tickets: 0,
   pending_tickets: 0,
 };
 
-const emptyTechnicianStats: TechnicianAnalytics = {
+const emptyTechnicianStats: TechnicianStatsLocal = {
   available: 0,
   busy: 0,
   off_duty: 0,
@@ -32,8 +47,8 @@ const emptyTechnicianStats: TechnicianAnalytics = {
 export const useStats = (params: UseStatsParams = {}): UseStatsResult => {
   const { user = null, fetchTicketStats = true, fetchTechnicianStats = true } = params;
 
-  const [ticketStats, setTicketStats] = useState<TicketAnalytics>(emptyTicketStats);
-  const [technicianStats, setTechnicianStats] = useState<TechnicianAnalytics>(emptyTechnicianStats);
+  const [ticketStats, setTicketStats] = useState<TicketStatsLocal>(emptyTicketStats);
+  const [technicianStats, setTechnicianStats] = useState<TechnicianStatsLocal>(emptyTechnicianStats);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -64,12 +79,14 @@ export const useStats = (params: UseStatsParams = {}): UseStatsResult => {
 
       let ticketIndex = 0;
       if (fetchTicketStats) {
-        setTicketStats(results[ticketIndex] as TicketAnalytics);
+        // Note: This hook uses deprecated API structure - cast through unknown
+        setTicketStats(results[ticketIndex] as unknown as TicketStatsLocal);
         ticketIndex++;
       }
 
       if (fetchTechnicianStats) {
-        setTechnicianStats(results[ticketIndex] as TechnicianAnalytics);
+        // Note: This hook uses deprecated API structure - cast through unknown
+        setTechnicianStats(results[ticketIndex] as unknown as TechnicianStatsLocal);
       }
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch stats'));

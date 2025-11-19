@@ -9,6 +9,8 @@ export interface TicketColumnsConfig {
   role: 'admin' | 'user' | 'technician';
   setSelectedTicket?: (ticket: Ticket | null) => void;
   setIsTicketDialogOpen?: (open: boolean) => void;
+  technicians?: any[];
+  allStatuses?: string[];
 }
 
 /**

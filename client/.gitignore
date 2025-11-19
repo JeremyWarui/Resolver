@@ -25,3 +25,5 @@ dist-ssr
 .github
 .env
 docs
+# Keep production env for Vercel
+!.env.production

@@ -165,7 +165,7 @@ export const createdAtColumn = <T,>(header: string = "Created"): ColumnDef<T> =>
   },
 });
 
-export const updatedAtColumn = <T extends Record<string, unknown>,>(header: string = "Updated"): ColumnDef<T> => ({
+export const updatedAtColumn = <T,>(header: string = "Updated"): ColumnDef<T> => ({
   accessorKey: "updated_at",
   header: ({ column }) => (
     <div className="flex items-center space-x-1">
@@ -180,8 +180,8 @@ export const updatedAtColumn = <T extends Record<string, unknown>,>(header: stri
     </div>
   ),
   cell: ({ row }) => {
-    const updatedAt = row.original.updated_at;
-    if (!updatedAt || typeof updatedAt !== 'string') return <div>N/A</div>;
+    const updatedAt = row.getValue("updated_at") as string;
+    if (!updatedAt) return <div>N/A</div>;
     const date = new Date(updatedAt);
     return <div title={date.toLocaleString()}>{formatRelativeTime(updatedAt)}</div>;
   },
