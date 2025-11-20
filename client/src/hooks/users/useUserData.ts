@@ -19,7 +19,7 @@ export const useUserData = (): UseUserDataResult => {
     setError(null);
 
     try {
-      // Force userId = 2 for UserDashboard demo/testing
+      // DEMO OVERRIDE: Always use user id 2 for UserDashboard
       const userId = 2;
       const user = await usersService.getUserById(userId);
       setUserData(user);

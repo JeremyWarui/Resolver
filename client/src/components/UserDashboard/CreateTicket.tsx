@@ -76,10 +76,12 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
 
     try {
       console.log('Attempting to create ticket...');
+      // DEMO: Always use user id 2 as the creator (raised_by)
       const result = await createTicket({
         ...values,
         section_id: Number(values.section_id),
         facility_id: Number(values.facility_id),
+        raised_by: 2, // This will be ignored if backend does not accept, but included for demo
       });
       console.log('Create ticket result:', result);
 

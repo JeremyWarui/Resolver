@@ -37,7 +37,10 @@ export function extractWritableFields(
     if (fields.section_id !== undefined) payload.section_id = fields.section_id;
     if (fields.facility_id !== undefined) payload.facility_id = fields.facility_id;
     if (fields.status !== undefined) payload.status = fields.status;
-    if (fields.assigned_to_id !== undefined) payload.assigned_to_id = fields.assigned_to_id;
+    // Only include assigned_to_id if not closing
+    if (fields.assigned_to_id !== undefined && fields.status !== 'closed') {
+      payload.assigned_to_id = fields.assigned_to_id;
+    }
     if (fields.pending_reason !== undefined) payload.pending_reason = fields.pending_reason;
   } else {
     // Extract writable fields from ticket object (if they exist as write-only properties)
@@ -46,7 +49,10 @@ export function extractWritableFields(
     if (ticket.section_id !== undefined) payload.section_id = ticket.section_id;
     if (ticket.facility_id !== undefined) payload.facility_id = ticket.facility_id;
     if (ticket.status !== undefined) payload.status = ticket.status;
-    if (ticket.assigned_to_id !== undefined) payload.assigned_to_id = ticket.assigned_to_id;
+    // Only include assigned_to_id if not closing
+    if (ticket.assigned_to_id !== undefined && ticket.status !== 'closed') {
+      payload.assigned_to_id = ticket.assigned_to_id;
+    }
     if (ticket.pending_reason !== undefined) payload.pending_reason = ticket.pending_reason;
   }
 
