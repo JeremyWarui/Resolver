@@ -19,11 +19,9 @@ export const useUserData = (): UseUserDataResult => {
     setError(null);
 
     try {
-      // For now, using a mock user ID. Replace with actual current user endpoint
-      // const user = await usersService.getCurrentUser();
-      // Or get from localStorage/context
-      const userId = localStorage.getItem('userId') || '1';
-      const user = await usersService.getUserById(Number(userId));
+      // Force userId = 2 for UserDashboard demo/testing
+      const userId = 2;
+      const user = await usersService.getUserById(userId);
       setUserData(user);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch user data'));
