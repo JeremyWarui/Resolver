@@ -98,7 +98,7 @@ export default function QuickFilterButtons({
             variant={isActive ? "default" : "outline"}
             size="sm"
             onClick={() => onFilterChange(filter.id)}
-            className={`flex items-center gap-2 transition-all ${
+            className={`flex items-center gap-2 py-3 transition-all ${
               isActive 
                 ? 'ring-2 ring-offset-1 ring-blue-500' 
                 : filter.colorClass

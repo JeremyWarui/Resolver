@@ -68,14 +68,19 @@ function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTabl
 
       {/* Ticket details sidebar */}
       {table.selectedTicket && (
-        <UserTicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          currentUser={table.selectedTicket.raised_by}
-          onUpdate={table.handleTicketUpdate}
-          viewOnly={viewOnly}
-        />
+        (() => {
+          console.log('PostedTicketsTable: selectedTicket passed to sidebar', table.selectedTicket);
+          return (
+            <UserTicketDetailsSidebar
+              isOpen={table.isTicketDialogOpen}
+              onOpenChange={table.setIsTicketDialogOpen}
+              ticket={table.selectedTicket}
+              currentUser={table.selectedTicket.raised_by}
+              onUpdate={table.handleTicketUpdate}
+              viewOnly={viewOnly}
+            />
+          );
+        })()
       )}
     </>
   );

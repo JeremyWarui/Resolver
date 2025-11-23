@@ -17,6 +17,7 @@ export interface Section {
     | 'tickets'
     | 'reports'
     | 'schedule'
+    | 'sections'
     | 'technicians'
     | 'facilities'
     | 'inventory'
@@ -37,6 +38,7 @@ const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
     { id: 'tickets', label: 'Tickets', icon: ClipboardList },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'schedule', label: 'Schedule', icon: CalendarIcon },
+    { id: 'sections', label: 'Sections', icon: FileText },
     { id: 'technicians', label: 'Technicians', icon: Users },
     { id: 'facilities', label: 'Facilities', icon: Building },
     { id: 'inventory', label: 'Inventory', icon: Tool },

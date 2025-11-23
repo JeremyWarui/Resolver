@@ -30,6 +30,13 @@ export const useTickets = (params?: TicketsParams): UseTicketsResult => {
         sectionsService.getSections(),
       ]);
 
+      // Debug: log first ticket returned to inspect whether comments are included
+      try {
+        console.log('useTickets: fetched ticketsResponse sample', ticketsResponse.results[0]);
+      } catch (e) {
+        // ignore
+      }
+
       setTickets(ticketsResponse.results);
       setTotalTickets(ticketsResponse.count);
       setSections(sectionsResponse.results);

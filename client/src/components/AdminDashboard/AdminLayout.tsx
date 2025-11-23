@@ -8,6 +8,7 @@ import MainContent from "./Dashboard/DashboardLayout";
 import TicketsPage from "./TicketsPage/TicketsPage";
 import TechniciansPage from "./Technicians/TechniciansPage";
 import FacilitiesPage from "./Facilities/FacilitiesPage";
+import SectionsPage from "./Sections/SectionsPage";
 import { ReportsPageEnhanced as ReportsPage } from "./Reports";
 
 // A placeholder component for sections not yet implemented
@@ -54,7 +55,9 @@ export default function AdminLayout() {
               ? "Technicians"
               : activeSection === "facilities"
                 ? "Facilities"
-                : activeSection === "inventory"
+                : activeSection === "sections"
+                  ? "Sections"
+                  : activeSection === "inventory"
                   ? "Inventory Management"
                   : "Settings";
 
@@ -82,6 +85,7 @@ export default function AdminLayout() {
           {activeSection === "tickets" && <TicketsPage />}
           {activeSection === "reports" && <ReportsPage />}
           {activeSection === "technicians" && <TechniciansPage />}
+          {activeSection === "sections" && <SectionsPage />}
           {activeSection === "facilities" && <FacilitiesPage />}
           {activeSection === "schedule" && (
             <ComingSoonSection section="Schedule" />

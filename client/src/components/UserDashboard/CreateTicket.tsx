@@ -81,7 +81,6 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
         ...values,
         section_id: Number(values.section_id),
         facility_id: Number(values.facility_id),
-        raised_by: 2, // This will be ignored if backend does not accept, but included for demo
       });
       console.log('Create ticket result:', result);
 

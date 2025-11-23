@@ -13,27 +13,23 @@ import {
 } from "@tanstack/react-table";
 import {
   ChevronDown,
-  MoreHorizontal,
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Trash2,
   Users,
   Plus,
 } from "lucide-react";
 
 // Import REST API hooks
 import useTechnicians from "@/hooks/technicians/useTechnicians";
+import TechnicianForm from './TechnicianForm';
+import TechnicianDetails from './TechnicianDetails';
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -87,13 +83,18 @@ function TechniciansTable() {
     technicians, 
     totalTechnicians,
     sections,
-    loading: isLoading
+    loading: isLoading,
+    refetch
   } = useTechnicians({
     page: pageIndex + 1,
     page_size: pageSize,
     sections: sectionFilter === "all" ? undefined : Number(sectionFilter),
     ordering: sortField && sortDirection ? `${sortDirection === 'desc' ? '-' : ''}${sortField}` : undefined
   });
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   // Add a searchable field to each technician that combines ID and name
   const dataWithSearchField = useMemo(() => {
@@ -180,34 +181,13 @@ function TechniciansTable() {
         const technician = row.original;
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-              <DropdownMenuItem
-                onClick={() => alert(`View details for ${technician.first_name} ${technician.last_name}`)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View details
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onClick={() => alert(`Delete ${technician.first_name} ${technician.last_name}`)}
-                className="text-red-600 focus:text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="ghost"
+            onClick={() => { setSelectedTechnician(technician); setIsDetailsOpen(true); }}
+            className="h-8 px-3"
+          >
+            View
+          </Button>
         );
       },
     },
@@ -280,9 +260,8 @@ function TechniciansTable() {
         <Button
           size="sm"
           className="flex items-center gap-1 bg-[#0078d4] hover:bg-[#106ebe]"
-          onClick={() => alert("Add new technician")}
+          onClick={() => setIsFormOpen(true)}
         >
-          {" "}
           <Plus className="h-4 w-4" />
           Add Technician
         </Button>
@@ -450,6 +429,10 @@ function TechniciansTable() {
             </Button>
           </div>
         </div>
+        <TechnicianForm isOpen={isFormOpen} onOpenChange={() => { setIsFormOpen(false); setSelectedTechnician(null); }} onSuccess={() => { setIsFormOpen(false); refetch(); }} technician={null} />
+        {selectedTechnician && (
+          <TechnicianDetails isOpen={isDetailsOpen} onOpenChange={(open: boolean) => { setIsDetailsOpen(open); if (!open) setSelectedTechnician(null); }} technician={selectedTechnician} onUpdated={() => refetch()} />
+        )}
       </CardContent>
     </Card>
   );

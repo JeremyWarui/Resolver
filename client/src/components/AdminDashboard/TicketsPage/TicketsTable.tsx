@@ -1,5 +1,6 @@
 // Import DRY utilities
 import { useMemo } from "react";
+import { useAdminAnalytics } from '@/hooks/analytics';
 import { useTicketTable } from "@/hooks/tickets";
 import { createTicketTableFilters } from "@/components/Common/DataTable/utils/TicketTableFilters";
 import { createTicketTableColumns } from "@/components/Common/DataTable/utils/TicketTableColumns";
@@ -42,6 +43,14 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
     return daysDiff > 7;
   };
 
+  // Use server-side analytics when available to determine overdue tickets
+  // This keeps the QuickFilter counts consistent with the StatsCards which use admin analytics
+  const { data: adminAnalytics } = useAdminAnalytics();
+  const overdueIdSet = useMemo(() => {
+    if (!adminAnalytics || !adminAnalytics.overdue_tickets) return null;
+    return new Set(adminAnalytics.overdue_tickets.map((t) => t.id));
+  }, [adminAnalytics]);
+
   // ✨ Client-side filtering based on activeQuickFilter (instant, no API calls!)
   const filteredTickets = useMemo(() => {
     switch (activeQuickFilter) {
@@ -54,7 +63,9 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
           !t.assigned_to_id && !t.assigned_to && !t.assigned_to_name
         );
       case 'overdue':
-        return table.tickets.filter(isOverdue);
+        return overdueIdSet
+          ? table.tickets.filter((t) => overdueIdSet.has(t.id))
+          : table.tickets.filter(isOverdue);
       case 'in_progress':
         return table.tickets.filter(t => t.status === 'in_progress');
       case 'resolved':
@@ -72,7 +83,9 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
       unassigned: table.tickets.filter(t => 
         !t.assigned_to_id && !t.assigned_to && !t.assigned_to_name
       ).length,
-      overdue: table.tickets.filter(isOverdue).length,
+      overdue: overdueIdSet
+        ? table.tickets.filter((t) => overdueIdSet.has(t.id)).length
+        : table.tickets.filter(isOverdue).length,
       in_progress: table.tickets.filter(t => t.status === 'in_progress').length,
       resolved: table.tickets.filter(t => t.status === 'resolved').length,
     };

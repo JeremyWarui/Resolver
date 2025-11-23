@@ -87,7 +87,7 @@ export default function TechQuickFilterButtons({
             size="sm"
             onClick={() => onFilterChange(filter.id)}
             className={`
-              flex items-center gap-2 transition-all
+              flex items-center gap-2 py-3 transition-all
               ${!isActive && filter.colorClass}
               ${isActive ? 'bg-[#0078d4] hover:bg-[#106ebe] text-white' : ''}
             `}

@@ -13,35 +13,23 @@ import {
 } from "@tanstack/react-table";
 import {
   ChevronDown,
-  MoreHorizontal,
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  Trash2,
-  Calendar,
-  AlertTriangle,
-  CheckCircle,
-  WrenchIcon,
-  LockIcon,
   Building,
   Plus,
 } from "lucide-react";
 
 // Import REST API hooks
 import useFacilities from "@/hooks/facilities/useFacilities";
+import FacilityForm from './FacilityForm';
+import FacilityDetails from './FacilityDetails';
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -63,9 +51,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Facility } from "@/types";
-
-// List of status options
-const statusOptions = ["operational", "maintenance", "closed"];
 
 // List of all facility types
 const allFacilityTypes = [
@@ -96,7 +81,10 @@ function FacilitiesTable() {
   const [typeFilter, setTypeFilter] = useState<string | null>("all");
 
   // Use REST API hook to fetch facilities
-  const { facilities, loading } = useFacilities();
+  const { facilities, loading, refetch } = useFacilities();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   
   // Get unique values for filter dropdowns
   const uniqueStatuses = useMemo(
@@ -266,69 +254,13 @@ function FacilitiesTable() {
         const facility = row.original;
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-              <DropdownMenuItem
-                onClick={() => alert(`View details for ${facility.name}`)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View details
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={() =>
-                  alert(`Schedule maintenance for ${facility.name}`)
-                }
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Schedule maintenance
-              </DropdownMenuItem>
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  Change status
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {statusOptions.map((status) => (
-                    <DropdownMenuItem
-                      key={status}
-                      onClick={() =>
-                        alert(`Changed ${facility.name}'s status to ${status}`)
-                      }
-                    >
-                      {status === "operational" ? (
-                        <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                      ) : status === "maintenance" ? (
-                        <WrenchIcon className="mr-2 h-4 w-4 text-orange-600" />
-                      ) : (
-                        <LockIcon className="mr-2 h-4 w-4 text-red-600" />
-                      )}
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onClick={() => alert(`Delete ${facility.name}`)}
-                className="text-red-600 focus:text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="ghost"
+            onClick={() => { setSelectedFacility(facility); setIsDetailsOpen(true); }}
+            className="h-8 px-3"
+          >
+            View
+          </Button>
         );
       },
     },
@@ -394,7 +326,7 @@ function FacilitiesTable() {
         <Button
           size="sm"
           className="flex items-center gap-1 bg-[#0078d4] hover:bg-[#106ebe]"
-          onClick={() => alert("Add new facility")}
+          onClick={() => setIsFormOpen(true)}
         >
           <Plus className="h-4 w-4" />
           Add Facility
@@ -584,6 +516,8 @@ function FacilitiesTable() {
             </Button>
           </div>
         </div>
+        <FacilityForm isOpen={isFormOpen} onOpenChange={setIsFormOpen} onSuccess={() => { refetch(); }} />
+        <FacilityDetails isOpen={isDetailsOpen} onOpenChange={(open: boolean) => { setIsDetailsOpen(open); if (!open) setSelectedFacility(null); }} facility={selectedFacility} onUpdated={() => refetch()} />
       </CardContent>
     </Card>
   );
