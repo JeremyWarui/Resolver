@@ -134,7 +134,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
         columns={columns}
         data={filteredTableData}
         title="Tickets"
-        subtitle={`Showing ${filteredTickets.length} ticket${filteredTickets.length !== 1 ? 's' : ''}`}
+        subtitle={`Showing ${filteredTickets.length} of ${adminAnalytics?.system_overview?.total_tickets || table.tickets.length} tickets`}
         {...table.commonTableProps}
         defaultPageSize={10}
         initialColumnVisibility={columnVisibility}
