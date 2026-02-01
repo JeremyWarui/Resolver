@@ -75,10 +75,10 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
     }
   }, [table.tickets, activeQuickFilter]);
 
-  // Calculate filter counts from ALL tickets (client-side)
+  // Calculate filter counts - use analytics total for "all" to match StatsCards
   const filterCounts = useMemo(() => {
     return {
-      all: table.tickets.length,
+      all: adminAnalytics?.system_overview?.total_tickets || table.tickets.length,
       open: table.tickets.filter(t => t.status === 'open').length,
       unassigned: table.tickets.filter(t => 
         !t.assigned_to_id && !t.assigned_to && !t.assigned_to_name
@@ -89,7 +89,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
       in_progress: table.tickets.filter(t => t.status === 'in_progress').length,
       resolved: table.tickets.filter(t => t.status === 'resolved').length,
     };
-  }, [table.tickets]);
+  }, [table.tickets, adminAnalytics]);
 
   // Transform filtered tickets with raisedByName
   const filteredTableData = useMemo(() => {
