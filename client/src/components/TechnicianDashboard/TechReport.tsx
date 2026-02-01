@@ -92,7 +92,7 @@ const TechReport = () => {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 px-6 py-6">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -105,7 +105,7 @@ const TechReport = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6 px-6 py-6">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">My Performance Report</h1>
@@ -117,7 +117,7 @@ const TechReport = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="px-6 py-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Tickets</p>
@@ -131,7 +131,7 @@ const TechReport = () => {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="px-6 py-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Resolved</p>
@@ -145,7 +145,7 @@ const TechReport = () => {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="px-6 py-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">In Progress</p>
@@ -159,7 +159,7 @@ const TechReport = () => {
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="px-6 py-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
@@ -175,7 +175,7 @@ const TechReport = () => {
 
       {/* Download Report Section */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-6 pt-6">
           <CardTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5 text-blue-600" />
             Download Performance Report
@@ -184,7 +184,7 @@ const TechReport = () => {
             Get a detailed Excel report with your performance metrics, ticket history, and ratings
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="px-6 pb-6 space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-semibold text-blue-900 text-sm mb-2">Report Includes:</h4>
             <ul className="text-sm text-blue-700 space-y-1">
@@ -290,7 +290,7 @@ const TechReport = () => {
 
       {/* Info Card */}
       <Card className="bg-gray-50 border-gray-200">
-        <CardContent className="pt-6">
+        <CardContent className="px-6 pt-6 pb-6">
           <div className="flex gap-3">
             <FileSpreadsheet className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
             <div>

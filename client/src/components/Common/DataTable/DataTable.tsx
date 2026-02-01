@@ -151,10 +151,14 @@ const DataTable = <TData, TValue>({
     },
   });
 
-  // Sync table pageSize state with the component's pageSize state
+  // Sync table pageSize - use table methods for client-side pagination
   useEffect(() => {
-    table.setPageSize(pageSize);
-  }, [pageSize, table]);
+    if (!manualPagination) {
+      // For client-side pagination, let TanStack Table control it
+      table.setPageSize(pageSize);
+      table.setPageIndex(pageIndex);
+    }
+  }, [pageSize, pageIndex, manualPagination, table]);
 
   // Reset page index when search value changes
   useEffect(() => {
