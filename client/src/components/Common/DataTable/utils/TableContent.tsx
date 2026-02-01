@@ -26,6 +26,7 @@ interface TableContentProps<TData> {
   emptyStateMessage: string;
   emptyStateDescription: string;
   actualTotalItems: number;
+  totalSystemItems?: number;
   pageSize: number;
   pageIndex: number;
   handlePageSizeChange: (size: number) => void;
@@ -41,6 +42,7 @@ export function RenderTableContent<TData>({
   emptyStateMessage,
   emptyStateDescription,
   actualTotalItems,
+  totalSystemItems,
   pageSize,
   pageIndex,
   handlePageSizeChange,
@@ -126,7 +128,7 @@ export function RenderTableContent<TData>({
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex items-center space-x-6">
           <div className="text-sm text-muted-foreground">
-            {actualTotalItems} ticket(s) found.
+            {totalSystemItems ? `${actualTotalItems} of ${totalSystemItems} tickets` : `${actualTotalItems} ticket(s) found`}
           </div>
           <div className="flex items-center space-x-2">
             <p className="text-sm font-medium">Rows per page</p>

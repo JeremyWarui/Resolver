@@ -58,6 +58,7 @@ export interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void;
   selectedRowId?: number | null;
   totalItems?: number;
+  totalSystemItems?: number;
   loading?: boolean;
   manualPagination?: boolean;
   onPageChange?: (pageIndex: number) => void;
@@ -82,6 +83,7 @@ const DataTable = <TData, TValue>({
   onRowClick,
   selectedRowId,
   totalItems,
+  totalSystemItems,
   loading = false,
   manualPagination = false,
   onPageChange,
@@ -277,6 +279,7 @@ const DataTable = <TData, TValue>({
     onRowClick,
     selectedRowId,
     actualTotalItems,
+    totalSystemItems,
     pageSize,
     pageIndex,
     handlePageSizeChange,

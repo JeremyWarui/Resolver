@@ -140,6 +140,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
         initialColumnVisibility={columnVisibility}
         filterOptions={filters}
         totalItems={filteredTickets.length}
+        totalSystemItems={adminAnalytics?.system_overview?.total_tickets || table.tickets.length}
         loading={table.loading}
         onPageChange={table.handlePageChange}
         onPageSizeChange={table.handlePageSizeChange}
