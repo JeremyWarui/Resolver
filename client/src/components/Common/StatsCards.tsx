@@ -1,11 +1,11 @@
 import { AlertTriangle, CheckCircle, Clock, FileText, AlertCircle } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAdminAnalytics } from '@/hooks/analytics';
+import { useSharedData } from '@/contexts/SharedDataContext';
 import StatCard from './StatCard';
 
 const StatsCards = () => {
-  // Use admin analytics hook to fetch real data from backend
-  const { data: analytics, loading } = useAdminAnalytics();
+  // Use admin analytics from shared context (no API call - already cached!)
+  const { adminAnalytics: analytics, analyticsLoading: loading } = useSharedData();
 
   // Create a skeleton loader for a stat card
   const SkeletonStatCard = () => (

@@ -49,6 +49,7 @@ export function TicketDetailsSidebar({
   isOpen,
   onOpenChange,
   ticket,
+  technicians = [], // Add technicians prop
   role = 'user',
   users = [],
   onUpdate,
@@ -73,21 +74,30 @@ export function TicketDetailsSidebar({
   // Fetch technicians filtered by section when in edit mode
   useEffect(() => {
     if (mode === 'edit' && role === 'admin' && sectionId) {
-      setLoadingTechnicians(true);
-      techniciansService.getTechnicians({ sections: sectionId })
-        .then(response => {
-          setSectionTechnicians(response.results);
-        })
-        .catch(error => {
-          console.error('Error fetching section technicians:', error);
-          toast.error('Failed to load technicians for this section');
-          setSectionTechnicians([]);
-        })
-        .finally(() => {
-          setLoadingTechnicians(false);
-        });
+      // If technicians are provided (from SharedDataContext), filter them client-side by section
+      if (technicians.length > 0) {
+        const filteredTechnicians = technicians.filter(tech => 
+          tech.sections.includes(sectionId)
+        );
+        setSectionTechnicians(filteredTechnicians);
+      } else {
+        // Fallback: fetch section-specific technicians from API
+        setLoadingTechnicians(true);
+        techniciansService.getTechnicians({ sections: sectionId })
+          .then(response => {
+            setSectionTechnicians(response.results);
+          })
+          .catch(error => {
+            console.error('Error fetching section technicians:', error);
+            toast.error('Failed to load technicians for this section');
+            setSectionTechnicians([]);
+          })
+          .finally(() => {
+            setLoadingTechnicians(false);
+          });
+      }
     }
-  }, [mode, role, sectionId]);
+  }, [mode, role, sectionId, technicians]);
   
   // Pending reason state for technicians
   const [showPendingForm, setShowPendingForm] = useState(false);

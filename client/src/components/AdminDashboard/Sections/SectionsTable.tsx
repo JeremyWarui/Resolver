@@ -20,7 +20,7 @@ import {
   FileText,
 } from 'lucide-react';
 
-import useSections from '@/hooks/sections/useSections';
+import { useSharedData } from '@/contexts/SharedDataContext';
 import SectionForm from './SectionForm';
 import SectionDetails from './SectionDetails';
 
@@ -57,7 +57,9 @@ function SectionsTable() {
   const [pageIndex, setPageIndex] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  const { sections, loading, totalSections, refetch } = useSections();
+  // Get sections from shared context (instant - no API call)
+  const { sections, sectionsLoading: loading, refetchSections: refetch } = useSharedData();
+  const totalSections = sections.length;
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);

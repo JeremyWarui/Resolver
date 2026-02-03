@@ -94,7 +94,7 @@ export default function ReportsPageEnhanced() {
             </div>
             
             {/* Action Buttons - Right */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <Button variant="outline" size="sm" className="gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Refresh
@@ -288,7 +288,7 @@ export default function ReportsPageEnhanced() {
             </Card>
 
             {/* Best Practices & Tips */}
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <Card className="bg-linear-to-br from-blue-50 to-indigo-50 border-blue-200">
               <CardHeader className="pt-6 pb-4">
                 <CardTitle className="text-blue-900 flex items-center gap-2">
                   <Activity className="h-5 w-5" />
@@ -297,21 +297,21 @@ export default function ReportsPageEnhanced() {
               </CardHeader>
               <CardContent className="space-y-4 pt-2 pb-6">
                 <div className="flex gap-3 p-3 bg-white/50 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-sm text-gray-900">Regular Monitoring</p>
                     <p className="text-sm text-gray-600">Review reports weekly to identify trends early</p>
                   </div>
                 </div>
                 <div className="flex gap-3 p-3 bg-white/50 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <TrendingUp className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-sm text-gray-900">Compare Timeframes</p>
                     <p className="text-sm text-gray-600">Use date range filters to compare performance periods</p>
                   </div>
                 </div>
                 <div className="flex gap-3 p-3 bg-white/50 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-sm text-gray-900">Focus on Bottlenecks</p>
                     <p className="text-sm text-gray-600">Identify pending tickets and overdue items for immediate action</p>
@@ -395,7 +395,7 @@ export default function ReportsPageEnhanced() {
         {activeView === 'export' && (
           <div className="space-y-6">
             {/* Export Instructions */}
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <Card className="bg-linear-to-r from-blue-50 to-indigo-50 border-blue-200">
               <CardHeader className="pb-4 pt-6">
                 <CardTitle className="text-blue-900 flex items-center gap-2">
                   <FileSpreadsheet className="h-5 w-5" />
@@ -407,15 +407,15 @@ export default function ReportsPageEnhanced() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-blue-900 pt-2 pb-6">
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
                   <span>Select report type and optional date range</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
                   <span>Reports include summary statistics, detailed tables, and visual formatting</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
                   <span>Compatible with Microsoft Excel 2013+ and Google Sheets</span>
                 </div>
               </CardContent>

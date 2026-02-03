@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
 import useCreateUser from '@/hooks/users/useCreateUser';
-import useSections from '@/hooks/sections/useSections';
+import { useSharedData } from '@/contexts/SharedDataContext';
 import useUpdateUser from '@/hooks/users/useUpdateUser';
 import { createTechnicianSchema, type CreateTechnicianFormValues } from '@/utils/entityValidation';
 import type { Technician } from '@/types';
@@ -32,7 +32,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
   const [sectionInputs, setSectionInputs] = useState<number[]>([0]); // Array of section IDs, start with one empty input
   const { createUser } = useCreateUser();
   const { updateUser } = useUpdateUser();
-  const { sections } = useSections();
+  const { sections } = useSharedData();
 
   const form = useForm<CreateTechnicianFormValues>({
     resolver: zodResolver(createTechnicianSchema),

@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import useSections from '@/hooks/sections/useSections';
+import { useSharedData } from '@/contexts/SharedDataContext';
+import sectionsService from '@/api/services/sectionsService';
 import { createSectionSchema, type CreateSectionFormValues } from '@/utils/entityValidation';
 
 interface SectionFormProps {
@@ -18,7 +19,7 @@ interface SectionFormProps {
 
 const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: SectionFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createSection, updateSection } = useSections();
+  const { refetchSections } = useSharedData();
 
   const form = useForm<CreateSectionFormValues>({
     resolver: zodResolver(createSectionSchema),
@@ -36,16 +37,18 @@ const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: Sectio
     setIsSubmitting(true);
     try {
       if (section) {
-        const res = await updateSection(section.id, values);
+        const res = await sectionsService.updateSection(section.id, values);
         if (res) {
           toast.success('Section updated');
+          refetchSections(); // Update shared context cache
           onSuccess?.();
         } else {
           toast.error('Failed to update section');
         }
       } else {
-        await createSection(values);
+        await sectionsService.createSection(values);
         toast.success('Section created');
+        refetchSections(); // Update shared context cache
         form.reset();
         onSuccess?.();
       }

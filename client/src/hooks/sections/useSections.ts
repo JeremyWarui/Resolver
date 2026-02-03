@@ -22,6 +22,7 @@ export const useSections = (): UseSectionsResult => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    
     try {
       const response: SectionsResponse = await sectionsService.getSections();
       setSections(response.results);

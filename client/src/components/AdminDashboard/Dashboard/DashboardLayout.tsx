@@ -17,7 +17,7 @@ import FacilityAndWorkload from "./FacilityAndWorkload";
 import RecentTicketsTable from "./RecentTickets";
 import reportsService from "@/api/services/reportsService";
 import type { GenerateReportParams } from "@/api/services/reportsService";
-import useUserData from "@/hooks/users/useUserData";
+import { useSharedData } from '@/contexts/SharedDataContext';
 
 const MainContent = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -26,8 +26,8 @@ const MainContent = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
-  // Get current user data for the welcome message
-  const { userData, loading: userLoading } = useUserData();
+  // Get current user data from shared context for the welcome message
+  const { currentUser: userData, userLoading } = useSharedData();
 
   const handleExport = async () => {
     if (!selectedReportType) {

@@ -1,21 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import ticketsService from '@/api/services/ticketsService';
-import sectionsService from '@/api/services/sectionsService';
-import type { Ticket, TicketsParams, Section } from '@/types';
+import type { Ticket, TicketsParams } from '@/types';
 
 interface UseTicketsResult {
   tickets: Ticket[];
   totalTickets: number;
-  sections: Section[];
   loading: boolean;
   error: Error | null;
   refetch: () => void;
 }
 
+/**
+ * Hook to fetch tickets with direct API calls and state management
+ * 
+ * Pure ticket fetching hook - does not depend on SharedDataContext to avoid conflicts.
+ * Components should get reference data (sections, facilities) from SharedDataContext directly.
+ * 
+ * @param params - Optional filtering and pagination parameters
+ * @returns Tickets data with loading states
+ */
 export const useTickets = (params?: TicketsParams): UseTicketsResult => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [totalTickets, setTotalTickets] = useState(0);
-  const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -24,38 +30,27 @@ export const useTickets = (params?: TicketsParams): UseTicketsResult => {
     setError(null);
     
     try {
-      // Fetch tickets and sections in parallel
-      const [ticketsResponse, sectionsResponse] = await Promise.all([
-        ticketsService.getTickets(params),
-        sectionsService.getSections(),
-      ]);
-
-      // Debug: log first ticket returned to inspect whether comments are included
-      try {
-        console.log('useTickets: fetched ticketsResponse sample', ticketsResponse.results[0]);
-      } catch (e) {
-        // ignore
-      }
-
+      // Fetch only tickets data
+      const ticketsResponse = await ticketsService.getTickets(params);
       setTickets(ticketsResponse.results);
       setTotalTickets(ticketsResponse.count);
-      setSections(sectionsResponse.results);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch tickets'));
       console.error('Error fetching tickets:', err);
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     params?.page,
     params?.page_size,
+    params?.search,
     params?.status,
     params?.section,
     params?.assigned_to,
+    params?.assigned_to__isnull,
     params?.raised_by,
     params?.ordering,
-    params?.search,
+    params?.is_overdue,
   ]);
 
   useEffect(() => {
@@ -65,7 +60,6 @@ export const useTickets = (params?: TicketsParams): UseTicketsResult => {
   return {
     tickets,
     totalTickets,
-    sections,
     loading,
     error,
     refetch: fetchData,

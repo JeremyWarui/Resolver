@@ -1,6 +1,6 @@
 // Import DRY utilities
 import { useMemo } from "react";
-import { useAdminAnalytics } from '@/hooks/analytics';
+import { useSharedData } from '@/contexts/SharedDataContext';
 import { useTicketTable } from "@/hooks/tickets";
 import { createTicketTableFilters } from "@/components/Common/DataTable/utils/TicketTableFilters";
 import { createTicketTableColumns } from "@/components/Common/DataTable/utils/TicketTableColumns";
@@ -27,7 +27,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
     fetchTechnicians: true,
     fetchUsers: true,
     fetchFacilities: true,
-    defaultPageSize: 1000, // Fetch ALL tickets for client-side filtering (backend is 66x faster now!)
+    defaultPageSize: 500, // Use backend maximum for optimal performance (was 1000, capped at 500)
     defaultStatusFilter: 'all', // Fetch all statuses
     ordering: '-updated_at',
   });
@@ -45,7 +45,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
 
   // Use server-side analytics when available to determine overdue tickets
   // This keeps the QuickFilter counts consistent with the StatsCards which use admin analytics
-  const { data: adminAnalytics } = useAdminAnalytics();
+  const { adminAnalytics } = useSharedData();
   const overdueIdSet = useMemo(() => {
     if (!adminAnalytics || !adminAnalytics.overdue_tickets) return null;
     return new Set(adminAnalytics.overdue_tickets.map((t) => t.id));
@@ -135,15 +135,12 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
         data={filteredTableData}
         title="Tickets"
         subtitle={`Showing ${filteredTickets.length} of ${adminAnalytics?.system_overview?.total_tickets || table.tickets.length} tickets`}
-        {...table.commonTableProps}
-        defaultPageSize={10}
+        defaultPageSize={20} // Better default for admin ticket management
         initialColumnVisibility={columnVisibility}
         filterOptions={filters}
         totalItems={filteredTickets.length}
         totalSystemItems={adminAnalytics?.system_overview?.total_tickets || table.tickets.length}
         loading={table.loading}
-        onPageChange={table.handlePageChange}
-        onPageSizeChange={table.handlePageSizeChange}
         onRowClick={table.handleViewTicket}
         selectedRowId={table.selectedTicket?.id || null}
         renderHeader={AdminTableHeader}

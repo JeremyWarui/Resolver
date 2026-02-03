@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // Import REST API hooks
-import useTechnicians from "@/hooks/technicians/useTechnicians";
+import { useSharedData } from '@/contexts/SharedDataContext';
 import TechnicianForm from './TechnicianForm';
 import TechnicianDetails from './TechnicianDetails';
 
@@ -52,6 +52,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Technician } from "@/types";
 
 function TechniciansTable() {
+  // Get technicians from shared context (instant - no API call)
+  const { technicians, techniciansLoading, refetchTechnicians } = useSharedData();
+  const totalTechnicians = technicians.length;
+
   // State for sorting, filtering, and column visibility
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -74,23 +78,8 @@ function TechniciansTable() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [sectionFilter, setSectionFilter] = useState<string | null>("all");
   
-  // Get sorted field and direction from the sorting state
-  const sortField = sorting.length > 0 ? sorting[0].id : undefined;
-  const sortDirection = sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined;
-
-  // Use REST API hook to fetch technicians
-  const { 
-    technicians, 
-    totalTechnicians,
-    sections,
-    loading: isLoading,
-    refetch
-  } = useTechnicians({
-    page: pageIndex + 1,
-    page_size: pageSize,
-    sections: sectionFilter === "all" ? undefined : Number(sectionFilter),
-    ordering: sortField && sortDirection ? `${sortDirection === 'desc' ? '-' : ''}${sortField}` : undefined
-  });
+  // Get sections from shared context for section names
+  const { sections } = useSharedData();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState<Technician | null>(null);
@@ -234,7 +223,7 @@ function TechniciansTable() {
   };
 
   // Loading state indicator
-  if (isLoading && technicians.length === 0) {
+  if (techniciansLoading && technicians.length === 0) {
     return (
       <Card className="w-full pt-7">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -429,9 +418,9 @@ function TechniciansTable() {
             </Button>
           </div>
         </div>
-        <TechnicianForm isOpen={isFormOpen} onOpenChange={() => { setIsFormOpen(false); setSelectedTechnician(null); }} onSuccess={() => { setIsFormOpen(false); refetch(); }} technician={null} />
+        <TechnicianForm isOpen={isFormOpen} onOpenChange={() => { setIsFormOpen(false); setSelectedTechnician(null); }} onSuccess={() => { setIsFormOpen(false); refetchTechnicians(); }} technician={null} />
         {selectedTechnician && (
-          <TechnicianDetails isOpen={isDetailsOpen} onOpenChange={(open: boolean) => { setIsDetailsOpen(open); if (!open) setSelectedTechnician(null); }} technician={selectedTechnician} onUpdated={() => refetch()} />
+          <TechnicianDetails isOpen={isDetailsOpen} onOpenChange={(open: boolean) => { setIsDetailsOpen(open); if (!open) setSelectedTechnician(null); }} technician={selectedTechnician} onUpdated={() => refetchTechnicians()} />
         )}
       </CardContent>
     </Card>

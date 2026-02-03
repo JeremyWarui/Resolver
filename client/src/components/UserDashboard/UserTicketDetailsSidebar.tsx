@@ -26,7 +26,7 @@ import { formatDate } from '@/utils/date';
 import { getStatusBadgeVariant } from '@/components/Common/DataTable/utils/TicketDetailsUtils';
 import { TicketComments } from '@/components/Common/DataTable/sidebar/TicketComments';
 import useFacilities from '@/hooks/facilities/useFacilities';
-import useTickets from '@/hooks/tickets/useTickets';
+import useSections from '@/hooks/sections/useSections';
 import ticketsService from '@/api/services/ticketsService';
 import useUserData from '@/hooks/users/useUserData';
 import { useUsers } from '@/hooks/users';
@@ -70,7 +70,7 @@ export function UserTicketDetailsSidebar({
 
   // Fetch facilities and sections
   const { facilities } = useFacilities();
-  const { sections } = useTickets({ page_size: 1 });
+  const { sections } = useSections();
   
   // Fetch users to get the full name of the person who raised the ticket
   const { users } = useUsers({ page_size: 100 });

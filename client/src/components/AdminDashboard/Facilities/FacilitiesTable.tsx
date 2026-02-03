@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // Import REST API hooks
-import useFacilities from "@/hooks/facilities/useFacilities";
+import { useSharedData } from '@/contexts/SharedDataContext';
 import FacilityForm from './FacilityForm';
 import FacilityDetails from './FacilityDetails';
 
@@ -67,6 +67,9 @@ const allFacilityTypes = [
 ];
 
 function FacilitiesTable() {
+  // Get facilities from shared context (instant - no API call)
+  const { facilities, facilitiesLoading, refetchFacilities } = useSharedData();
+
   // State for sorting, filtering, and column visibility
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -80,8 +83,6 @@ function FacilitiesTable() {
   const [searchValue, setSearchValue] = useState("");
   const [typeFilter, setTypeFilter] = useState<string | null>("all");
 
-  // Use REST API hook to fetch facilities
-  const { facilities, loading, refetch } = useFacilities();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
@@ -300,7 +301,7 @@ function FacilitiesTable() {
   });
 
   // Show loading state
-  if (loading && facilities.length === 0) {
+  if (facilitiesLoading && facilities.length === 0) {
     return (
       <Card className="w-full pt-7">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -516,8 +517,8 @@ function FacilitiesTable() {
             </Button>
           </div>
         </div>
-        <FacilityForm isOpen={isFormOpen} onOpenChange={setIsFormOpen} onSuccess={() => { refetch(); }} />
-        <FacilityDetails isOpen={isDetailsOpen} onOpenChange={(open: boolean) => { setIsDetailsOpen(open); if (!open) setSelectedFacility(null); }} facility={selectedFacility} onUpdated={() => refetch()} />
+        <FacilityForm isOpen={isFormOpen} onOpenChange={setIsFormOpen} onSuccess={() => { refetchFacilities(); }} />
+        <FacilityDetails isOpen={isDetailsOpen} onOpenChange={(open: boolean) => { setIsDetailsOpen(open); if (!open) setSelectedFacility(null); }} facility={selectedFacility} onUpdated={() => refetchFacilities()} />
       </CardContent>
     </Card>
   );

@@ -33,7 +33,7 @@ import { Loader2 } from 'lucide-react';
 
 // Import REST API hooks
 import useFacilities from '@/hooks/facilities/useFacilities';
-import useTickets from '@/hooks/tickets/useTickets';
+import useSections from '@/hooks/sections/useSections';
 import useCreateTicket from '@/hooks/tickets/useCreateTicket';
 import { createTicketSchema, type CreateTicketFormValues } from '@/utils/ticketValidation';
 
@@ -50,10 +50,8 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
   // Fetch facilities using the REST API hook
   const { facilities, loading: facilitiesLoading } = useFacilities();
 
-  // Get sections from the tickets hook (since it returns sections)
-  const { sections, loading: sectionsLoading } = useTickets({
-    page_size: 1, // Just need minimal data to get sections
-  });
+  // Get sections from the sections hook
+  const { sections, loading: sectionsLoading } = useSections();
 
   // Setup create ticket hook
   const { createTicket } = useCreateTicket();

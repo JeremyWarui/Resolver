@@ -18,7 +18,7 @@ export default function RecentTicketsTable() {
     fetchTechnicians: true,
     fetchUsers: true,
     fetchFacilities: true,
-    defaultPageSize: 10,
+    defaultPageSize: 25, // Increased from 10 - better for admin overview with new backend pagination
     ordering: '-updated_at', // Most recently updated first
   });
 
@@ -65,14 +65,11 @@ export default function RecentTicketsTable() {
         columns={columns}
         data={table.tableData}
         title="Recent Tickets"
-        {...table.commonTableProps}
-        defaultPageSize={table.pageSize}
+        defaultPageSize={10} // UI pagination: Show 10 per page with prev/next controls
+        manualPagination={false} // Use client-side pagination for small dataset
         initialColumnVisibility={columnVisibility}
         filterOptions={filters}
-        totalItems={table.totalTickets}
         loading={table.loading}
-        onPageChange={table.handlePageChange}
-        onPageSizeChange={table.handlePageSizeChange}
         onRowClick={table.handleViewTicket}
         selectedRowId={table.selectedTicket?.id || null}
         renderHeader={AdminTableHeader}

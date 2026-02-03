@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import techniciansService from '@/api/services/techniciansService';
-import sectionsService from '@/api/services/sectionsService';
-import type { Technician, TechniciansParams, Section } from '@/types';
+import type { Technician, TechniciansParams } from '@/types';
 
 interface UseTechniciansResult {
   technicians: Technician[];
   totalTechnicians: number;
-  sections: Section[];
   loading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -15,7 +13,6 @@ interface UseTechniciansResult {
 export const useTechnicians = (params?: TechniciansParams): UseTechniciansResult => {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [totalTechnicians, setTotalTechnicians] = useState(0);
-  const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -24,15 +21,10 @@ export const useTechnicians = (params?: TechniciansParams): UseTechniciansResult
     setError(null);
 
     try {
-      // Fetch technicians and sections in parallel
-      const [techniciansResponse, sectionsResponse] = await Promise.all([
-        techniciansService.getTechnicians(params),
-        sectionsService.getSections(),
-      ]);
-
+      // Fetch only technicians - sections should come from SharedDataContext
+      const techniciansResponse = await techniciansService.getTechnicians(params);
       setTechnicians(techniciansResponse.results);
       setTotalTechnicians(techniciansResponse.count);
-      setSections(sectionsResponse.results);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch technicians'));
       console.error('Error fetching technicians:', err);
@@ -55,7 +47,6 @@ export const useTechnicians = (params?: TechniciansParams): UseTechniciansResult
   return {
     technicians,
     totalTechnicians,
-    sections,
     loading,
     error,
     refetch: fetchData,

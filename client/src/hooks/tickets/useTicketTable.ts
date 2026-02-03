@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import useTickets from './useTickets';
-import useTechnicians from '../technicians/useTechnicians';
 import { useUsers } from '../users';
-import useFacilities from '../facilities/useFacilities';
 import useUpdateTicket from './useUpdateTicket';
+import { useSharedData } from '@/contexts/SharedDataContext';
 import { extractWritableFields } from '@/utils/ticketHelpers';
 import type { Ticket, Section, Facility, Technician, User, TicketsParams } from '@/types';
 
@@ -242,31 +241,33 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   const {
     tickets,
     totalTickets,
-    sections,
     loading: ticketsLoading,
     refetch,
   } = useTickets(ticketParams);
 
-  // Fetch technicians (always call hook, but only with params if needed)
+  // Get shared reference data from context (no API calls - already cached at layout level)
   const {
+    sections, // Get sections from shared context instead of useTickets
     technicians: allTechniciansData,
-    loading: techniciansLoadingRaw,
-  } = useTechnicians(fetchTechnicians ? { page_size: listPageSize } : { page_size: 0 });
-  const techniciansLoading = fetchTechnicians ? techniciansLoadingRaw : false;
-
-  // Fetch users (always call hook, but only with params if needed)
-  const {
-    users: allUsersData,
-    loading: usersLoadingRaw,
-  } = useUsers(fetchUsers ? { page_size: listPageSize } : { page_size: 0 });
-  const usersLoading = fetchUsers ? usersLoadingRaw : false;
-
-  // Fetch facilities (always call hook)
-  const {
     facilities: allFacilitiesData,
-    loading: facilitiesLoadingRaw,
-  } = useFacilities();
-  const facilitiesLoading = fetchFacilities ? facilitiesLoadingRaw : false;
+    users: allUsersData, // Get users from shared context instead of separate API call
+    sectionsLoading,
+    techniciansLoading: techniciansLoadingContext,
+    facilitiesLoading: facilitiesLoadingContext,
+    usersLoading: usersLoadingContext,
+  } = useSharedData();
+
+  // Only show loading state if data is actually needed
+  const techniciansLoading = fetchTechnicians ? techniciansLoadingContext : false;
+  const facilitiesLoading = fetchFacilities ? facilitiesLoadingContext : false;
+  const usersLoading = fetchUsers ? usersLoadingContext : false;
+
+  // Remove independent users fetching - now comes from SharedDataContext
+  // const {
+  //   users: allUsersData,
+  //   loading: usersLoadingRaw,
+  // } = useUsers(fetchUsers ? { page_size: listPageSize } : { page_size: 0 });
+  // const usersLoading = fetchUsers ? usersLoadingRaw : false;
 
   // Update ticket hook
   const { updateTicket } = useUpdateTicket();
@@ -361,6 +362,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   // ==================== LOADING STATE ====================
   const loading =
     ticketsLoading ||
+    sectionsLoading || // Always include sections loading since sections are always used
     (fetchTechnicians && techniciansLoading) ||
     (fetchUsers && usersLoading) ||
     (fetchFacilities && facilitiesLoading);

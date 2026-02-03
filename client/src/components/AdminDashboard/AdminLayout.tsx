@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SideBar, { Section } from "../Common/Sidebar";
 import Header from "../Common/Header";
-import { useUserData } from "@/hooks/users";
+import { SharedDataProvider, useSharedData } from "@/contexts/SharedDataContext";
 
 // Import your view components (or use placeholders)
 import MainContent from "./Dashboard/DashboardLayout";
@@ -34,12 +34,12 @@ function ComingSoonSection({ section }: { section: string }) {
   );
 }
 
-export default function AdminLayout() {
+function AdminLayoutContent() {
   const [activeSection, setActiveSection] =
     useState<Section["id"]>("dashboard");
   
-  // Fetch current user data
-  const { userData } = useUserData();
+  // Fetch current user data from shared context
+  const { currentUser: userData } = useSharedData();
 
   // Determine header title based on the active section.
   const headerTitle =
@@ -99,5 +99,13 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout() {
+  return (
+    <SharedDataProvider>
+      <AdminLayoutContent />
+    </SharedDataProvider>
   );
 }

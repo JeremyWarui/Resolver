@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Plus, X } from 'lucide-react';
-import useSections from '@/hooks/sections/useSections';
+import { useSharedData } from '@/contexts/SharedDataContext';
 import useUpdateUser from '@/hooks/users/useUpdateUser';
 import type { Technician } from '@/types';
 
@@ -36,7 +36,7 @@ export default function TechnicianDetails({ isOpen, onOpenChange, technician, on
   const [editedSections, setEditedSections] = useState<number[]>([]);
   const [sectionInputs, setSectionInputs] = useState<number[]>([0]); // Array of section IDs for inputs
 
-  const { sections } = useSections();
+  const { sections } = useSharedData();
   const { updateUser } = useUpdateUser();
 
   // Sync edit state when technician changes or mode changes

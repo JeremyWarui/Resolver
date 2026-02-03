@@ -128,7 +128,26 @@ export function RenderTableContent<TData>({
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex items-center space-x-6">
           <div className="text-sm text-muted-foreground">
-            {totalSystemItems ? `${actualTotalItems} of ${totalSystemItems} tickets` : `${actualTotalItems} ticket(s) found`}
+            {(() => {
+              if (totalSystemItems) {
+                // Main tickets table: show filtered vs total system
+                return `${actualTotalItems} of ${totalSystemItems} tickets`;
+              } else if (actualTotalItems > 0) {
+                // Client-side pagination: show range (e.g., "Showing 1-10 of 25 tickets")
+                const startItem = (pageIndex * pageSize) + 1;
+                const endItem = Math.min((pageIndex + 1) * pageSize, actualTotalItems);
+                
+                if (actualTotalItems <= pageSize) {
+                  // Single page: just show total
+                  return `${actualTotalItems} ticket(s) found`;
+                } else {
+                  // Multi-page: show range
+                  return `Showing ${startItem}-${endItem} of ${actualTotalItems} tickets`;
+                }
+              } else {
+                return "No tickets found";
+              }
+            })()}
           </div>
           <div className="flex items-center space-x-2">
             <p className="text-sm font-medium">Rows per page</p>
@@ -140,7 +159,7 @@ export function RenderTableContent<TData>({
                 <SelectValue placeholder={pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
-                {[5, 10, 15, 20].map((size) => (
+                {[10, 20, 30, 50].map((size) => (
                   <SelectItem key={size} value={`${size}`}>
                     {size}
                   </SelectItem>

@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, Inbox } from "lucide-react";
-import { useAdminAnalytics } from "@/hooks/analytics";
+import { useSharedData } from '@/contexts/SharedDataContext';
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PriorityStatsWidgetProps {
@@ -8,10 +8,10 @@ interface PriorityStatsWidgetProps {
 }
 
 export default function PriorityStatsWidget({ onFilterClick }: PriorityStatsWidgetProps) {
-  const { data: analytics, loading } = useAdminAnalytics();
+  const { adminAnalytics, analyticsLoading: loading } = useSharedData();
 
-  const overdueCount = analytics?.overdue_tickets?.length || 0;
-  const unassignedCount = analytics?.system_overview?.open_tickets || 0;
+  const overdueCount = adminAnalytics?.overdue_tickets?.length || 0;
+  const unassignedCount = adminAnalytics?.system_overview?.open_tickets || 0;
 
   if (loading) {
     return (

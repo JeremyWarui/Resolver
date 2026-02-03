@@ -9,6 +9,14 @@ interface UseFacilitiesResult {
   refetch: () => void;
 }
 
+/**
+ * Hook to fetch all facilities with direct API calls and state management
+ * 
+ * @returns Facilities data with loading, error states and refetch function
+ * 
+ * @example
+ * const { facilities, loading, error, refetch } = useFacilities();
+ */
 export const useFacilities = (): UseFacilitiesResult => {
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,10 +25,10 @@ export const useFacilities = (): UseFacilitiesResult => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await facilitiesService.getFacilities();
-      setFacilities(response.results);
+      const facilitiesResponse = await facilitiesService.getFacilities();
+      setFacilities(facilitiesResponse.results);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch facilities'));
       console.error('Error fetching facilities:', err);

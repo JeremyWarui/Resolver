@@ -292,7 +292,7 @@ const TechReport = () => {
       <Card className="bg-gray-50 border-gray-200">
         <CardContent className="px-6 pt-6 pb-6">
           <div className="flex gap-3">
-            <FileSpreadsheet className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
+            <FileSpreadsheet className="h-5 w-5 text-gray-600 shrink-0 mt-0.5" />
             <div>
             <h4 className="font-semibold text-gray-900 mb-1">About Your Reports</h4>
             <p className="text-sm text-gray-600">
