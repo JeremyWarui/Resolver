@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import useTickets from './useTickets';
-import { useUsers } from '../users';
 import useUpdateTicket from './useUpdateTicket';
 import { useSharedData } from '@/contexts/SharedDataContext';
 import { extractWritableFields } from '@/utils/ticketHelpers';
@@ -34,20 +33,7 @@ export interface UseTicketTableConfig {
    */
   defaultPageSize?: number;
   
-  /**
-   * Whether to fetch technicians data (for filters)
-   */
-  fetchTechnicians?: boolean;
-  
-  /**
-   * Whether to fetch users data (for raised_by filter)
-   */
-  fetchUsers?: boolean;
-  
-  /**
-   * Whether to fetch facilities data
-   */
-  fetchFacilities?: boolean;
+  // Note: technicians, users, and facilities are always available via SharedDataContext
   
   /**
    * Custom ordering for tickets (e.g., '-created_at', 'ticket_no')
@@ -139,17 +125,14 @@ export interface UseTicketTableResult {
  * @example
  * // Admin Dashboard - All Tickets
  * const table = useTicketTable({ 
- *   role: 'admin',
- *   fetchTechnicians: true,
- *   fetchUsers: true 
+ *   role: 'admin'
  * });
  * 
  * @example
  * // User Dashboard - My Tickets
  * const table = useTicketTable({ 
  *   role: 'user',
- *   currentUserId: userId,
- *   fetchTechnicians: true 
+ *   currentUserId: userId
  * });
  * 
  * @example
@@ -166,11 +149,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     currentUserId,
     defaultStatusFilter = 'all',
     defaultPageSize = 10,
-    fetchTechnicians = false,
-    fetchUsers = false,
-    fetchFacilities = false,
     ordering = '-id',
-    listPageSize = 100,
   } = config;
 
   // ==================== STATE ====================
@@ -257,10 +236,10 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     usersLoading: usersLoadingContext,
   } = useSharedData();
 
-  // Only show loading state if data is actually needed
-  const techniciansLoading = fetchTechnicians ? techniciansLoadingContext : false;
-  const facilitiesLoading = fetchFacilities ? facilitiesLoadingContext : false;
-  const usersLoading = fetchUsers ? usersLoadingContext : false;
+  // SharedDataContext always provides this data
+  const techniciansLoading = techniciansLoadingContext;
+  const facilitiesLoading = facilitiesLoadingContext;
+  const usersLoading = usersLoadingContext;
 
   // Remove independent users fetching - now comes from SharedDataContext
   // const {
@@ -362,10 +341,10 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   // ==================== LOADING STATE ====================
   const loading =
     ticketsLoading ||
-    sectionsLoading || // Always include sections loading since sections are always used
-    (fetchTechnicians && techniciansLoading) ||
-    (fetchUsers && usersLoading) ||
-    (fetchFacilities && facilitiesLoading);
+    sectionsLoading ||
+    techniciansLoadingContext ||
+    usersLoadingContext ||
+    facilitiesLoadingContext;
 
   // ==================== RETURN ====================
   return {
@@ -399,9 +378,9 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     tickets,
     totalTickets,
     sections,
-    facilities: fetchFacilities ? allFacilitiesData : [],
-    technicians: fetchTechnicians ? allTechniciansData : [],
-    users: fetchUsers ? allUsersData : [],
+    facilities: allFacilitiesData,
+    technicians: allTechniciansData,
+    users: allUsersData,
 
     // Transformed Data
     tableData,

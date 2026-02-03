@@ -19,4 +19,31 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunk for React and core libraries
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          
+          // UI library chunk
+          'ui-vendor': [
+            '@tanstack/react-table', 
+            'sonner', 
+            'react-hook-form', 
+            '@hookform/resolvers',
+            'zod'
+          ],
+          
+          // Chart/visualization libraries
+          'charts-vendor': ['recharts'],
+          
+          // Utilities and icons chunk  
+          'utils-vendor': ['clsx', 'tailwind-merge', 'lucide-react', 'axios']
+        }
+      }
+    },
+    // Increase chunk size warning limit to 1000kb (current is 500kb)
+    chunkSizeWarningLimit: 1000
+  }
 })

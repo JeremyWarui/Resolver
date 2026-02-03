@@ -76,9 +76,17 @@ export function TicketDetailsSidebar({
     if (mode === 'edit' && role === 'admin' && sectionId) {
       // If technicians are provided (from SharedDataContext), filter them client-side by section
       if (technicians.length > 0) {
-        const filteredTechnicians = technicians.filter(tech => 
-          tech.sections.includes(sectionId)
-        );
+        const filteredTechnicians = technicians
+          .filter(tech => tech.sections?.includes(sectionId))
+          .map(tech => ({
+            id: tech.id,
+            username: tech.username,
+            first_name: tech.first_name,
+            last_name: tech.last_name,
+            email: (tech as any).email || '',
+            role: 'technician' as const,
+            sections: tech.sections || []
+          }));
         setSectionTechnicians(filteredTechnicians);
       } else {
         // Fallback: fetch section-specific technicians from API

@@ -15,9 +15,6 @@ export default function RecentTicketsTable() {
   // ✨ All state, data fetching, and handlers consolidated in one hook
   const table = useTicketTable({
     role: 'admin',
-    fetchTechnicians: true,
-    fetchUsers: true,
-    fetchFacilities: true,
     defaultPageSize: 25, // Increased from 10 - better for admin overview with new backend pagination
     ordering: '-updated_at', // Most recently updated first
   });

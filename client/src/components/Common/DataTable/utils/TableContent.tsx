@@ -26,7 +26,6 @@ interface TableContentProps<TData> {
   emptyStateMessage: string;
   emptyStateDescription: string;
   actualTotalItems: number;
-  totalSystemItems?: number;
   pageSize: number;
   pageIndex: number;
   handlePageSizeChange: (size: number) => void;
@@ -42,7 +41,6 @@ export function RenderTableContent<TData>({
   emptyStateMessage,
   emptyStateDescription,
   actualTotalItems,
-  totalSystemItems,
   pageSize,
   pageIndex,
   handlePageSizeChange,
@@ -129,10 +127,7 @@ export function RenderTableContent<TData>({
         <div className="flex items-center space-x-6">
           <div className="text-sm text-muted-foreground">
             {(() => {
-              if (totalSystemItems) {
-                // Main tickets table: show filtered vs total system
-                return `${actualTotalItems} of ${totalSystemItems} tickets`;
-              } else if (actualTotalItems > 0) {
+              if (actualTotalItems > 0) {
                 // Client-side pagination: show range (e.g., "Showing 1-10 of 25 tickets")
                 const startItem = (pageIndex * pageSize) + 1;
                 const endItem = Math.min((pageIndex + 1) * pageSize, actualTotalItems);

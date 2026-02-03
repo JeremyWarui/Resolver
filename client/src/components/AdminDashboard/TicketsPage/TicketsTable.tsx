@@ -24,9 +24,6 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
   // ✨ Fetch ALL tickets once with large page_size for client-side filtering
   const table = useTicketTable({
     role: 'admin',
-    fetchTechnicians: true,
-    fetchUsers: true,
-    fetchFacilities: true,
     defaultPageSize: 500, // Use backend maximum for optimal performance (was 1000, capped at 500)
     defaultStatusFilter: 'all', // Fetch all statuses
     ordering: '-updated_at',
@@ -134,12 +131,10 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
         columns={columns}
         data={filteredTableData}
         title="Tickets"
-        subtitle={`Showing ${filteredTickets.length} of ${adminAnalytics?.system_overview?.total_tickets || table.tickets.length} tickets`}
         defaultPageSize={20} // Better default for admin ticket management
         initialColumnVisibility={columnVisibility}
         filterOptions={filters}
         totalItems={filteredTickets.length}
-        totalSystemItems={adminAnalytics?.system_overview?.total_tickets || table.tickets.length}
         loading={table.loading}
         onRowClick={table.handleViewTicket}
         selectedRowId={table.selectedTicket?.id || null}

@@ -1,15 +1,23 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 import SideBar, { Section } from "../Common/Sidebar";
 import Header from "../Common/Header";
 import { SharedDataProvider, useSharedData } from "@/contexts/SharedDataContext";
 
-// Import your view components (or use placeholders)
-import MainContent from "./Dashboard/DashboardLayout";
-import TicketsPage from "./TicketsPage/TicketsPage";
-import TechniciansPage from "./Technicians/TechniciansPage";
-import FacilitiesPage from "./Facilities/FacilitiesPage";
-import SectionsPage from "./Sections/SectionsPage";
-import { ReportsPageEnhanced as ReportsPage } from "./Reports";
+// Lazy load dashboard pages for better code splitting
+const MainContent = lazy(() => import("./Dashboard/DashboardLayout"));
+const TicketsPage = lazy(() => import("./TicketsPage/TicketsPage"));
+const TechniciansPage = lazy(() => import("./Technicians/TechniciansPage"));
+const FacilitiesPage = lazy(() => import("./Facilities/FacilitiesPage"));  
+const SectionsPage = lazy(() => import("./Sections/SectionsPage"));
+const ReportsPage = lazy(() => import("./Reports").then(module => ({ default: module.ReportsPageEnhanced })));
+
+// Loading component for dashboard pages
+const PageLoading = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+    <span className="ml-2 text-gray-600">Loading page...</span>
+  </div>
+);
 
 // A placeholder component for sections not yet implemented
 function ComingSoonSection({ section }: { section: string }) {
@@ -81,12 +89,14 @@ function AdminLayoutContent() {
           }}
         />
         <main className="flex-1 overflow-y-auto">
-          {activeSection === "dashboard" && <MainContent />}
-          {activeSection === "tickets" && <TicketsPage />}
-          {activeSection === "reports" && <ReportsPage />}
-          {activeSection === "technicians" && <TechniciansPage />}
-          {activeSection === "sections" && <SectionsPage />}
-          {activeSection === "facilities" && <FacilitiesPage />}
+          <Suspense fallback={<PageLoading />}>
+            {activeSection === "dashboard" && <MainContent />}
+            {activeSection === "tickets" && <TicketsPage />}
+            {activeSection === "reports" && <ReportsPage />}
+            {activeSection === "technicians" && <TechniciansPage />}
+            {activeSection === "sections" && <SectionsPage />}
+            {activeSection === "facilities" && <FacilitiesPage />}
+          </Suspense>
           {activeSection === "schedule" && (
             <ComingSoonSection section="Schedule" />
           )}

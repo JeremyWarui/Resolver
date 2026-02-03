@@ -38,7 +38,6 @@ function TechTickets({
     defaultStatusFilter: 'all', // Fetch all statuses, filter client-side
     defaultPageSize: 100, // Fetch more for client-side filtering
     ordering: '-updated_at',
-    fetchUsers: true, // Fetch users for 'raised_by' column
   });
 
   // ✨ Client-side filtering based on activeQuickFilter

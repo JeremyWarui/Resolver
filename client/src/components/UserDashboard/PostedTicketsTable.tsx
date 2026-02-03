@@ -20,9 +20,6 @@ function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTabl
   const table = useTicketTable({
     role: 'user',
     currentUserId: currentUser,
-    fetchTechnicians: true,
-    fetchUsers: true, // Enable users fetching for raised_by filter
-    fetchFacilities: true,
     defaultPageSize: 10,
     ordering: '-updated_at',
   });
