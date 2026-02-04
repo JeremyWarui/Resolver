@@ -12,8 +12,8 @@ interface TechTicketsPageProps {
 const TechTicketsPage = ({ userData }: TechTicketsPageProps) => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<TechQuickFilterType>('assigned');
   
-  // TESTING: Force technician ID 3 (Alex Smith) for testing purposes
-  const simulatedTechnicianId = 3;
+  // TODO: Replace with actual authentication - using dummy ID for testing
+  const technicianId = 3; // Dummy technician ID until auth is implemented
 
   // Handle stat card clicks to change filter
   const handleStatCardClick = (filter: TechQuickFilterType) => {
@@ -44,7 +44,7 @@ const TechTicketsPage = ({ userData }: TechTicketsPageProps) => {
       {/* Tickets Table with active filter - includes stats cards and quick filters */}
       <TechTicketsTable 
         activeQuickFilter={activeQuickFilter}
-        currentTechnicianId={simulatedTechnicianId}
+        currentTechnicianId={technicianId}
         onFilterChange={setActiveQuickFilter}
         onStatCardClick={handleStatCardClick}
       />

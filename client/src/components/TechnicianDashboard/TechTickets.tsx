@@ -30,6 +30,7 @@ function TechTickets({
   onFilterChange,
   onStatCardClick,
 }: TechTicketsProps) {
+  // Use provided ID or fallback to dummy ID for testing
   const technicianId = currentTechnicianId ?? 3;
   
   const table = useTicketTable({

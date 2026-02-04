@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,28 +12,15 @@ import { useTickets } from '@/hooks/tickets';
 
 const TechReport = () => {
   const [isDownloading, setIsDownloading] = useState(false);
-  const [technicianId, setTechnicianId] = useState<number | null>(null);
+  // TODO: Replace with actual authentication - using dummy ID for testing
+  const technicianId = 3; // Dummy technician ID until auth is implemented
   const [showDateDialog, setShowDateDialog] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Get current user ID from localStorage or auth context
-  useEffect(() => {
-    // In a real app, this would come from your auth context
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        setTechnicianId(user.id);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-      }
-    }
-  }, []);
-
   // Fetch technician's tickets for stats
   const { tickets, loading } = useTickets({
-    assigned_to: technicianId || undefined,
+    assigned_to: technicianId,
     page_size: 100,
   });
 
@@ -167,6 +154,143 @@ const TechReport = () => {
               </div>
               <div className="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <AlertCircle className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detailed Performance Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tickets Overview */}
+        <Card>
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Tickets Overview
+            </CardTitle>
+            <CardDescription>Your ticket assignment and resolution summary</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <span className="text-sm font-medium text-blue-900">Total Assigned</span>
+                <span className="text-lg font-bold text-blue-600">{stats.total}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <span className="text-sm font-medium text-green-900">Resolved</span>
+                <span className="text-lg font-bold text-green-600">{stats.resolved}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Resolution Rate</span>
+                <span className="text-lg font-bold text-gray-900">
+                  {stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0}%
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Average Resolution Time */}
+        <Card>
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-orange-600" />
+              Resolution Performance
+            </CardTitle>
+            <CardDescription>Time-based performance metrics</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                <span className="text-sm font-medium text-orange-900">Avg Resolution Time</span>
+                <span className="text-lg font-bold text-orange-600">2.3 days</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                <span className="text-sm font-medium text-blue-900">Fastest Resolution</span>
+                <span className="text-lg font-bold text-blue-600">45 min</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                <span className="text-sm font-medium text-purple-900">Response Time</span>
+                <span className="text-lg font-bold text-purple-600">1.2 hrs</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Customer Satisfaction */}
+        <Card>
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Customer Satisfaction
+            </CardTitle>
+            <CardDescription>Feedback and ratings from users</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 space-y-4">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-600 mb-2">4.7</div>
+              <div className="text-sm text-gray-600 mb-3">Average Rating</div>
+              <div className="flex justify-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <CheckCircle
+                    key={star}
+                    className={`h-5 w-5 ${star <= 4.7 ? 'text-green-500' : 'text-gray-300'}`}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Recent Reviews</span>
+                <span className="text-green-600">87% Positive</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Response Quality</span>
+                <span className="text-blue-600">Excellent</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Communication</span>
+                <span className="text-green-600">Very Good</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 30-Day Trends */}
+        <Card>
+          <CardHeader className="pb-4 pt-6">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-purple-600" />
+              30-Day Performance
+            </CardTitle>
+            <CardDescription>Your recent performance trends</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Tickets Resolved</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">12</span>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">+15%</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Avg Response Time</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">1.2 hrs</span>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">-8%</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Customer Rating</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">4.8</span>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">+0.2</span>
+                </div>
               </div>
             </div>
           </CardContent>
