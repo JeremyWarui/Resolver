@@ -52,7 +52,7 @@ export const ticketTitleColumn = <T,>(header: string = "Title"): ColumnDef<T> =>
   header,
   cell: ({ row }) => (
     <div className="max-w-[300px] truncate" title={row.getValue("title")}>
-      {truncateText(row.getValue("title"), 20)}
+      {truncateText(row.getValue("title"), 25)}
     </div>
   ),
   enableSorting: false,

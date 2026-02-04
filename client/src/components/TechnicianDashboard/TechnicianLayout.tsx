@@ -4,6 +4,7 @@ import Header from '../Common/Header';
 import TechTicketsPage from './TechTicketsPage';
 import TechReport from './TechReport';
 import { useUserData } from '@/hooks/users';
+import { SharedDataProvider } from '@/contexts/SharedDataContext';
 
 // Import your view components (or use placeholders)
 
@@ -30,7 +31,7 @@ function ComingSoonSection({ section }: { section: string }) {
   );
 }
 
-const TechnicianLayout = () => {
+const TechnicianLayoutContent = () => {
   const [activeSection, setActiveSection] =
     useState<Section['id']>('dashboard');
   
@@ -76,6 +77,14 @@ const TechnicianLayout = () => {
         </main>
       </div>
     </div>
+  );
+};
+
+const TechnicianLayout = () => {
+  return (
+    <SharedDataProvider>
+      <TechnicianLayoutContent />
+    </SharedDataProvider>
   );
 };
 

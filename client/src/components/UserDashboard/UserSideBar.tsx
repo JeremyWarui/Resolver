@@ -21,7 +21,7 @@ interface SideBarProps {
 const UserSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const sections: Section[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'postedTickets', label: 'Posted Tickets', icon: ClipboardList },
+    // { id: 'postedTickets', label: 'Posted Tickets', icon: ClipboardList },
     { id: 'userTickets', label: 'My Tickets', icon: ClipboardCheck },
     { id: 'submitTicket', label: 'New Ticket', icon: PlusCircle},
     { id: 'settings', label: 'Settings', icon: Settings },

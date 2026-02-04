@@ -2,11 +2,12 @@ import { useState } from 'react';
 import UserSideBar, { Section } from './UserSideBar';
 import Header from '../Common/Header';
 import { useUserData } from '@/hooks/users';
+import { SharedDataProvider } from '@/contexts/SharedDataContext';
 
 // Import your view components (or use placeholders)
 import UserDashboard from './UserDashboard';
 import UserTickets from './UserTickets';
-import PostedTickets from './PostedTickets';
+// import PostedTickets from './PostedTickets';
 import CreateTicket from './CreateTicket';
 
 // A placeholder component for sections not yet implemented
@@ -32,22 +33,22 @@ function ComingSoonSection({ section }: { section: string }) {
   );
 }
 
-const UserLayout = () => {
+const UserLayoutContent = () => {
   const [activeSection, setActiveSection] =
     useState<Section['id']>('dashboard');
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
-  
+
   // Fetch current user data
   const { userData } = useUserData();
 
   // Callback to refresh ticket tables after creating a ticket
   const handleTicketCreated = () => {
-    setTicketRefreshKey(prev => prev + 1);
+    setTicketRefreshKey((prev) => prev + 1);
   };
 
   // Determine header title based on the active section.
-  const headerTitle =
+  /*const headerTitle =
     activeSection === 'dashboard'
       ? 'Dashboard'
       : activeSection === 'postedTickets'
@@ -57,6 +58,16 @@ const UserLayout = () => {
           : activeSection === 'submitTicket'
             ? 'New Ticket'
             : 'Settings';
+  */
+
+  const headerTitle =
+    activeSection === 'dashboard'
+      ? 'Dashboard'
+      : activeSection === 'userTickets'
+        ? 'My Tickets'
+        : activeSection === 'submitTicket'
+          ? 'New Ticket'
+          : 'Settings';
 
   // Handle section changes - if "submitTicket" is selected, open the modal
   const handleSectionChange = (section: Section['id']) => {
@@ -88,9 +99,24 @@ const UserLayout = () => {
           }}
         />
         <main className='flex-1 overflow-y-auto'>
-          {activeSection === 'dashboard' && <UserDashboard key={`dashboard-${ticketRefreshKey}`} onNavigate={handleSectionChange} />}
-          {activeSection === 'postedTickets' && <PostedTickets key={`posted-${ticketRefreshKey}`} onNavigate={handleSectionChange} />}
-          {activeSection === 'userTickets' && <UserTickets key={`user-${ticketRefreshKey}`} onNavigate={handleSectionChange}/>}
+          {activeSection === 'dashboard' && (
+            <UserDashboard
+              key={`dashboard-${ticketRefreshKey}`}
+              onNavigate={handleSectionChange}
+            />
+          )}
+          {/* {activeSection === 'postedTickets' && (
+            <PostedTickets
+              key={`posted-${ticketRefreshKey}`}
+              onNavigate={handleSectionChange}
+            />
+          )} */}
+          {activeSection === 'userTickets' && (
+            <UserTickets
+              key={`user-${ticketRefreshKey}`}
+              onNavigate={handleSectionChange}
+            />
+          )}
           {activeSection === 'settings' && (
             <ComingSoonSection section='Settings' />
           )}
@@ -98,12 +124,20 @@ const UserLayout = () => {
       </div>
 
       {/* Create Ticket Modal */}
-      <CreateTicket 
-        isOpen={isCreateTicketOpen} 
+      <CreateTicket
+        isOpen={isCreateTicketOpen}
         onOpenChange={setIsCreateTicketOpen}
         onSuccess={handleTicketCreated}
       />
     </div>
+  );
+};
+
+const UserLayout = () => {
+  return (
+    <SharedDataProvider>
+      <UserLayoutContent />
+    </SharedDataProvider>
   );
 };
 
