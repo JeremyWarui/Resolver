@@ -2,7 +2,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   Settings,
-  ClipboardList,
+  // ClipboardList,
   ClipboardCheck,
   LogOut,
 } from 'lucide-react';
