@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import TechSideBar, { Section } from './TechSideBar';
 import Header from '../Common/Header';
+import FullScreenLoading from '../Common/FullScreenLoading';
 import TechTicketsPage from './TechTicketsPage';
 import TechReport from './TechReport';
 import { useUserData } from '@/hooks/users';
@@ -36,7 +37,7 @@ const TechnicianLayoutContent = () => {
     useState<Section['id']>('dashboard');
   
   // Fetch current user data
-  const { userData } = useUserData();
+  const { userData, loading: userLoading } = useUserData();
 
   // Determine header title based on the active section.
   const headerTitle =
@@ -50,6 +51,9 @@ const TechnicianLayoutContent = () => {
 
   return (
     <div className='flex h-screen bg-gray-100'>
+      {/* Show loading spinner while fetching user data */}
+      {userLoading && <FullScreenLoading message="Loading your dashboard..." />}
+      
       {/* Sidebar with controlled active state */}
       <TechSideBar
         activeSection={activeSection}

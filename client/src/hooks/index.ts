@@ -5,3 +5,5 @@ export * from './facilities';
 export * from './technicians';
 export * from './sections';
 export * from './analytics';
+export { useAuth } from './useAuth';
+export { useLogout } from './useLogout';

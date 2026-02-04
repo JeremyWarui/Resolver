@@ -1,6 +1,7 @@
 import { useState, Suspense, lazy } from "react";
 import SideBar, { Section } from "../Common/Sidebar";
 import Header from "../Common/Header";
+import FullScreenLoading from "../Common/FullScreenLoading";
 import { SharedDataProvider, useSharedData } from "@/contexts/SharedDataContext";
 
 // Lazy load dashboard pages for better code splitting
@@ -47,7 +48,7 @@ function AdminLayoutContent() {
     useState<Section["id"]>("dashboard");
   
   // Fetch current user data from shared context
-  const { currentUser: userData } = useSharedData();
+  const { currentUser: userData, isLoading } = useSharedData();
 
   // Determine header title based on the active section.
   const headerTitle =
@@ -71,6 +72,9 @@ function AdminLayoutContent() {
 
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* Show loading spinner while fetching reference data */}
+      {isLoading && <FullScreenLoading message="Loading dashboard..." />}
+      
       {/* Sidebar with controlled active state */}
       <SideBar
         activeSection={activeSection}

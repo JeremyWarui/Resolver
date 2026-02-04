@@ -1,4 +1,5 @@
 // Export all services
+export { default as authService } from './authService';
 export { default as ticketsService } from './ticketsService';
 export { default as techniciansService } from './techniciansService';
 export { default as facilitiesService } from './facilitiesService';

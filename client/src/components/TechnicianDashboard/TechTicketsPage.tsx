@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import TechTicketsTable from "./TechTickets";
 import type { TechQuickFilterType } from "./QuickFilterButtons";
 import type { User } from "@/types";
+import { useAuth } from '@/hooks/useAuth';
 
 interface TechTicketsPageProps {
   userData?: User | null;
@@ -11,9 +12,10 @@ interface TechTicketsPageProps {
 
 const TechTicketsPage = ({ userData }: TechTicketsPageProps) => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<TechQuickFilterType>('assigned');
+  const { user } = useAuth();
   
-  // TODO: Replace with actual authentication - using dummy ID for testing
-  const technicianId = 3; // Dummy technician ID until auth is implemented
+  // Get technician ID from authenticated user
+  const technicianId = user?.id;
 
   // Handle stat card clicks to change filter
   const handleStatCardClick = (filter: TechQuickFilterType) => {

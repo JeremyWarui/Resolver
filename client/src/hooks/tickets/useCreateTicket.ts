@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 import ticketsService from '@/api/services/ticketsService';
 import type { CreateTicketPayload, Ticket } from '@/types';
 
@@ -45,12 +44,10 @@ export const useCreateTicket = (): UseCreateTicketResult => {
 
     try {
       const newTicket = await ticketsService.createTicket(ticketData);
-      toast.success('Ticket created successfully');
       return newTicket;
     } catch (err) {
       const errorObj = err instanceof Error ? err : new Error('Failed to create ticket');
       setError(errorObj);
-      toast.error('Failed to create ticket');
       console.error('Error creating ticket:', err);
       throw errorObj;
     } finally {

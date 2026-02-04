@@ -482,7 +482,7 @@ export function UserTicketDetailsSidebar({
                       </div>
                     )}
 
-                    {/* Resolved - Rating section */}
+                    {/* Resolved - Rating section (only show if no feedback has been submitted) */}
                     {isResolved && !ticket.feedback && (
                       <div className='bg-white border rounded-lg p-4 space-y-4'>
                         <div>
@@ -557,29 +557,20 @@ export function UserTicketDetailsSidebar({
                       </div>
                     )}
 
-                    {/* Resolved - Show existing feedback */}
+                    {/* Resolved - Feedback already submitted (show brief confirmation only) */}
                     {isResolved && ticket.feedback && (
-                      <div className='bg-green-50 border border-green-200 rounded-lg px-4 py-3 space-y-2'>
+                      <div className='bg-green-50 border border-green-200 rounded-lg px-4 py-3'>
                         <p className='text-sm font-medium text-green-900'>
-                          ✓ You rated this service
+                          ✓ Thank you for your feedback! Your rating has been submitted.
                         </p>
-                        <div className='flex items-center gap-2'>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-5 w-5 ${
-                                star <= ticket.feedback!.rating
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        {ticket.feedback.comment && (
-                          <p className='text-sm text-gray-700 italic'>
-                            "{ticket.feedback.comment}"
-                          </p>
-                        )}
+                        <Button
+                          onClick={handleConfirmClosure}
+                          disabled={isUpdating}
+                          variant='outline'
+                          className='w-full mt-3'
+                        >
+                          {isUpdating ? 'Closing...' : 'Confirm Closure'}
+                        </Button>
                       </div>
                     )}
                   </div>

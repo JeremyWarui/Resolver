@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { toast } from 'sonner';
 import useTickets from './useTickets';
 import useUpdateTicket from './useUpdateTicket';
 import { useSharedData } from '@/contexts/SharedDataContext';
@@ -298,17 +297,12 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
       
       console.log('Ticket updated successfully:', result);
       
-      toast.success(`Updated ticket #${result.ticket_no}`, {
-        description: 'Ticket has been updated successfully',
-      });
-      
       // Refetch tickets to sync UI with backend
       refetch();
       
       setIsTicketDialogOpen(false);
     } catch (error) {
       console.error('Failed to update ticket:', error);
-      toast.error('Failed to update ticket');
     }
   };
 

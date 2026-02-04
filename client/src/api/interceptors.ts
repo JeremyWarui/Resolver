@@ -5,7 +5,7 @@ import { AUTH_CONFIG } from './config';
 export const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem(AUTH_CONFIG.tokenKey);
   if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Token ${token}`; // Django uses 'Token' prefix, not 'Bearer'
   }
   return config;
 };
@@ -26,13 +26,15 @@ export const responseErrorInterceptor = (error: AxiosError) => {
     // Server responded with error status
     switch (error.response.status) {
       case 401:
-        // Unauthorized - redirect to login or refresh token
-        console.error('Unauthorized access');
-        // Clear auth tokens
+        // Unauthorized - clear auth tokens and redirect to login
+        console.error('Unauthorized access - clearing session');
         localStorage.removeItem(AUTH_CONFIG.tokenKey);
         localStorage.removeItem(AUTH_CONFIG.refreshTokenKey);
-        // You can dispatch a logout action or redirect here
-        // window.location.href = '/login';
+        localStorage.removeItem('user');
+        // Redirect to login if not already there
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
         break;
       case 403:
         console.error('Forbidden access');

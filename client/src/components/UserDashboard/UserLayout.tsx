@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import UserSideBar, { Section } from './UserSideBar';
 import Header from '../Common/Header';
+import FullScreenLoading from '../Common/FullScreenLoading';
 import { useUserData } from '@/hooks/users';
 import { SharedDataProvider } from '@/contexts/SharedDataContext';
 
 // Import your view components (or use placeholders)
 import UserDashboard from './UserDashboard';
 import UserTickets from './UserTickets';
-// import PostedTickets from './PostedTickets';
 import CreateTicket from './CreateTicket';
 
 // A placeholder component for sections not yet implemented
@@ -40,7 +40,7 @@ const UserLayoutContent = () => {
   const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
 
   // Fetch current user data
-  const { userData } = useUserData();
+  const { userData, loading: userLoading } = useUserData();
 
   // Callback to refresh ticket tables after creating a ticket
   const handleTicketCreated = () => {
@@ -48,18 +48,6 @@ const UserLayoutContent = () => {
   };
 
   // Determine header title based on the active section.
-  /*const headerTitle =
-    activeSection === 'dashboard'
-      ? 'Dashboard'
-      : activeSection === 'postedTickets'
-        ? 'Posted Tickets'
-        : activeSection === 'userTickets'
-          ? 'My Tickets'
-          : activeSection === 'submitTicket'
-            ? 'New Ticket'
-            : 'Settings';
-  */
-
   const headerTitle =
     activeSection === 'dashboard'
       ? 'Dashboard'
@@ -81,6 +69,9 @@ const UserLayoutContent = () => {
 
   return (
     <div className='flex h-screen bg-gray-100'>
+      {/* Show loading spinner while fetching user data */}
+      {userLoading && <FullScreenLoading message="Loading your dashboard..." />}
+      
       {/* Sidebar with controlled active state */}
       <UserSideBar
         activeSection={activeSection}
@@ -105,12 +96,6 @@ const UserLayoutContent = () => {
               onNavigate={handleSectionChange}
             />
           )}
-          {/* {activeSection === 'postedTickets' && (
-            <PostedTickets
-              key={`posted-${ticketRefreshKey}`}
-              onNavigate={handleSectionChange}
-            />
-          )} */}
           {activeSection === 'userTickets' && (
             <UserTickets
               key={`user-${ticketRefreshKey}`}

@@ -9,11 +9,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Download, FileSpreadsheet, TrendingUp, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import reportsService from '@/api/services/reportsService';
 import { useTickets } from '@/hooks/tickets';
+import { useAuth } from '@/hooks/useAuth';
 
 const TechReport = () => {
   const [isDownloading, setIsDownloading] = useState(false);
-  // TODO: Replace with actual authentication - using dummy ID for testing
-  const technicianId = 3; // Dummy technician ID until auth is implemented
+  const { user } = useAuth();
+  
+  // Get technician ID from authenticated user
+  const technicianId = user?.id;
   const [showDateDialog, setShowDateDialog] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');

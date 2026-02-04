@@ -9,6 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import FullScreenLoading from "@/components/Common/FullScreenLoading";
+import { useLogout } from "@/hooks/useLogout";
 import type { User } from "@/types";
 
 export interface HeaderProps {
@@ -25,6 +27,7 @@ const Header = ({
   currentUser,
 }: HeaderProps) => {
   const [searchValue, setSearchValue] = useState("");
+  const { handleLogout, isLoading } = useLogout();
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -45,7 +48,9 @@ const Header = ({
     : "User";
 
   return (
-    <header className="bg-white border-b border-gray-200 flex items-center justify-between p-5">
+    <>
+      {isLoading && <FullScreenLoading message="Logging out..." />}
+      <header className="bg-white border-b border-gray-200 flex items-center justify-between p-5">
       <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
       <div className="flex items-center space-x-4">
         <div className="relative">
@@ -82,11 +87,12 @@ const Header = ({
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </header>
+    </>
   );
 };
 
