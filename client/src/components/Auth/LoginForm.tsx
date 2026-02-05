@@ -242,6 +242,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
               </form>
             </Form>
             
+            {/* Forgot Password Link */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => toast.info('Forgot password feature coming soon!')}
+                className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                Forgot your password?
+              </button>
+            </div>
+            
             {/* Commented out multi-step auth UI for testing */}
             {/* {!authMethod ? (
             ) : (
