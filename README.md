@@ -8,7 +8,7 @@ A modern, enterprise-grade maintenance ticketing system with role-based dashboar
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://reactjs.org/)
 
 > **🚀 Quick Start:** `npm install` → `npm run dev` → http://localhost:5173  
-> **📖 Full Documentation:** See [`docs/`](docs/) folder for architecture, API reference, and deployment guides
+> **📖 Full Documentation:** See [`docs/`](client/docs/) folder for architecture, API reference, and deployment guides
 
 ---
 
@@ -94,13 +94,13 @@ src/
 
 ## 📚 Documentation
 
-Comprehensive documentation available in [`docs/`](docs/):
+Comprehensive documentation available in [`docs/`](client/docs/):
 
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System architecture and design patterns
-- **[REST API Reference](docs/REST_API_REFERENCE.md)** - Backend endpoints and payloads
-- **[Vercel Deployment](docs/VERCEL_DEPLOYMENT.md)** - Production deployment guide
-- **[Backend Alignment](docs/BACKEND_ALIGNMENT_REPORT.md)** - API issues and workarounds
-- **[Reports Design](docs/REPORTS_PAGE_DESIGN.md)** - Analytics system specifications
+- **[Architecture Guide](client/docs/ARCHITECTURE.md)** - System architecture and design patterns
+- **[REST API Reference](client/client/docs/REST_API_REFERENCE.md)** - Backend endpoints and payloads
+- **[Vercel Deployment](client/docs/VERCEL_DEPLOYMENT.md)** - Production deployment guide
+- **[Backend Alignment](client/docs/BACKEND_ALIGNMENT_REPORT.md)** - API issues and workarounds
+- **[Reports Design](client/docs/REPORTS_PAGE_DESIGN.md)** - Analytics system specifications
 
 ## 🚀 Deployment
 
@@ -112,7 +112,7 @@ Comprehensive documentation available in [`docs/`](docs/):
 # 3. Deploy (automatic on push)
 ```
 
-See [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) for complete guide.
+See [client/docs/VERCEL_DEPLOYMENT.md](client/docs/VERCEL_DEPLOYMENT.md) for complete guide.
 
 ## 🔑 Demo Accounts
 
@@ -130,7 +130,7 @@ User:        jane_user
 **Build Errors?** Run `npm install` and check TypeScript errors  
 **API Connection?** Verify `VITE_API_URL` matches running backend
 
-For detailed troubleshooting, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+For detailed troubleshooting, see [client/docs/ARCHITECTURE.md](client/docs/ARCHITECTURE.md)
 
 ## ⚠️ Development Conventions
 
@@ -167,4 +167,4 @@ Built with [shadcn/ui](https://ui.shadcn.com/), [TanStack Table](https://tanstac
 
 ---
 
-**Questions or Issues?** Check the [`docs/`](docs/) folder or open an issue on GitHub.
+**Questions or Issues?** Check the [`docs/`](client/docs/) folder or open an issue on GitHub.
