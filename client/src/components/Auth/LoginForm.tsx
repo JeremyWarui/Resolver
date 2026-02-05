@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { Mail, Lock, Shield, Settings, Users, Zap } from 'lucide-react';
+import { Mail, Lock, Shield, Settings, Users, Zap, Eye, EyeOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface LoginFormProps {
@@ -27,6 +27,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
   // const [authMethod, setAuthMethod] = useState<'password' | 'magic_link' | null>(null);
   // const [userRole, setUserRole] = useState<string>('');
   // const [email, setEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, isLoading } = useAuth();
   // Commented out magic link functionality for testing
@@ -206,12 +207,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <Input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
-                            className="pl-10 h-11"
+                            className="pl-10 pr-10 h-11"
                             {...field}
                             disabled={isLoading}
                           />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            onClick={() => setShowPassword(!showPassword)}
+                            disabled={isLoading}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
