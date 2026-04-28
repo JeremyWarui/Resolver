@@ -1,5 +1,6 @@
 // Import DRY utilities
 import { useMemo } from "react";
+import type { Ticket } from "@/types";
 import { useSharedData } from '@/contexts/SharedDataContext';
 import { useTicketTable } from "@/hooks/tickets";
 import { createTicketTableFilters } from "@/components/Common/DataTable/utils/TicketTableFilters";
@@ -15,6 +16,16 @@ import { AdminTableHeader } from "../../Common/DataTable/utils/TableHeaders";
 // Import the new Sidebar component
 import { TicketDetailsSidebar } from "@/components/Common/DataTable";
 
+// Check if ticket is overdue (7+ days old and still active)
+const isOverdue = (ticket: Ticket) => {
+  const activeStatuses = ['open', 'assigned', 'in_progress'];
+  if (!activeStatuses.includes(ticket.status)) return false;
+  const createdDate = new Date(ticket.created_at);
+  const now = new Date();
+  const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+  return daysDiff > 7;
+};
+
 interface AllTicketsTableProps {
   activeQuickFilter?: QuickFilterType;
   onFilterChange?: (filter: QuickFilterType) => void;
@@ -28,17 +39,6 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
     defaultStatusFilter: 'all', // Fetch all statuses
     ordering: '-updated_at',
   });
-
-  // Helper: Check if ticket is overdue (7+ days old and still active)
-  const isOverdue = (ticket: any) => {
-    const activeStatuses = ['open', 'assigned', 'in_progress'];
-    if (!activeStatuses.includes(ticket.status)) return false;
-    
-    const createdDate = new Date(ticket.created_at);
-    const now = new Date();
-    const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-    return daysDiff > 7;
-  };
 
   // Use server-side analytics when available to determine overdue tickets
   // This keeps the QuickFilter counts consistent with the StatsCards which use admin analytics
@@ -70,7 +70,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
       default:
         return table.tickets;
     }
-  }, [table.tickets, activeQuickFilter]);
+  }, [table.tickets, activeQuickFilter, overdueIdSet]);
 
   // Calculate filter counts - use analytics total for "all" to match StatsCards
   const filterCounts = useMemo(() => {
@@ -86,7 +86,7 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
       in_progress: table.tickets.filter(t => t.status === 'in_progress').length,
       resolved: table.tickets.filter(t => t.status === 'resolved').length,
     };
-  }, [table.tickets, adminAnalytics]);
+  }, [table.tickets, adminAnalytics, overdueIdSet]);
 
   // Transform filtered tickets with raisedByName
   const filteredTableData = useMemo(() => {

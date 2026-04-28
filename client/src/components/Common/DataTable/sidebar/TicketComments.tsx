@@ -74,15 +74,15 @@ function setCache(ticketId: number, data: Comment[]) {
 // Load persistent cache at module init
 try {
   loadCacheFromStorage();
-} catch (e) {
-  /* ignore */
+} catch {
+  /* ignore loading error */
 }
 
 function TicketCommentsInner({ ticket }: TicketCommentsProps) {
   // Log ticket prop only when ticket id or updated_at changes
   useEffect(() => {
     console.log('TicketComments: ticket prop', ticket);
-  }, [ticket.id, (ticket as any).updated_at]);
+  }, [ticket.id, (ticket as unknown as { updated_at?: string }).updated_at]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -100,7 +100,7 @@ function TicketCommentsInner({ ticket }: TicketCommentsProps) {
   useEffect(() => {
     let mounted = true;
 
-    const useCacheOrFetch = async () => {
+    const fetchComments = async () => {
       const cached = COMMENTS_CACHE.get(ticket.id);
       const now = Date.now();
 
@@ -145,7 +145,7 @@ function TicketCommentsInner({ ticket }: TicketCommentsProps) {
       }
     };
 
-    useCacheOrFetch();
+    fetchComments();
 
     return () => {
       mounted = false;
@@ -301,6 +301,6 @@ function TicketCommentsInner({ ticket }: TicketCommentsProps) {
 // Memoize to avoid re-rendering when parent re-renders but ticket hasn't changed
 export const TicketComments = React.memo(
   TicketCommentsInner,
-  (prev, next) => prev.ticket.id === next.ticket.id && (prev.ticket as any).updated_at === (next.ticket as any).updated_at
+  (prev, next) => prev.ticket.id === next.ticket.id && prev.ticket.updated_at === next.ticket.updated_at
 );
 

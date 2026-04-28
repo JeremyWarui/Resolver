@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, FileSpreadsheet, TrendingUp, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
-import reportsService from '@/api/services/reportsService';
+import reportsService, { type GenerateReportParams } from '@/api/services/reportsService';
 import { useTickets } from '@/hooks/tickets';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -50,15 +50,11 @@ const TechReport = () => {
 
     setIsDownloading(true);
     try {
-      const params: any = {
+      const params: GenerateReportParams = {
         report_type: 'technician-performance',
         ...(startDate && endDate && { start_date: startDate, end_date: endDate }),
+        ...(technicianId && { technician_id: technicianId }),
       };
-      
-      // Only add technician_id if available (for filtering)
-      if (technicianId) {
-        params.technician_id = technicianId;
-      }
       
       await reportsService.generateAndDownload(params);
 

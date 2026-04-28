@@ -64,10 +64,11 @@ export default function SectionDetails({ isOpen, onOpenChange, section, onUpdate
       toast.success('Section updated successfully');
       setMode('view');
       onUpdated?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Update error:', error);
-      if (error?.response?.data) {
-        const data = error.response.data;
+      const err = error as { response?: { data?: Record<string, unknown> } };
+      if (err?.response?.data) {
+        const data = err.response.data;
         Object.keys(data).forEach((key) => {
           const val = data[key];
           const message = Array.isArray(val) ? val.join(' ') : String(val);

@@ -14,11 +14,11 @@ export const createTicketSchema = z.object({
   description: z.string().min(10, {
     message: 'Description must be at least 10 characters.',
   }),
-  section_id: z.string({
-    required_error: 'Please select a section.',
+  section_id: z.string().min(1, {
+    message: 'Please select a section.',
   }),
-  facility_id: z.string({
-    required_error: 'Please select a facility.',
+  facility_id: z.string().min(1, {
+    message: 'Please select a facility.',
   }),
 });
 

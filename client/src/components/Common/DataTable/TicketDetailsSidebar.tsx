@@ -36,6 +36,7 @@ export interface TicketDetailsSidebarProps {
     first_name: string;
     last_name: string;
     username: string;
+    email?: string;
     sections: number[];
   }[];
   sections?: Section[]; // For looking up section ID from section name
@@ -83,7 +84,7 @@ export function TicketDetailsSidebar({
             username: tech.username,
             first_name: tech.first_name,
             last_name: tech.last_name,
-            email: (tech as any).email || '',
+            email: tech.email || '',
             role: 'technician' as const,
             sections: tech.sections || []
           }));

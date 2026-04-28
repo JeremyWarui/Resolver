@@ -216,8 +216,8 @@ const ChartSection = () => {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ percent }) => {
-                      return `${(percent * 100).toFixed(0)}%`;
+                    label={({ percent = 0 }: { percent?: number }) => {
+                      return `${((percent || 0) * 100).toFixed(0)}%`;
                     }}
                     labelLine={false}
                   >

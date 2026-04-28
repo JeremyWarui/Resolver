@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   Sheet,
@@ -37,15 +37,17 @@ export default function FacilityDetails({ isOpen, onOpenChange, facility, onUpda
 
   const { updateFacility, loading: isUpdating } = useManageFacilities();
 
-  // Sync edit state
-  useEffect(() => {
+  // Sync edit state when facility prop changes (React recommended "adjusting state on prop changes" pattern)
+  const [prevFacility, setPrevFacility] = useState(facility);
+  if (prevFacility !== facility) {
+    setPrevFacility(facility);
     if (facility) {
       setEditedName(facility.name || '');
       setEditedType(facility.type || '');
       setEditedStatus(facility.status || '');
       setEditedLocation(facility.location || '');
     }
-  }, [facility]);
+  }
 
   if (!facility) return null;
 
@@ -65,7 +67,7 @@ export default function FacilityDetails({ isOpen, onOpenChange, facility, onUpda
     try {
       const payload = {
         name: editedName,
-        type: editedType as any,
+        type: editedType as 'building' | 'ict' | 'laundry' | 'kitchen' | 'residential' | null,
         status: editedStatus,
         location: editedLocation,
       };
@@ -73,10 +75,11 @@ export default function FacilityDetails({ isOpen, onOpenChange, facility, onUpda
       toast.success('Facility updated successfully');
       setMode('view');
       onUpdated?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Update error:', error);
-      if (error?.response?.data) {
-        const data = error.response.data;
+      const err = error as { response?: { data?: Record<string, unknown> } };
+      if (err?.response?.data) {
+        const data = err.response.data;
         Object.keys(data).forEach((key) => {
           const val = data[key];
           const message = Array.isArray(val) ? val.join(' ') : String(val);

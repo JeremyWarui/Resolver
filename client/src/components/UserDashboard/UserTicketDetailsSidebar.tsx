@@ -44,7 +44,6 @@ export function UserTicketDetailsSidebar({
   isOpen,
   onOpenChange,
   ticket,
-  currentUser: _currentUser, // Kept for backward compatibility but unused
   onUpdate,
   viewOnly = false,
 }: UserTicketDetailsSidebarProps) {

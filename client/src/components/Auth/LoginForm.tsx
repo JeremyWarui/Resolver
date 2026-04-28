@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,11 +18,11 @@ interface LoginFormProps {
 
 // Simple login schema with username and password
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required')
+  username: z.string().min(1, { message: 'Username is required' }),
+  password: z.string().min(1, { message: 'Password is required' })
 });
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegister }) => {
+export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   // Simplified state - remove magic link logic for testing
   // const [authMethod, setAuthMethod] = useState<'password' | 'magic_link' | null>(null);
   // const [userRole, setUserRole] = useState<string>('');
@@ -62,11 +62,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
       };
       
       const redirectPath = roleRedirect[result.role as keyof typeof roleRedirect] || '/dashboard';
-      window.location.href = redirectPath;
+      window.location.assign(redirectPath);
       
       onSuccess?.();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err?.response?.data?.message || 'Login failed. Please check your credentials.');
     }
   };
 

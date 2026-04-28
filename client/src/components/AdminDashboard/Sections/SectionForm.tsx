@@ -54,7 +54,7 @@ const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: Sectio
       }
     } catch (err) {
       console.error(err);
-      const anyErr = err as any;
+      const anyErr = err as { response?: { data?: Record<string, unknown> } };
       if (anyErr?.response?.data && typeof anyErr.response.data === 'object') {
         const data = anyErr.response.data;
         Object.keys(data).forEach((key) => {
@@ -63,7 +63,7 @@ const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: Sectio
           if (key === 'non_field_errors' || key === 'detail') {
             toast.error(message);
           } else {
-            try { form.setError(key as any, { type: 'server', message }); } catch (e) { }
+            try { form.setError(key as keyof CreateSectionFormValues, { type: 'server', message }); } catch { /* ignore */ }
           }
         });
       } else {

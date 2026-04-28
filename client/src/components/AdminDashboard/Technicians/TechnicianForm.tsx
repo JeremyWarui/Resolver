@@ -18,7 +18,7 @@ import useCreateUser from '@/hooks/users/useCreateUser';
 import { useSharedData } from '@/contexts/SharedDataContext';
 import useUpdateUser from '@/hooks/users/useUpdateUser';
 import { createTechnicianSchema, type CreateTechnicianFormValues } from '@/utils/entityValidation';
-import type { Technician } from '@/types';
+import type { Technician, CreateUserPayload, User } from '@/types';
 
 interface TechnicianFormProps {
   isOpen: boolean;
@@ -95,17 +95,18 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
       // Filter out any zero/empty section IDs
       const filteredSections = (values.sections || []).filter(id => id && id > 0);
 
-      const payload = {
-        first_name: values.first_name,
-        last_name: values.last_name,
-        email: values.email,
-        ...(values.password ? { password: values.password } : {}),
-        role: 'technician' as const,
-        sections: filteredSections,
-      };
-
       if (technician) {
-        const res = await updateUser(technician.id, payload as any);
+        const updatePayload: Partial<User> = {
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          role: 'technician',
+          sections: filteredSections,
+        };
+        if (values.password) {
+          updatePayload.password = values.password;
+        }
+        const res = await updateUser(technician.id, updatePayload);
         if (res) {
           toast.success('Technician updated');
           onSuccess?.();
@@ -113,14 +114,22 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           toast.error('Failed to update technician');
         }
       } else {
-        await createUser(payload as any);
+        const createPayload: CreateUserPayload = {
+          first_name: values.first_name,
+          last_name: values.last_name,
+          email: values.email,
+          password: values.password,
+          role: 'technician',
+          sections: filteredSections,
+        };
+        await createUser(createPayload);
         toast.success('Technician created');
         form.reset();
         onSuccess?.();
       }
     } catch (err) {
       console.error(err);
-      const anyErr = err as any;
+      const anyErr = err as { response?: { data?: Record<string, unknown> } };
       if (anyErr?.response?.data && typeof anyErr.response.data === 'object') {
         const data = anyErr.response.data;
         let foundField = false;
@@ -131,11 +140,9 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
             toast.error(message);
           } else {
             try {
-              form.setError(key as any, { type: 'server', message });
+              form.setError(key as keyof CreateTechnicianFormValues, { type: 'server', message });
               foundField = true;
-            } catch (e) {
-              // ignore
-            }
+            } catch { /* ignore */ }
           }
         });
         if (!foundField) toast.error('Failed to save technician');

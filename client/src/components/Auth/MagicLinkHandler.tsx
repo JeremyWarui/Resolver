@@ -11,7 +11,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -20,18 +19,11 @@ import { CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 export const MagicLinkHandler: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(() => token ? 'verifying' : 'error');
   const [rememberMe, setRememberMe] = useState(false);
-  
-  // COMMENTED OUT FOR TESTING - Magic Link functionality disabled
-  // const { magicLinkLogin } = useAuth();
-  const { } = useAuth(); // Temporary placeholder
 
   useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      return;
-    }
+    if (!token) return;
 
     const handleMagicLink = async () => {
       try {
@@ -64,9 +56,10 @@ export const MagicLinkHandler: React.FC = () => {
         //       navigate('/');
         //   }
         // }, 2000);
-      } catch (error: any) {
+      } catch (error: unknown) {
         setStatus('error');
-        toast.error(error.response?.data?.message || 'Invalid or expired link');
+        const err = error as { response?: { data?: { message?: string } } };
+        toast.error(err?.response?.data?.message || 'Invalid or expired link');
       }
     };
 

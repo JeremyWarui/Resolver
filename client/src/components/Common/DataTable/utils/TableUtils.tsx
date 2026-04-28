@@ -191,33 +191,33 @@ export const assignedToColumn = <T,>(header: string = "Assigned To"): ColumnDef<
   accessorKey: "assigned_to",
   header,
   cell: ({ row }) => {
-    const ticket = row.original as any;
+    const ticket = row.original as Record<string, unknown>;
     
     // Priority 1: Use optimized assigned_to_name string (new backend format)
-    if (ticket.assigned_to_name) {
+    if (typeof ticket.assigned_to_name === 'string') {
       return <div>{ticket.assigned_to_name}</div>;
     }
-    
+
     // Priority 2: Check if unassigned
     if (!ticket.assigned_to && !ticket.assigned_to_id) {
       return <div>Unassigned</div>;
     }
-    
+
     // Priority 3: Backward compatibility - handle old object format
     const assignedTo = row.getValue("assigned_to");
     if (typeof assignedTo === "object" && assignedTo !== null) {
       const user = assignedTo as { username?: string; first_name?: string; last_name?: string };
-      const fullName = user.first_name && user.last_name 
-        ? `${user.first_name} ${user.last_name}` 
+      const fullName = user.first_name && user.last_name
+        ? `${user.first_name} ${user.last_name}`
         : user.username || "N/A";
       return <div>{fullName}</div>;
     }
-    
+
     // Priority 4: Handle string format
     if (typeof assignedTo === "string") {
       return <div>{assignedTo}</div>;
     }
-    
+
     return <div>Unassigned</div>;
   },
   enableSorting: false,
@@ -305,7 +305,7 @@ export function AdminActionsColumn<T>(options: {
 }
 
 export function technicianViewColumn<T>(options: {
-  setSelectedTicket: (ticket: any) => void;
+  setSelectedTicket: (ticket: T | null) => void;
   setIsTicketDialogOpen: (open: boolean) => void;
 }): ColumnDef<T> {
   return {

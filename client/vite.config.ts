@@ -22,24 +22,26 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: (id: string) => {
           // Vendor chunk for React and core libraries
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          
+          if (id.includes('react') || id.includes('react-router')) {
+            return 'react-vendor';
+          }
           // UI library chunk
-          'ui-vendor': [
-            '@tanstack/react-table', 
-            'sonner', 
-            'react-hook-form', 
-            '@hookform/resolvers',
-            'zod'
-          ],
-          
+          if (id.includes('@tanstack/react-table') || id.includes('sonner') || 
+              id.includes('react-hook-form') || id.includes('@hookform') || 
+              id.includes('zod')) {
+            return 'ui-vendor';
+          }
           // Chart/visualization libraries
-          'charts-vendor': ['recharts'],
-          
-          // Utilities and icons chunk  
-          'utils-vendor': ['clsx', 'tailwind-merge', 'lucide-react', 'axios']
+          if (id.includes('recharts')) {
+            return 'charts-vendor';
+          }
+          // Utilities and icons chunk
+          if (id.includes('clsx') || id.includes('tailwind-merge') || 
+              id.includes('lucide-react') || id.includes('axios')) {
+            return 'utils-vendor';
+          }
         }
       }
     },

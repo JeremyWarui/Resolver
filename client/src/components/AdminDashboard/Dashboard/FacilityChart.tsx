@@ -140,7 +140,6 @@ export function FacilityChart() {
             />
             <Bar
               dataKey="value"
-              layout="vertical"
               fill="hsl(210, 100%, 50%)"
               radius={4}
             >

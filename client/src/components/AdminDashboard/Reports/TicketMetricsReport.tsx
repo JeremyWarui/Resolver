@@ -81,7 +81,7 @@ export default function TicketMetricsReport() {
       <div className="flex flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
-          <Select value={timeframe} onValueChange={(value: any) => setTimeframe(value)}>
+          <Select value={timeframe} onValueChange={(value) => setTimeframe(value as 'day' | 'week' | 'month')}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select timeframe" />
             </SelectTrigger>
@@ -95,7 +95,7 @@ export default function TicketMetricsReport() {
 
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-gray-500" />
-          <Select value={groupBy} onValueChange={(value: any) => setGroupBy(value)}>
+          <Select value={groupBy} onValueChange={(value) => setGroupBy(value as 'day' | 'week' | 'month')}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Group by" />
             </SelectTrigger>
@@ -127,7 +127,7 @@ export default function TicketMetricsReport() {
                     innerRadius={60}
                     outerRadius={100}
                     labelLine={false}
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    label={({ percent = 0 }: { percent?: number }) => `${((percent || 0) * 100).toFixed(0)}%`}
                     dataKey="value"
                   >
                     {statusChartData.map((entry, index) => (

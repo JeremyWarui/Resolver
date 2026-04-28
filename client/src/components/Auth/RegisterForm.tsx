@@ -57,24 +57,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       toast.success('Account created successfully! Welcome to Resolver.');
       
       // Redirect new users to their dashboard (new users default to 'user' role)
-      window.location.href = '/user';
+      window.location.assign('/user');
       
       onSuccess?.();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message 
-        || error.response?.data?.error 
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; error?: string; errors?: Record<string, string> } } };
+      const errorMessage = err?.response?.data?.message
+        || err?.response?.data?.error
         || 'Registration failed. Please try again.';
-      
-      // Handle specific validation errors from backend
-      if (error.response?.data?.errors) {
-        Object.keys(error.response.data.errors).forEach(field => {
-          form.setError(field as any, {
+
+      if (err?.response?.data?.errors) {
+        Object.keys(err.response.data.errors).forEach(field => {
+          form.setError(field as keyof z.infer<typeof registerSchema>, {
             type: 'server',
-            message: error.response.data.errors[field]
+            message: err.response!.data!.errors![field]
           });
         });
       }
-      
+
       toast.error(errorMessage);
     }
   };

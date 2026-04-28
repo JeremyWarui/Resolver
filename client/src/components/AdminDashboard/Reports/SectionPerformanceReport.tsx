@@ -113,7 +113,7 @@ export default function SectionPerformanceReport() {
                     innerRadius={60}
                     outerRadius={100}
                     labelLine={false}
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    label={({ percent = 0 }: { percent?: number }) => `${((percent || 0) * 100).toFixed(0)}%`}
                     dataKey="value"
                   >
                     {sectionPieData.map((entry, index) => (

@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import type { Ticket } from '@/types';
+import type { Ticket, Technician } from '@/types';
 import * as TableUtils from './TableUtils';
 
 /**
@@ -9,7 +9,7 @@ export interface TicketColumnsConfig {
   role: 'admin' | 'user' | 'technician';
   setSelectedTicket?: (ticket: Ticket | null) => void;
   setIsTicketDialogOpen?: (open: boolean) => void;
-  technicians?: any[];
+  technicians?: Technician[];
   allStatuses?: string[];
 }
 

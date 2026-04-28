@@ -40,21 +40,20 @@ const StatsCards = () => {
   // Extract system overview data after loading
   const systemOverview = analytics?.system_overview;
 
-  // Create ticket stats component with real data from backend
-  const TicketStats = () => {
-    // Calculate in-progress tickets (assigned + in_progress status)
-    const inProgressTickets = systemOverview 
-      ? systemOverview.total_tickets - systemOverview.open_tickets - systemOverview.resolved_tickets
-      : 0;
+  // Calculate in-progress tickets (assigned + in_progress status)
+  const inProgressTickets = systemOverview 
+    ? systemOverview.total_tickets - systemOverview.open_tickets - systemOverview.resolved_tickets
+    : 0;
 
-    // Calculate percentage changes (you can enhance this with historical data)
-    const resolutionRate = systemOverview?.resolution_rate || 0;
-    const newTickets24h = systemOverview?.new_tickets_24h || 0;
-    const ticketsThisWeek = systemOverview?.tickets_past_week || 0;
-    const ticketsThisMonth = systemOverview?.tickets_past_month || 0;
-    const overdueCount = analytics?.overdue_tickets?.length || 0;
+  // Calculate percentage changes (you can enhance this with historical data)
+  const resolutionRate = systemOverview?.resolution_rate || 0;
+  const newTickets24h = systemOverview?.new_tickets_24h || 0;
+  const ticketsThisWeek = systemOverview?.tickets_past_week || 0;
+  const ticketsThisMonth = systemOverview?.tickets_past_month || 0;
+  const overdueCount = analytics?.overdue_tickets?.length || 0;
 
-    return (
+  return (
+    <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-2'>
       <>
         <StatCard
           title="Total Tickets"
@@ -128,12 +127,6 @@ const StatsCards = () => {
           isLoading={loading}
         />
       </>
-    );
-  };
-
-  return (
-    <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-2'>
-      <TicketStats />
     </div>
   );
 };
