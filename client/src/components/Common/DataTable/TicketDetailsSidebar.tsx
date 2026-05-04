@@ -42,18 +42,20 @@ export interface TicketDetailsSidebarProps {
   sections?: Section[]; // For looking up section ID from section name
   users?: { id: number; username: string; first_name: string; last_name: string; }[]; // For displaying raised_by full name
   currentUser?: string;
-  role?: 'admin' | 'user' | 'technician';
+  role?: 'admin' | 'user' | 'technician' | 'section_head' | 'hod' | 'director';
   onUpdate?: (updatedTicket: Ticket) => Promise<void>;
+  viewOnly?: boolean;
 }
 
 export function TicketDetailsSidebar({
   isOpen,
   onOpenChange,
   ticket,
-  technicians = [], // Add technicians prop
+  technicians = [],
   role = 'user',
   users = [],
   onUpdate,
+  viewOnly = false,
 }: TicketDetailsSidebarProps) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -69,12 +71,12 @@ export function TicketDetailsSidebar({
   const raisedByName = ticketWithName.raisedByName || 
     (raisedByUser ? `${raisedByUser.first_name} ${raisedByUser.last_name}` : ticket.raised_by);
   
-  // Use section_id_value from backend for filtering
-  const sectionId = ticket.section_id_value;
-  
+  const sectionId = ticket.section?.id;
+  const isManagementRole = role === 'admin' || role === 'section_head' || role === 'hod' || role === 'director';
+
   // Fetch technicians filtered by section when in edit mode
   useEffect(() => {
-    if (mode === 'edit' && role === 'admin' && sectionId) {
+  if (mode === 'edit' && isManagementRole && sectionId) {
       // If technicians are provided (from SharedDataContext), filter them client-side by section
       if (technicians.length > 0) {
         const filteredTechnicians = technicians
@@ -97,8 +99,11 @@ export function TicketDetailsSidebar({
             setSectionTechnicians(response.results);
           })
           .catch(error => {
+            const status = (error as { response?: { status?: number } })?.response?.status;
+            if (status !== 403) {
+              toast.error('Failed to load technicians for this section');
+            }
             console.error('Error fetching section technicians:', error);
-            toast.error('Failed to load technicians for this section');
             setSectionTechnicians([]);
           })
           .finally(() => {
@@ -309,6 +314,15 @@ export function TicketDetailsSidebar({
               </div>
             ) : (
               <div className='space-y-6'>
+                {/* VIEW-ONLY BANNER */}
+                {viewOnly && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-2">
+                    <span className="text-blue-600 text-xs font-medium">
+                      This ticket is not assigned to you — view only
+                    </span>
+                  </div>
+                )}
+
                 {/* DESCRIPTION SECTION - Always read-only */}
                 <div className='space-y-2'>
                   <h3 className='text-sm font-semibold text-gray-900 uppercase tracking-wide'>
@@ -330,13 +344,13 @@ export function TicketDetailsSidebar({
                     {/* Section */}
                     <div className='px-4 py-3 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-600'>Section</span>
-                      <span className='text-sm text-gray-900'>{ticket.section}</span>
+                      <span className='text-sm text-gray-900'>{ticket.section?.name ?? '—'}</span>
                     </div>
-                    
+
                     {/* Facility */}
                     <div className='px-4 py-3 flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-600'>Facility</span>
-                      <span className='text-sm text-gray-900'>{ticket.facility}</span>
+                      <span className='text-sm text-gray-900'>{ticket.facility?.name ?? '—'}</span>
                     </div>
                     
                     {/* Raised By */}
@@ -383,16 +397,27 @@ export function TicketDetailsSidebar({
                       </div>
                     )}
 
-                    {/* Assigned To (for admin and technician) */}
-                    {(role === 'admin' || role === 'technician') && (
+                    {/* Escalation status */}
+                    {ticket.escalation_status && ticket.escalation_status.code !== 'none' && (
+                      <div className='px-4 py-3 border-l-4 border-red-500 bg-red-50'>
+                        <span className='text-sm font-medium text-red-700 block mb-0.5'>
+                          Escalation
+                        </span>
+                        <p className='text-sm text-red-800'>{ticket.escalation_status.label}</p>
+                        {ticket.escalated_to && (
+                          <p className='text-xs text-red-600 mt-0.5'>
+                            Escalated to: {ticket.escalated_to.name}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Assigned To (for admin / management / technician) */}
+                    {(isManagementRole || role === 'technician') && (
                       <div className='px-4 py-3 flex items-center justify-between'>
                         <span className='text-sm font-medium text-gray-600'>Assigned to</span>
                         <span className='text-sm text-gray-900'>
-                          {ticket.assigned_to_name
-                            ? ticket.assigned_to_name
-                            : (ticket.assigned_to 
-                              ? `${ticket.assigned_to.first_name} ${ticket.assigned_to.last_name}` 
-                              : 'Unassigned')}
+                          {ticket.assigned_to?.name ?? 'Unassigned'}
                         </span>
                       </div>
                     )}
@@ -400,7 +425,7 @@ export function TicketDetailsSidebar({
                 </div>
 
                 {/* ACTIONS SECTION - Only visible if not closed and in edit mode */}
-                {!isClosed && mode === 'edit' && role === 'admin' && (
+                {!viewOnly && !isClosed && mode === 'edit' && isManagementRole && (
                   <div className='space-y-4'>
                     <h3 className='text-sm font-semibold text-gray-900 uppercase tracking-wide'>
                       Actions
@@ -417,7 +442,7 @@ export function TicketDetailsSidebar({
                             {loadingTechnicians ? (
                               <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                                 <Loader2 className='h-4 w-4 animate-spin' />
-                                Loading technicians in {ticket.section}...
+                                Loading technicians in {ticket.section?.name}...
                               </div>
                             ) : (
                               <>
@@ -427,7 +452,7 @@ export function TicketDetailsSidebar({
                                   technicians={sectionTechnicians}
                                 />
                                 <p className='text-xs text-muted-foreground'>
-                                  Showing only technicians in <span className='font-medium'>{ticket.section}</span> section
+                                  Showing only technicians in <span className='font-medium'>{ticket.section?.name}</span> section
                                   {sectionTechnicians.length > 0 && ` (${sectionTechnicians.length} available)`}
                                 </p>
                               </>
@@ -476,7 +501,7 @@ export function TicketDetailsSidebar({
                 )}
 
                 {/* TECHNICIAN ACTIONS - Workflow buttons */}
-                {role === 'technician' && !isClosed && mode === 'view' && (
+                {!viewOnly && role === 'technician' && !isClosed && mode === 'view' && (
                   <div className='space-y-4'>
                     <h3 className='text-sm font-semibold text-gray-900 uppercase tracking-wide'>
                       Actions
@@ -581,17 +606,70 @@ export function TicketDetailsSidebar({
                   </div>
                 )}
 
-                {/* Edit Button for Admin (when in view mode) */}
-                {role === 'admin' && !isClosed && mode === 'view' && (
-                  <div className='flex justify-end'>
+                {/* Management actions — view mode */}
+                {!viewOnly && isManagementRole && !isClosed && mode === 'view' && (
+                  <div className='flex flex-wrap gap-2 justify-end'>
+                    {/* Escalate button — shown when ticket can still be escalated (level < 2) */}
+                    {(ticket.escalation_level ?? 0) < 2 &&
+                      ticket.status !== 'resolved' &&
+                      ticket.status !== 'closed' && (
+                        <Button
+                          variant='outline'
+                          onClick={async () => {
+                            if (!window.confirm('Escalate this ticket to the next level?')) return;
+                            setIsUpdating(true);
+                            try {
+                              const { ticketsService } = await import('@/api/services');
+                              const updated = await ticketsService.escalateTicket(ticket.id);
+                              await onUpdate?.(updated);
+                              toast.success(`Ticket #${ticket.ticket_no} escalated`);
+                            } catch {
+                              toast.error('Failed to escalate ticket');
+                            } finally {
+                              setIsUpdating(false);
+                            }
+                          }}
+                          disabled={isUpdating}
+                          className='border-orange-300 text-orange-700 hover:bg-orange-50'
+                        >
+                          {isUpdating ? <Loader2 className='h-4 w-4 animate-spin mr-1' /> : null}
+                          Escalate
+                        </Button>
+                      )}
+
+                    {/* Close button — shown for resolved tickets by management */}
+                    {ticket.status === 'resolved' && (
+                      <Button
+                        onClick={async () => {
+                          if (!window.confirm('Close this ticket? This action cannot be undone.')) return;
+                          setIsUpdating(true);
+                          try {
+                            const { ticketsService } = await import('@/api/services');
+                            const updated = await ticketsService.closeTicket(ticket.id);
+                            await onUpdate?.(updated);
+                            toast.success(`Ticket #${ticket.ticket_no} closed`);
+                          } catch {
+                            toast.error('Failed to close ticket');
+                          } finally {
+                            setIsUpdating(false);
+                          }
+                        }}
+                        disabled={isUpdating}
+                        className='bg-gray-700 hover:bg-gray-800 text-white'
+                      >
+                        {isUpdating ? <Loader2 className='h-4 w-4 animate-spin mr-1' /> : null}
+                        Close Ticket
+                      </Button>
+                    )}
+
+                    {/* Edit / Update button */}
                     <Button
                       onClick={() => {
                         setMode('edit');
-                        // Reset to current ticket values when entering edit mode
                         setEditedStatus(ticket.status);
                         setEditedAssignedToId(ticket.assigned_to?.id || null);
                       }}
-                      className='gap-2 bg-blue-600 hover:bg-blue-700 text-white'
+                      className='bg-blue-600 hover:bg-blue-700 text-white'
                       title={getAdminActionButton().description}
                     >
                       {getAdminActionButton().text}
@@ -599,13 +677,12 @@ export function TicketDetailsSidebar({
                   </div>
                 )}
 
-                {/* Cancel Edit Button for Admin (when in edit mode) */}
-                {role === 'admin' && mode === 'edit' && (
+                {/* Cancel Edit Button for management roles */}
+                {!viewOnly && isManagementRole && mode === 'edit' && (
                   <div className='flex justify-end'>
                     <Button
                       onClick={() => {
                         setMode('view');
-                        // Reset to actual ticket values when canceling
                         setEditedStatus(ticket.status);
                         setEditedAssignedToId(ticket.assigned_to?.id || null);
                       }}

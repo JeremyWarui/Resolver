@@ -2,9 +2,11 @@ import apiClient from '../client';
 import { AUTH_CONFIG } from '../config';
 
 // Types for authentication
+import type { UserRole } from '@/types';
+
 export interface AuthMethodResponse {
   auth_method: 'password' | 'magic_link';
-  user_role: 'user' | 'admin' | 'technician' | 'manager';
+  user_role: UserRole;
   user_id: number;
 }
 
@@ -13,7 +15,7 @@ export interface LoginResponse {
   user_id: number;
   username: string;
   email: string;
-  role: 'user' | 'admin' | 'technician' | 'manager';
+  role: UserRole;
   first_name: string;
   last_name: string;
   sections?: Array<{ id: number; name: string }>;

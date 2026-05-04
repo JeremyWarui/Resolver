@@ -32,8 +32,15 @@ const useUsers = (params: UseUsersParams = {}): UseUsersResult => {
       setUsers(response.results);
       setTotalUsers(response.count);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch users'));
-      console.error('Error fetching users:', err);
+      // 403 means the current role lacks permission — silently return empty rather than breaking UI
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 403) {
+        setUsers([]);
+        setTotalUsers(0);
+      } else {
+        setError(err instanceof Error ? err : new Error('Failed to fetch users'));
+        console.error('Error fetching users:', err);
+      }
     } finally {
       setLoading(false);
     }

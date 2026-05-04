@@ -96,7 +96,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
       const filteredSections = (values.sections || []).filter(id => id && id > 0);
 
       if (technician) {
-        const updatePayload: Partial<User> = {
+        const updatePayload: Partial<User> & { password?: string } = {
           first_name: values.first_name,
           last_name: values.last_name,
           email: values.email,

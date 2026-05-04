@@ -43,9 +43,9 @@ const Header = ({
     return `${first}${last}`.toUpperCase() || "U";
   };
 
-  const userName = currentUser 
-    ? `${currentUser.first_name} ${currentUser.last_name}`.trim() || currentUser.username
-    : "User";
+  const userName = currentUser
+    ? [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') || currentUser.username || 'User'
+    : 'User';
 
   return (
     <>

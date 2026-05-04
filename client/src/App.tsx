@@ -8,8 +8,11 @@ import { RegisterForm } from "./components/Auth/RegisterForm";
 
 // Lazy load main layout components for better code splitting
 const AdminLayout = lazy(() => import("./components/AdminDashboard/AdminLayout"));
-const UserLayout = lazy(() => import("./components/UserDashboard/UserLayout"));  
+const UserLayout = lazy(() => import("./components/UserDashboard/UserLayout"));
 const TechnicianLayout = lazy(() => import("./components/TechnicianDashboard/TechnicianLayout"));
+const SectionHeadLayout = lazy(() => import("./components/SectionHeadDashboard/SectionHeadLayout"));
+const HODLayout = lazy(() => import("./components/HODDashboard/HODLayout"));
+const DirectorLayout = lazy(() => import("./components/DirectorDashboard/DirectorLayout"));
 
 // Loading component for lazy routes
 const RouteLoading = () => (
@@ -67,15 +70,39 @@ const App = () => {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/technician/*" 
+          <Route
+            path="/technician/*"
             element={
               <ProtectedRoute requiredRoles={['technician']}>
                 <TechnicianLayout />
               </ProtectedRoute>
-            } 
+            }
           />
-          
+          <Route
+            path="/section-head/*"
+            element={
+              <ProtectedRoute requiredRoles={['section_head']}>
+                <SectionHeadLayout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hod/*"
+            element={
+              <ProtectedRoute requiredRoles={['hod']}>
+                <HODLayout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/director/*"
+            element={
+              <ProtectedRoute requiredRoles={['director']}>
+                <DirectorLayout />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Default redirect to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           

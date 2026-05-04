@@ -14,8 +14,9 @@ export interface UseTicketTableConfig {
    * - 'admin': Show all tickets with full filtering
    * - 'user': Show only tickets raised by current user
    * - 'technician': Show only tickets assigned to current technician
+   * - 'section_head' | 'hod' | 'director': Management roles — full access
    */
-  role: 'admin' | 'user' | 'technician';
+  role: 'admin' | 'user' | 'technician' | 'section_head' | 'hod' | 'director';
   
   /**
    * Current user ID for role-based filtering
@@ -34,6 +35,12 @@ export interface UseTicketTableConfig {
   
   // Note: technicians, users, and facilities are always available via SharedDataContext
   
+  /**
+   * When true and role is 'technician', omits the assigned_to filter so all
+   * section tickets are returned (used by the Section Tickets notice board).
+   */
+  fetchSectionTickets?: boolean;
+
   /**
    * Custom ordering for tickets (e.g., '-created_at', 'ticket_no')
    */
@@ -149,6 +156,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     defaultStatusFilter = 'all',
     defaultPageSize = 10,
     ordering = '-id',
+    fetchSectionTickets = false,
   } = config;
 
   // ==================== STATE ====================
@@ -194,8 +202,11 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
       params.raised_by = currentUserId;
       params.assigned_to = technicianFilter || undefined;
     } else if (role === 'technician') {
-      params.assigned_to = currentUserId;
-    } else if (role === 'admin') {
+      if (!fetchSectionTickets) {
+        params.assigned_to = currentUserId;
+      }
+    } else {
+      // admin, section_head, hod, director — full access with optional filters
       params.assigned_to = technicianFilter || undefined;
       params.raised_by = userFilter || undefined;
     }
@@ -213,6 +224,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     unassignedFilter,
     overdueFilter,
     ordering,
+    fetchSectionTickets,
   ]);
 
   // Fetch tickets
@@ -263,8 +275,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
       return {
         ...ticket,
         searchField: `${String(ticket.ticket_no).toLowerCase()} ${ticket.title.toLowerCase()}`,
-        sectionName: ticket.section,
-        raisedByName, // Add the full name for display
+        sectionName: ticket.section?.name ?? '',
+        raisedByName,
       };
     });
   }, [tickets, allUsersData]);

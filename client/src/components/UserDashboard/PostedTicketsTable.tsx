@@ -1,22 +1,19 @@
-// Import DRY utilities
+import { useEffect, useMemo } from 'react';
 import { useTicketTable } from '@/hooks/tickets';
 import { createTicketTableFilters } from '@/components/Common/DataTable/utils/TicketTableFilters';
 import { createTicketTableColumns } from '@/components/Common/DataTable/utils/TicketTableColumns';
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
-
-// Import DataTable component
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { UserTableHeader } from '../Common/DataTable/utils/TableHeaders';
 import { UserTicketDetailsSidebar } from './UserTicketDetailsSidebar';
 
-// Add interface for component props
 interface PostedTicketsTableProps {
   currentUser?: number;
-  viewOnly?: boolean; // New prop to indicate view-only mode
+  viewOnly?: boolean;
+  statusFilter?: string;
 }
 
-function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTableProps) {
-  // ✨ All state, data fetching, and handlers consolidated in one hook
+function PostedTicketsTable({ currentUser, viewOnly = false, statusFilter }: PostedTicketsTableProps) {
   const table = useTicketTable({
     role: 'user',
     currentUserId: currentUser,
@@ -24,22 +21,26 @@ function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTabl
     ordering: '-updated_at',
   });
 
-  // ✨ Generate columns with one function call
-  const columns = createTicketTableColumns({
+  useEffect(() => {
+    if (statusFilter !== undefined) {
+      table.setStatusFilter(statusFilter);
+      table.setPageIndex(0);
+    }
+  }, [statusFilter]);
+
+  const columns = useMemo(() => createTicketTableColumns({
     role: 'user',
     setSelectedTicket: table.setSelectedTicket,
     setIsTicketDialogOpen: table.setIsTicketDialogOpen,
-  });
+  }), [table.setSelectedTicket, table.setIsTicketDialogOpen]);
 
-  // ✨ Generate filters with one function call
   const filters = createTicketTableFilters(table, {
     includeStatus: true,
     includeSection: true,
     includeTechnician: true,
-    includeUser: true, // Enable raised_by filter for users
+    includeUser: true,
   });
 
-  // ✨ Generate column visibility config
   const columnVisibility = createTicketColumnVisibility({ role: 'user' });
 
   return (
@@ -48,7 +49,7 @@ function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTabl
         variant="user"
         columns={columns}
         data={table.tableData}
-        title={currentUser ? 'Your Tickets' : 'Posted Tickets'}
+        title={currentUser ? 'My Tickets' : 'Posted Tickets'}
         subtitle=""
         {...table.commonTableProps}
         defaultPageSize={table.pageSize}
@@ -62,22 +63,15 @@ function PostedTicketsTable({ currentUser, viewOnly = false }: PostedTicketsTabl
         selectedRowId={table.selectedTicket?.id || null}
         renderHeader={UserTableHeader}
       />
-
-      {/* Ticket details sidebar */}
       {table.selectedTicket && (
-        (() => {
-          console.log('PostedTicketsTable: selectedTicket passed to sidebar', table.selectedTicket);
-          return (
-            <UserTicketDetailsSidebar
-              isOpen={table.isTicketDialogOpen}
-              onOpenChange={table.setIsTicketDialogOpen}
-              ticket={table.selectedTicket}
-              currentUser={table.selectedTicket.raised_by}
-              onUpdate={table.handleTicketUpdate}
-              viewOnly={viewOnly}
-            />
-          );
-        })()
+        <UserTicketDetailsSidebar
+          isOpen={table.isTicketDialogOpen}
+          onOpenChange={table.setIsTicketDialogOpen}
+          ticket={table.selectedTicket}
+          currentUser={table.selectedTicket.raised_by}
+          onUpdate={table.handleTicketUpdate}
+          viewOnly={viewOnly}
+        />
       )}
     </>
   );

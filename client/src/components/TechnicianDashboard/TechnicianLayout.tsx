@@ -3,6 +3,7 @@ import TechSideBar, { Section } from './TechSideBar';
 import Header from '../Common/Header';
 import FullScreenLoading from '../Common/FullScreenLoading';
 import TechTicketsPage from './TechTicketsPage';
+import TechSectionTickets from './TechSectionTickets';
 import TechReport from './TechReport';
 import { useUserData } from '@/hooks/users';
 import { SharedDataProvider } from '@/contexts/SharedDataContext';
@@ -39,15 +40,12 @@ const TechnicianLayoutContent = () => {
   // Fetch current user data
   const { userData, loading: userLoading } = useUserData();
 
-  // Determine header title based on the active section.
-  const headerTitle =
-    activeSection === 'dashboard'
-      ? 'Dashboard'
-      : activeSection === 'assignedTickets'
-        ? 'My Tickets'
-        : activeSection === 'report'
-          ? 'Reports'
-          : 'Settings';
+  const headerTitle: Record<Section['id'], string> = {
+    dashboard: 'Section Tickets',
+    assignedTickets: 'Assigned Tickets',
+    report: 'Reports',
+    settings: 'Settings',
+  };
 
   return (
     <div className='flex h-screen bg-gray-100'>
@@ -63,7 +61,7 @@ const TechnicianLayoutContent = () => {
       {/* Main Content Area */}
       <div className='flex-1 flex flex-col overflow-hidden'>
         <Header
-          title={headerTitle}
+          title={headerTitle[activeSection]}
           searchPlaceholder='Search...'
           currentUser={userData}
           onSearchChange={(value) => {
@@ -72,7 +70,7 @@ const TechnicianLayoutContent = () => {
           }}
         />
         <main className='flex-1 overflow-y-auto'>
-          {activeSection === 'dashboard' && <TechTicketsPage userData={userData} />}
+          {activeSection === 'dashboard' && <TechSectionTickets currentTechnicianId={userData?.id} />}
           {activeSection === 'assignedTickets' && <TechTicketsPage userData={userData} />}
           {activeSection === 'report' && <TechReport />}
           {activeSection === 'settings' && (

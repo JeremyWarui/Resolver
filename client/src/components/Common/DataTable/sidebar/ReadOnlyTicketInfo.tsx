@@ -44,13 +44,13 @@ export function ReadOnlyTicketInfo({
         {showFacility && (
           <div className="px-3 py-2 flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Facility</span>
-            <span className="text-sm text-gray-900">{ticket.facility}</span>
+            <span className="text-sm text-gray-900">{ticket.facility?.name ?? '—'}</span>
           </div>
         )}
         {showSection && (
           <div className="px-3 py-2 flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Section</span>
-            <span className="text-sm text-gray-900">{ticket.section}</span>
+            <span className="text-sm text-gray-900">{ticket.section?.name ?? '—'}</span>
           </div>
         )}
       </div>

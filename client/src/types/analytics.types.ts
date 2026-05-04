@@ -1,9 +1,9 @@
 // ============================================
-// TICKET ANALYTICS (from TicketAnalyticsView)
+// TICKET ANALYTICS
 // ============================================
 
 export interface TicketCounts {
-  period: string; // e.g., "Last 1 day", "Last 7 days"
+  period: string;
   count: number;
 }
 
@@ -13,7 +13,7 @@ export interface StatusCount {
 }
 
 export interface TrendDataPoint {
-  period: string; // ISO date string
+  period: string;
   count: number;
 }
 
@@ -36,16 +36,16 @@ export interface TicketAnalytics {
 }
 
 export interface TicketAnalyticsParams {
-  timeframe?: 'day' | 'week' | 'month'; // default: 'day'
+  timeframe?: 'day' | 'week' | 'month';
   facility_id?: number;
   section_id?: number;
-  raised_by?: number; // Filter by user who raised the ticket
-  group_by?: 'day' | 'week' | 'month'; // default: 'day'
-  days?: number; // default: 30
+  raised_by?: number;
+  group_by?: 'day' | 'week' | 'month';
+  days?: number;
 }
 
 // ============================================
-// TECHNICIAN ANALYTICS (from TechnicianAnalyticsView)
+// TECHNICIAN ANALYTICS
 // ============================================
 
 export interface TechnicianPerformance {
@@ -57,7 +57,7 @@ export interface TechnicianPerformance {
   pending_tickets: number;
   overdue_tickets: number;
   avg_rating: number;
-  avg_resolution_time: number; // in hours
+  avg_resolution_time: number;
   resolution_percentage: number;
 }
 
@@ -77,14 +77,14 @@ export interface TechnicianAnalyticsParams {
 }
 
 // ============================================
-// ADMIN ANALYTICS (from AdminDashboardAnalyticsView)
+// ADMIN ANALYTICS
 // ============================================
 
 export interface SystemOverview {
   total_tickets: number;
   open_tickets: number;
   resolved_tickets: number;
-  resolution_rate: number; // percentage
+  resolution_rate: number;
   new_tickets_24h: number;
   tickets_past_week: number;
   tickets_past_month: number;
@@ -106,4 +106,124 @@ export interface OverdueTicket {
 export interface AdminDashboardAnalytics {
   system_overview: SystemOverview;
   overdue_tickets: OverdueTicket[];
+}
+
+// ============================================
+// SECTION HEAD ANALYTICS  (/analytics/section-head/)
+// ============================================
+
+export interface SectionStat {
+  section: { id: number; name: string; code: string; section_head: string | null };
+  total_tickets: number;
+  open_tickets: number;
+  escalated_tickets: number;
+  avg_resolution_hours: number | null;
+  technician_count: number;
+}
+
+export interface TechPerformanceStat {
+  technician: { id: number; name: string; username: string; sections: string[] };
+  total_assigned: number;
+  resolved: number;
+  open: number;
+  avg_resolution_hours: number | null;
+  escalation_count: number;
+}
+
+export interface SectionHeadOverview {
+  total_tickets: number;
+  open_tickets: number;
+  overdue_tickets: number;
+  escalated_tickets: number;
+  avg_resolution_hours: number | null;
+}
+
+export interface SectionHeadDepartment {
+  name: string;
+  code: string;
+  campus: string | null;
+  sections_count: number;
+}
+
+export interface SectionHeadAnalytics {
+  department: SectionHeadDepartment;
+  overview: SectionHeadOverview;
+  section_stats: SectionStat[];
+  tech_performance: TechPerformanceStat[];
+  status_distribution: StatusCount[];
+}
+
+// ============================================
+// HOD ANALYTICS  (/analytics/hod/)
+// ============================================
+
+export interface DeptStat {
+  department: { id: number; name: string; code: string; hod: string | null };
+  total_tickets: number;
+  open_tickets: number;
+  escalated_tickets: number;
+  avg_resolution_hours: number | null;
+  sla_compliance: number;
+}
+
+export interface SectionPerformanceStat {
+  section: { id: number; name: string; code: string; department: string; section_head: string | null };
+  ticket_count: number;
+  open_count: number;
+  avg_resolution_hours: number | null;
+  technician_count: number;
+}
+
+export interface HODOverview {
+  total_tickets: number;
+  open_tickets: number;
+  overdue_tickets: number;
+  escalated_tickets: number;
+}
+
+export interface HODAnalytics {
+  campus: { id: number; name: string; code: string; location: string };
+  overview: HODOverview;
+  dept_stats: DeptStat[];
+  section_performance: SectionPerformanceStat[];
+  tech_performance: TechPerformanceStat[];
+}
+
+// ============================================
+// DIRECTOR ANALYTICS  (/analytics/director/)
+// ============================================
+
+export interface CampusStat {
+  campus: { id: number; name: string; code: string; location: string };
+  total_tickets: number;
+  open_tickets: number;
+  overdue_tickets: number;
+  escalated_tickets: number;
+  avg_resolution_hours: number | null;
+  sla_compliance: number;
+}
+
+export interface DeptPerformanceStat {
+  department: { id: number; name: string; code: string; campus: string; hod: string | null };
+  ticket_count: number;
+  open_count: number;
+  resolved_count: number;
+}
+
+export interface DirectorOverview {
+  total_tickets: number;
+  total_open: number;
+  total_escalated: number;
+  avg_resolution_time: number | null;
+}
+
+export interface DirectorAnalytics {
+  organization: { id: number; name: string; code: string };
+  overview: DirectorOverview;
+  campus_stats: CampusStat[];
+  dept_performance: DeptPerformanceStat[];
+}
+
+export interface RoleAnalyticsParams {
+  days?: number;
 }

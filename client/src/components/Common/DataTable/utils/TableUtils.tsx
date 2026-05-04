@@ -77,7 +77,13 @@ export const descriptionColumn = <T,>(header: string = "Description"): ColumnDef
 export const facilityColumn = <T,>(header: string = "Facility"): ColumnDef<T> => ({
   accessorKey: "facility",
   header,
-  cell: ({ row }) => <div>{row.getValue("facility") || "N/A"}</div>,
+  cell: ({ row }) => {
+    const val = row.getValue("facility");
+    const name = typeof val === 'object' && val !== null
+      ? (val as { name: string }).name
+      : (val as string | undefined);
+    return <div>{name || "N/A"}</div>;
+  },
   enableSorting: false,
 });
 
@@ -203,13 +209,13 @@ export const assignedToColumn = <T,>(header: string = "Assigned To"): ColumnDef<
       return <div>Unassigned</div>;
     }
 
-    // Priority 3: Backward compatibility - handle old object format
+    // Priority 3: Handle object format — API returns { id, name, username? }
     const assignedTo = row.getValue("assigned_to");
     if (typeof assignedTo === "object" && assignedTo !== null) {
-      const user = assignedTo as { username?: string; first_name?: string; last_name?: string };
-      const fullName = user.first_name && user.last_name
+      const user = assignedTo as { name?: string; username?: string; first_name?: string; last_name?: string };
+      const fullName = (user.first_name && user.last_name)
         ? `${user.first_name} ${user.last_name}`
-        : user.username || "N/A";
+        : user.name || user.username || "N/A";
       return <div>{fullName}</div>;
     }
 

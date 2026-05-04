@@ -56,8 +56,8 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
       case 'open':
         return table.tickets.filter(t => t.status === 'open');
       case 'unassigned':
-        return table.tickets.filter(t => 
-          !t.assigned_to_id && !t.assigned_to && !t.assigned_to_name
+        return table.tickets.filter(t =>
+          !t.assigned_to_id && !t.assigned_to
         );
       case 'overdue':
         return overdueIdSet
@@ -77,8 +77,8 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
     return {
       all: adminAnalytics?.system_overview?.total_tickets || table.tickets.length,
       open: table.tickets.filter(t => t.status === 'open').length,
-      unassigned: table.tickets.filter(t => 
-        !t.assigned_to_id && !t.assigned_to && !t.assigned_to_name
+      unassigned: table.tickets.filter(t =>
+        !t.assigned_to_id && !t.assigned_to
       ).length,
       overdue: overdueIdSet
         ? table.tickets.filter((t) => overdueIdSet.has(t.id)).length

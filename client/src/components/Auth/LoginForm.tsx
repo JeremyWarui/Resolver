@@ -55,13 +55,16 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
       toast.success(`Welcome back!`);
       
       // Redirect based on role from login response
-      const roleRedirect = {
-        'admin': '/dashboard',
-        'technician': '/technician', 
-        'user': '/user'
+      const roleRedirect: Record<string, string> = {
+        admin: '/dashboard',
+        technician: '/technician',
+        user: '/user',
+        section_head: '/section-head',
+        hod: '/hod',
+        director: '/director',
       };
-      
-      const redirectPath = roleRedirect[result.role as keyof typeof roleRedirect] || '/dashboard';
+
+      const redirectPath = roleRedirect[result.role] ?? '/dashboard';
       window.location.assign(redirectPath);
       
       onSuccess?.();

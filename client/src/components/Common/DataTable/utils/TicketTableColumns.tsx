@@ -6,7 +6,7 @@ import * as TableUtils from './TableUtils';
  * Configuration for which columns to include and customization
  */
 export interface TicketColumnsConfig {
-  role: 'admin' | 'user' | 'technician';
+  role: 'admin' | 'user' | 'technician' | 'section_head' | 'hod' | 'director';
   setSelectedTicket?: (ticket: Ticket | null) => void;
   setIsTicketDialogOpen?: (open: boolean) => void;
   technicians?: Technician[];
@@ -57,8 +57,9 @@ export function createTicketTableColumns(config: TicketColumnsConfig): ColumnDef
     TableUtils.searchFieldColumn('Search Field'),
   ];
 
-  // Add view button column for technicians
-  if (role === 'technician' && setSelectedTicket && setIsTicketDialogOpen) {
+  // Add view button column for technicians and management roles
+  const rolesWithViewButton = ['technician', 'section_head', 'hod', 'director'];
+  if (rolesWithViewButton.includes(role) && setSelectedTicket && setIsTicketDialogOpen) {
     columns.push(
       TableUtils.technicianViewColumn({
         setSelectedTicket,

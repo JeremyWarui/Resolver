@@ -1,12 +1,26 @@
+export type UserRole =
+  | 'user'
+  | 'technician'
+  | 'section_head'
+  | 'hod'
+  | 'director'
+  | 'admin';
+
 export interface User {
   id: number;
   username: string;
   first_name: string;
   last_name: string;
   email: string;
-  role: 'user' | 'admin' | 'technician' | 'manager';
-  sections: number[]; // Array of section IDs
-  password?: string; // write-only
+  role: UserRole;
+  sections: number[];
+  primary_campus_id: number | null;
+  primary_campus_display: string | null;
+  primary_department_id: number | null;
+  primary_department_display: string | null;
+  can_assign_tickets: boolean;
+  can_escalate_tickets: boolean;
+  can_view_analytics: boolean;
 }
 
 export interface CreateUserPayload {
@@ -14,7 +28,7 @@ export interface CreateUserPayload {
   last_name: string;
   email: string;
   password: string;
-  role?: 'user' | 'admin' | 'technician' | 'manager';
+  role?: UserRole;
   sections?: number[];
 }
 

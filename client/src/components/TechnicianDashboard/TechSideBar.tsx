@@ -23,8 +23,8 @@ const TechSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const { handleLogout, isLoading } = useLogout();
 
   const sections: Section[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'assignedTickets', label: 'My Tickets', icon: ClipboardList },
+    { id: 'dashboard', label: 'Section Tickets', icon: LayoutDashboard },
+    { id: 'assignedTickets', label: 'Assigned Tickets', icon: ClipboardList },
     { id: 'report', label: 'Reports', icon: FileText},
     { id: 'settings', label: 'Settings', icon: Settings },
   ];

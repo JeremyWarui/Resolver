@@ -5,6 +5,9 @@ import {
   ClipboardList,
   Users,
   Building,
+  Building2,
+  MapPin,
+  Layers,
   PenToolIcon as Tool,
   LogOut,
   FileText,
@@ -22,6 +25,9 @@ export interface Section {
     | 'sections'
     | 'technicians'
     | 'facilities'
+    | 'organizations'
+    | 'campuses'
+    | 'departments'
     | 'inventory'
     | 'settings';
   label: string;
@@ -29,12 +35,11 @@ export interface Section {
 }
 
 interface SideBarProps {
-  activeSection: Section["id"];
-  onSectionChange: (id: Section["id"]) => void;
+  activeSection: Section['id'];
+  onSectionChange: (id: Section['id']) => void;
 }
 
 const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
-
   const { handleLogout, isLoading } = useLogout();
 
   const sections: Section[] = [
@@ -42,22 +47,25 @@ const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
     { id: 'tickets', label: 'Tickets', icon: ClipboardList },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'schedule', label: 'Schedule', icon: CalendarIcon },
-    { id: 'sections', label: 'Sections', icon: FileText },
     { id: 'technicians', label: 'Technicians', icon: Users },
     { id: 'facilities', label: 'Facilities', icon: Building },
+    { id: 'sections', label: 'Sections', icon: FileText },
+    { id: 'organizations', label: 'Organizations', icon: Building2 },
+    { id: 'campuses', label: 'Campuses', icon: MapPin },
+    { id: 'departments', label: 'Departments', icon: Layers },
     { id: 'inventory', label: 'Inventory', icon: Tool },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <div className='w-64 bg-white border-r border-gray-200 flex flex-col'>
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       {isLoading && <FullScreenLoading message="Logging out..." />}
-      
-      <div className='p-6 border-b border-gray-200'>
-        <h1 className='text-2xl font-semibold text-[#0078d4]'>Resolver 🚀 </h1>
+
+      <div className="p-6 border-b border-gray-200">
+        <h1 className="text-2xl font-semibold text-[#0078d4]">Resolver 🚀 </h1>
       </div>
-      <div className='flex-1 py-4 overflow-y-auto'>
-        <nav className='space-y-1 px-2'>
+      <div className="flex-1 py-4 overflow-y-auto">
+        <nav className="space-y-1 px-2">
           {sections.map(({ id, label, icon }) => (
             <NavButton
               key={id}
@@ -69,11 +77,12 @@ const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
           ))}
         </nav>
       </div>
-      <div className='p-4 border-t border-gray-200'>
-        <button 
+      <div className="p-4 border-t border-gray-200">
+        <button
           onClick={handleLogout}
-          className='flex items-center w-full px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900'>
-          <LogOut className='mr-3 h-5 w-5' />
+          className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
+        >
+          <LogOut className="mr-3 h-5 w-5" />
           Logout
         </button>
       </div>

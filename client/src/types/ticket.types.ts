@@ -1,34 +1,36 @@
-// User interface for nested assigned_to
+import type { NestedRef } from './section.types';
+
 export interface AssignedUser {
   id: number;
-  username: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  role: 'user' | 'admin' | 'technician' | 'manager';
-  sections: number[];
+  name: string;
+  username?: string;
+  role?: string;
 }
 
-// Comment interface
+export interface EscalationStatus {
+  code: 'none' | 'section_head' | 'hod' | 'director' | 'unknown';
+  label: string;
+}
+
+export interface OrganizationalPath {
+  organization: NestedRef | null;
+  campus: NestedRef | null;
+  department: NestedRef | null;
+  section: NestedRef;
+}
+
 export interface Comment {
   id: number;
-  ticket: {
-    id: number;
-    ticket_no: string;
-  };
+  ticket: { id: number; ticket_no: string };
   text: string;
-  author: string; // username as string
+  author: string;
   created_at: string;
 }
 
-// Feedback interface
 export interface Feedback {
   id: number;
-  ticket: {
-    id: number;
-    ticket_no: string;
-  };
-  rated_by: string; // username as string
+  ticket: { id: number; ticket_no: string };
+  rated_by: string;
   rating: number;
   comment?: string;
   created_at: string;
@@ -40,20 +42,39 @@ export interface Ticket {
   title: string;
   description: string;
   status: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
-  section_id?: number; // write-only
-  section: string; // read-only: section name
-  section_id_value: number; // read-only: section ID for filtering
-  facility_id?: number; // write-only
-  facility: string; // read-only: facility name
-  facility_id_value: number; // read-only: facility ID for filtering
-  raised_by: string; // read-only: username
-  assigned_to_id?: number | null; // write-only
-  assigned_to: AssignedUser | null; // read-only: full user object (DEPRECATED - use assigned_to_name)
-  assigned_to_name?: string | null; // read-only: "FirstName LastName" string (optimized - no extra query)
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+
+  // Write-only IDs (sent on create/update)
+  section_id?: number;
+  facility_id?: number;
+  assigned_to_id?: number | null;
+
+  // Read-only nested objects
+  section: NestedRef;
+  facility: NestedRef;
+  raised_by: string;
+  assigned_to: AssignedUser | null;
+
+  // Timestamps
   created_at: string;
   updated_at: string;
-  resolved_at?: string | null; // read-only: automatically set when status changes to resolved/closed
-  pending_reason?: string | null; // Reason provided when ticket is marked as pending
+  resolved_at?: string | null;
+
+  // Pending info
+  pending_reason?: string | null;
+  pending_comment?: string | null;
+
+  // Escalation fields (present for section_head/hod/admin roles)
+  escalation_level?: 0 | 1 | 2;
+  escalation_status?: EscalationStatus;
+  escalated_to?: AssignedUser | null;
+  escalated_at?: string | null;
+  escalation_reason?: string | null;
+  next_escalation_due?: string | null;
+  is_due_for_escalation?: boolean;
+  organizational_path?: OrganizationalPath | null;
+
+  // Nested data (detail view only)
   comments?: Comment[];
   feedback?: Feedback;
 }
@@ -77,9 +98,15 @@ export interface UpdateTicketPayload {
   description?: string;
   section_id?: number;
   facility_id?: number;
-  status?: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+  status?: Ticket['status'];
   assigned_to_id?: number | null;
   pending_reason?: string | null;
+  pending_comment?: string | null;
+}
+
+export interface BulkStatusUpdatePayload {
+  ticket_ids: number[];
+  status: Ticket['status'];
 }
 
 export interface TicketsParams {
@@ -88,9 +115,9 @@ export interface TicketsParams {
   status?: string;
   section?: number;
   assigned_to?: number;
-  assigned_to__isnull?: boolean; // For filtering unassigned tickets
+  assigned_to__isnull?: boolean;
   raised_by?: number;
   ordering?: string;
   search?: string;
-  is_overdue?: boolean; // For filtering overdue tickets (backend implementation needed)
+  is_overdue?: boolean;
 }

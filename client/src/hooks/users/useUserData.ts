@@ -31,8 +31,14 @@ export const useUserData = (): UseUserDataResult => {
       const user = await usersService.getUserById(authUser.id);
       setUserData(user);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch user data'));
-      console.error('Error fetching user data:', err);
+      // On 403, fall back to the data stored in localStorage at login time
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 403 && authUser) {
+        setUserData(authUser);
+      } else {
+        setError(err instanceof Error ? err : new Error('Failed to fetch user data'));
+        console.error('Error fetching user data:', err);
+      }
     } finally {
       setLoading(false);
     }
