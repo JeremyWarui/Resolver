@@ -7,7 +7,8 @@ import type {
   AdminDashboardAnalytics,
   SectionHeadAnalytics,
   HODAnalytics,
-  DirectorAnalytics,
+  ManagerAnalytics,
+  OrganisationAnalytics,
   RoleAnalyticsParams,
 } from '@/types';
 
@@ -37,8 +38,13 @@ const analyticsService = {
     return response.data;
   },
 
-  getDirectorAnalytics: async (params?: RoleAnalyticsParams): Promise<DirectorAnalytics> => {
-    const response = await apiClient.get('/analytics/director/', { params });
+  getManagerAnalytics: async (params?: RoleAnalyticsParams): Promise<ManagerAnalytics> => {
+    const response = await apiClient.get('/analytics/manager/', { params });
+    return response.data;
+  },
+
+  getOrganisationAnalytics: async (params?: { days?: number }): Promise<OrganisationAnalytics> => {
+    const response = await apiClient.get('/analytics/organizational/', { params });
     return response.data;
   },
 };

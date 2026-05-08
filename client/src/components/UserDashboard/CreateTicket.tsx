@@ -32,11 +32,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 
 // Import REST API hooks
-import useFacilities from '@/hooks/facilities/useFacilities';
 import useSections from '@/hooks/sections/useSections';
 import useCreateTicket from '@/hooks/tickets/useCreateTicket';
-import { createTicketSchema, type CreateTicketFormValues } from '@/utils/ticketValidation';
-
+import { useCurrentUser } from '@/contexts/UserDataContext';
+import { FacilityLocationSelector } from '@/components/shared/FacilityLocationSelector';
+import type { LocationSelection } from '@/types';
+import {
+  createTicketSchema,
+  type CreateTicketFormValues,
+} from '@/utils/ticketValidation';
 
 interface CreateTicketProps {
   isOpen: boolean;
@@ -44,11 +48,22 @@ interface CreateTicketProps {
   onSuccess?: () => void; // Optional callback after successful creation
 }
 
-const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) => {
+const CreateTicket = ({
+  isOpen,
+  onOpenChange,
+  onSuccess,
+}: CreateTicketProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locationSelection, setLocationSelection] = useState<LocationSelection>(
+    {
+      facility: null,
+      floor: null,
+      room: null,
+      location_detail: '',
+    }
+  );
 
-  // Fetch facilities using the REST API hook
-  const { facilities, loading: facilitiesLoading } = useFacilities();
+  const { userData } = useCurrentUser();
 
   // Get sections from the sections hook
   const { sections, loading: sectionsLoading } = useSections();
@@ -63,8 +78,16 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
       title: '',
       description: '',
       section_id: '',
-      facility_id: '',
     },
+  });
+
+  const campusId = userData?.campus ?? userData?.primary_campus_id ?? null;
+  const visibleSections = sections.filter((section) => {
+    if (!campusId) {
+      return true;
+    }
+
+    return section.campus_name === userData?.campus_name;
   });
 
   // Handle form submission
@@ -78,7 +101,10 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
       const result = await createTicket({
         ...values,
         section_id: Number(values.section_id),
-        facility_id: Number(values.facility_id),
+        facility_id: locationSelection.facility ?? null,
+        floor_id: locationSelection.floor ?? null,
+        room_id: locationSelection.room ?? null,
+        location_detail: locationSelection.location_detail.trim(),
       });
       console.log('Create ticket result:', result);
 
@@ -89,8 +115,14 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
 
       // Reset form after successful submission
       form.reset();
+      setLocationSelection({
+        facility: null,
+        floor: null,
+        room: null,
+        location_detail: '',
+      });
       onOpenChange(false); // Close modal on success
-      
+
       // Call onSuccess callback if provided (for refetching ticket list)
       onSuccess?.();
     } catch (error) {
@@ -114,10 +146,7 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className='space-y-4'
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
             {/* Title */}
             <FormField
               control={form.control}
@@ -173,7 +202,7 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {sections.map((section) => (
+                      {visibleSections.map((section) => (
                         <SelectItem key={section.id} value={String(section.id)}>
                           {section.name}
                         </SelectItem>
@@ -185,35 +214,21 @@ const CreateTicket = ({ isOpen, onOpenChange, onSuccess }: CreateTicketProps) =>
               )}
             />
 
-            {/* Facility */}
-            <FormField
-              control={form.control}
-              name='facility_id'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Facility</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={facilitiesLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Select a facility' />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {facilities.map((facility) => (
-                        <SelectItem key={facility.id} value={String(facility.id)}>
-                          {facility.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+            <div className='space-y-2'>
+              <FormLabel>Location</FormLabel>
+              {campusId ? (
+                <FacilityLocationSelector
+                  campusId={campusId}
+                  value={locationSelection}
+                  onChange={setLocationSelection}
+                />
+              ) : (
+                <p className='text-sm text-muted-foreground'>
+                  Location selection will be available once your campus is
+                  loaded.
+                </p>
               )}
-            />
+            </div>
 
             <DialogFooter>
               <Button

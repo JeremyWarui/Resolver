@@ -4,7 +4,7 @@ import { createTicketTableColumns } from '@/components/Common/DataTable/utils/Ti
 import { createTicketTableFilters } from '@/components/Common/DataTable/utils/TicketTableFilters';
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/Common/DataTable/DataTable';
-import { TicketDetailsSidebar } from '@/components/Common/DataTable';
+import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 
 const TechSectionTickets = ({ currentTechnicianId }: { currentTechnicianId?: number }) => {
   const table = useTicketTable({
@@ -48,18 +48,12 @@ const TechSectionTickets = ({ currentTechnicianId }: { currentTechnicianId?: num
         manualPagination={true}
         defaultPageSize={20}
       />
-      {table.selectedTicket && (
-        <TicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          sections={table.sections}
-          users={table.users}
-          role="technician"
-          viewOnly={true}
-          onUpdate={table.handleTicketUpdate}
-        />
-      )}
+      <TicketDetailModal
+        ticketId={table.selectedTicket?.id ?? null}
+        isOpen={table.isTicketDialogOpen}
+        onOpenChange={table.setIsTicketDialogOpen}
+        onTicketUpdate={table.refetch}
+      />
     </div>
   );
 };

@@ -81,7 +81,7 @@ const App = () => {
           <Route
             path="/section-head/*"
             element={
-              <ProtectedRoute requiredRoles={['section_head']}>
+              <ProtectedRoute requiredRoles={['head_of_section']}>
                 <SectionHeadLayout />
               </ProtectedRoute>
             }
@@ -95,9 +95,9 @@ const App = () => {
             }
           />
           <Route
-            path="/director/*"
+            path="/manager/*"
             element={
-              <ProtectedRoute requiredRoles={['director']}>
+              <ProtectedRoute requiredRoles={['manager']}>
                 <DirectorLayout />
               </ProtectedRoute>
             }

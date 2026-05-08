@@ -2,8 +2,8 @@ import { useState } from 'react';
 import UserSideBar, { Section } from './UserSideBar';
 import Header from '../Common/Header';
 import FullScreenLoading from '../Common/FullScreenLoading';
-import { useUserData } from '@/hooks/users';
 import { SharedDataProvider } from '@/contexts/SharedDataContext';
+import { UserDataProvider, useCurrentUser } from '@/contexts/UserDataContext';
 
 // Import your view components (or use placeholders)
 import UserDashboard from './UserDashboard';
@@ -39,8 +39,8 @@ const UserLayoutContent = () => {
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
 
-  // Fetch current user data
-  const { userData, loading: userLoading } = useUserData();
+  // Read current user from context (fetched once by UserDataProvider)
+  const { userData, loading: userLoading } = useCurrentUser();
 
   // Callback to refresh ticket tables after creating a ticket
   const handleTicketCreated = () => {
@@ -120,9 +120,11 @@ const UserLayoutContent = () => {
 
 const UserLayout = () => {
   return (
-    <SharedDataProvider>
-      <UserLayoutContent />
-    </SharedDataProvider>
+    <UserDataProvider>
+      <SharedDataProvider>
+        <UserLayoutContent />
+      </SharedDataProvider>
+    </UserDataProvider>
   );
 };
 

@@ -10,6 +10,7 @@ const TechniciansPage = lazy(() => import("./Technicians/TechniciansPage"));
 const FacilitiesPage = lazy(() => import("./Facilities/FacilitiesPage"));
 const SectionsPage = lazy(() => import("./Sections/SectionsPage"));
 const ReportsPage = lazy(() => import("./Reports").then(module => ({ default: module.ReportsPageEnhanced })));
+const OrganisationAnalyticsPage = lazy(() => import("./OrganisationAnalytics").then(m => ({ default: m.OrganisationAnalytics })));
 const OrganizationsPage = lazy(() => import("./Organizations/OrganizationsPage"));
 const CampusesPage = lazy(() => import("./Campuses/CampusesPage"));
 const DepartmentsPage = lazy(() => import("./Departments/DepartmentsPage"));
@@ -41,7 +42,8 @@ function ComingSoonSection({ section }: { section: string }) {
 const headerTitles: Record<Section["id"], string> = {
   dashboard: "Dashboard",
   tickets: "Tickets",
-  reports: "Reports & Analytics",
+  reports: "Reports",
+  analytics: "Organisation Analytics",
   schedule: "Schedule",
   technicians: "Technicians",
   facilities: "Facilities",
@@ -75,6 +77,7 @@ function AdminLayoutContent() {
             {activeSection === "dashboard" && <MainContent />}
             {activeSection === "tickets" && <TicketsPage />}
             {activeSection === "reports" && <ReportsPage />}
+            {activeSection === "analytics" && <OrganisationAnalyticsPage />}
             {activeSection === "technicians" && <TechniciansPage />}
             {activeSection === "sections" && <SectionsPage />}
             {activeSection === "facilities" && <FacilitiesPage />}

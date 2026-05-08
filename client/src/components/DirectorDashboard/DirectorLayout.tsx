@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import DirectorSideBar, { type DirectorSection } from './DirectorSideBar';
+import DirectorSideBar, { type ManagerSection } from './DirectorSideBar';
 import Header from '@/components/Common/Header';
 import FullScreenLoading from '@/components/Common/FullScreenLoading';
-import DirectorDashboard from './DirectorDashboard';
-import DirectorTickets from './DirectorTickets';
+import ManagerDashboard from './DirectorDashboard';
+import ManagerTickets from './DirectorTickets';
 import { useUserData } from '@/hooks/users';
 import { SharedDataProvider } from '@/contexts/SharedDataContext';
 
@@ -24,13 +24,13 @@ function ComingSoon({ section }: { section: string }) {
   );
 }
 
-const DirectorLayoutContent = () => {
-  const [activeSection, setActiveSection] = useState<DirectorSection>('dashboard');
+const ManagerLayoutContent = () => {
+  const [activeSection, setActiveSection] = useState<ManagerSection>('dashboard');
   const { userData, loading: userLoading } = useUserData();
 
-  const headerTitle: Record<DirectorSection, string> = {
+  const headerTitle: Record<ManagerSection, string> = {
     dashboard: 'Dashboard',
-    tickets: 'Organisation Tickets',
+    tickets: 'Department Tickets',
     reports: 'Reports',
     settings: 'Settings',
   };
@@ -47,8 +47,8 @@ const DirectorLayoutContent = () => {
           onSearchChange={() => {}}
         />
         <main className="flex-1 overflow-y-auto">
-          {activeSection === 'dashboard' && <DirectorDashboard />}
-          {activeSection === 'tickets' && <DirectorTickets userId={userData?.id} />}
+          {activeSection === 'dashboard' && <ManagerDashboard />}
+          {activeSection === 'tickets' && <ManagerTickets userId={userData?.id} />}
           {activeSection === 'reports' && <ComingSoon section="Reports" />}
           {activeSection === 'settings' && <ComingSoon section="Settings" />}
         </main>
@@ -57,10 +57,10 @@ const DirectorLayoutContent = () => {
   );
 };
 
-const DirectorLayout = () => (
+const ManagerLayout = () => (
   <SharedDataProvider>
-    <DirectorLayoutContent />
+    <ManagerLayoutContent />
   </SharedDataProvider>
 );
 
-export default DirectorLayout;
+export default ManagerLayout;

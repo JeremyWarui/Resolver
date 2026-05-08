@@ -5,7 +5,7 @@ import { createTicketTableColumns } from '@/components/Common/DataTable/utils/Ti
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { TechTableHeader } from '../Common/DataTable/utils/TableHeaders';
-import { TicketDetailsSidebar } from '@/components/Common/DataTable';
+import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 import type { TechQuickFilterType } from './QuickFilterButtons';
 import TechnicianStatsCards from './TechnicianStatsCards';
 import TechQuickFilterButtons from './QuickFilterButtons';
@@ -87,17 +87,12 @@ function TechTickets({ currentTechnicianId }: TechTicketsProps) {
         manualPagination={true}
       />
 
-      {table.selectedTicket && (
-        <TicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          sections={table.sections}
-          users={table.users}
-          role="technician"
-          onUpdate={table.handleTicketUpdate}
-        />
-      )}
+      <TicketDetailModal
+        ticketId={table.selectedTicket?.id ?? null}
+        isOpen={table.isTicketDialogOpen}
+        onOpenChange={table.setIsTicketDialogOpen}
+        onTicketUpdate={table.refetch}
+      />
     </>
   );
 }

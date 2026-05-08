@@ -4,7 +4,7 @@ import PostedTicketsTable from './PostedTicketsTable';
 import UserStatsCards from '@/components/Common/UserStatsCards';
 import QuickFilterPills from '@/components/Common/QuickFilterPills';
 import type { FilterPill } from '@/components/Common/QuickFilterPills';
-import useUserData from '@/hooks/users/useUserData';
+import { useCurrentUser } from '@/contexts/UserDataContext';
 import { useState } from 'react';
 
 interface UserTicketsProps {
@@ -20,7 +20,7 @@ const STATUS_PILLS: readonly FilterPill[] = [
 ];
 
 const UserTickets = ({ onNavigate }: UserTicketsProps) => {
-  const { userData } = useUserData();
+  const { userData } = useCurrentUser();
   const currentUserId = userData?.id;
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -51,7 +51,7 @@ const UserTickets = ({ onNavigate }: UserTicketsProps) => {
         onFilterChange={setStatusFilter}
       />
 
-      <PostedTicketsTable currentUser={currentUserId} statusFilter={statusFilter} />
+      <PostedTicketsTable currentUser={currentUserId} statusFilter={statusFilter} waitForUserId />
     </div>
   );
 };

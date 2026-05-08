@@ -1,9 +1,9 @@
 export type UserRole =
   | 'user'
   | 'technician'
-  | 'section_head'
+  | 'head_of_section'
   | 'hod'
-  | 'director'
+  | 'manager'
   | 'admin';
 
 export interface User {
@@ -13,6 +13,7 @@ export interface User {
   last_name: string;
   email: string;
   role: UserRole;
+  campus_name: string | null;
   sections: number[];
   primary_campus_id: number | null;
   primary_campus_display: string | null;

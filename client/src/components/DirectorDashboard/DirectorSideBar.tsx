@@ -3,11 +3,11 @@ import NavButton from '@/components/Common/NavButton';
 import FullScreenLoading from '@/components/Common/FullScreenLoading';
 import { useLogout } from '@/hooks/useLogout';
 
-export type DirectorSection = 'dashboard' | 'tickets' | 'reports' | 'settings';
+export type ManagerSection = 'dashboard' | 'tickets' | 'reports' | 'settings';
 
 interface SideBarProps {
-  activeSection: DirectorSection;
-  onSectionChange: (id: DirectorSection) => void;
+  activeSection: ManagerSection;
+  onSectionChange: (id: ManagerSection) => void;
 }
 
 const DirectorSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
@@ -15,7 +15,7 @@ const DirectorSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
 
   const sections = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'tickets' as const, label: 'Organisation Tickets', icon: ClipboardList },
+    { id: 'tickets' as const, label: 'Department Tickets', icon: ClipboardList },
     { id: 'reports' as const, label: 'Reports', icon: BarChart2 },
     { id: 'settings' as const, label: 'Settings', icon: Settings },
   ];
@@ -26,7 +26,7 @@ const DirectorSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-2xl font-semibold text-[#0078d4]">Resolver 🚀</h1>
-          <p className="text-xs text-gray-500 mt-1">Director Portal</p>
+          <p className="text-xs text-gray-500 mt-1">Manager Portal</p>
         </div>
         <div className="flex-1 py-4 overflow-y-auto">
           <nav className="space-y-1 px-2">

@@ -24,7 +24,7 @@ const SectionHeadTickets = ({ userId }: { userId?: number }) => {
 
   return (
     <RoleTicketTablePage
-      role="section_head"
+      role="head_of_section"
       userId={userId}
       header={header}
       statsRow={<SectionHeadStatsCards data={data} loading={loading} />}

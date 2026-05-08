@@ -7,3 +7,5 @@ export * from './sections';
 export * from './analytics';
 export { useAuth } from './useAuth';
 export { useLogout } from './useLogout';
+export { useServiceCategories } from './useServiceCategories';
+export { useServiceItems } from './useServiceItems';

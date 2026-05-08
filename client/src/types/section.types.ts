@@ -13,10 +13,16 @@ export interface SectionHead {
 export interface Section {
   id: number;
   name: string;
-  code: string;
+  code: string | null;
   description?: string;
-  campus?: NestedRef;
-  department?: NestedRef;
+  campus?: NestedRef | null;
+  campus_name?: string | null;
+  department?: number | NestedRef | null;
+  department_name?: string | null;
+  section_type?: unknown | null;
+  section_type_detail?: unknown | null;
+  sla_hours?: number | null;
+  effective_sla_hours?: number;
   section_head?: SectionHead | null;
   technicians?: string[];
   is_active?: boolean;

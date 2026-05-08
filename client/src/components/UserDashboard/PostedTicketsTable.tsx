@@ -5,20 +5,22 @@ import { createTicketTableColumns } from '@/components/Common/DataTable/utils/Ti
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { UserTableHeader } from '../Common/DataTable/utils/TableHeaders';
-import { UserTicketDetailsSidebar } from './UserTicketDetailsSidebar';
+import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 
 interface PostedTicketsTableProps {
   currentUser?: number;
   viewOnly?: boolean;
   statusFilter?: string;
+  waitForUserId?: boolean;
 }
 
-function PostedTicketsTable({ currentUser, viewOnly = false, statusFilter }: PostedTicketsTableProps) {
+function PostedTicketsTable({ currentUser, statusFilter, waitForUserId = false }: PostedTicketsTableProps) {
   const table = useTicketTable({
     role: 'user',
     currentUserId: currentUser,
     defaultPageSize: 10,
     ordering: '-updated_at',
+    skipUntilUserId: waitForUserId,
   });
 
   useEffect(() => {
@@ -63,16 +65,12 @@ function PostedTicketsTable({ currentUser, viewOnly = false, statusFilter }: Pos
         selectedRowId={table.selectedTicket?.id || null}
         renderHeader={UserTableHeader}
       />
-      {table.selectedTicket && (
-        <UserTicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          currentUser={table.selectedTicket.raised_by}
-          onUpdate={table.handleTicketUpdate}
-          viewOnly={viewOnly}
-        />
-      )}
+      <TicketDetailModal
+        ticketId={table.selectedTicket?.id ?? null}
+        isOpen={table.isTicketDialogOpen}
+        onOpenChange={table.setIsTicketDialogOpen}
+        onTicketUpdate={table.refetch}
+      />
     </>
   );
 }

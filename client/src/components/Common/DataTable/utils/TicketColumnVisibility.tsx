@@ -4,7 +4,7 @@ import type { VisibilityState } from '@tanstack/react-table';
  * Configuration for ticket table column visibility
  */
 export interface ColumnVisibilityConfig {
-  role: 'admin' | 'user' | 'technician' | 'section_head' | 'hod' | 'director';
+  role: 'admin' | 'user' | 'technician' | 'head_of_section' | 'hod' | 'manager';
   hideDescription?: boolean;
   hideFacility?: boolean;
   hideUpdatedAt?: boolean;
@@ -88,7 +88,7 @@ export function createTicketColumnVisibility(
       assigned_to: false,     // Hidden by default
       description: false,     // Hidden by default
     },
-    section_head: {
+    head_of_section: {
       ticket_no: true,
       title: true,
       facility: true,
@@ -114,7 +114,7 @@ export function createTicketColumnVisibility(
       actions: true,
       description: false,
     },
-    director: {
+    manager: {
       ticket_no: true,
       title: true,
       facility: true,

@@ -13,8 +13,7 @@ import QuickFilterButtons from "./QuickFilterButtons";
 import DataTable from "@/components/Common/DataTable/DataTable";
 import { AdminTableHeader } from "../../Common/DataTable/utils/TableHeaders";
 
-// Import the new Sidebar component
-import { TicketDetailsSidebar } from "@/components/Common/DataTable";
+import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 
 // Check if ticket is overdue (7+ days old and still active)
 const isOverdue = (ticket: Ticket) => {
@@ -142,19 +141,12 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
         manualPagination={false} // Client-side pagination for filtered data
       />
 
-      {/* Ticket details sidebar */}
-      {table.selectedTicket && (
-        <TicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          technicians={table.technicians}
-          sections={table.sections}
-          users={table.users}
-          role="admin"
-          onUpdate={table.handleTicketUpdate}
-        />
-      )}
+      <TicketDetailModal
+        ticketId={table.selectedTicket?.id ?? null}
+        isOpen={table.isTicketDialogOpen}
+        onOpenChange={table.setIsTicketDialogOpen}
+        onTicketUpdate={table.refetch}
+      />
     </>
   );
 }

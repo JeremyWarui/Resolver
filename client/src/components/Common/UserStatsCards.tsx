@@ -1,27 +1,17 @@
-import { FileText, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { FileText, AlertTriangle, Clock, CheckCircle, PauseCircle } from 'lucide-react';
 import RoleStatsGrid from './RoleStatsGrid';
 import type { StatConfig } from './RoleStatsGrid';
-import { useTicketAnalytics } from '@/hooks/analytics';
+import { useUserTicketCounts } from '@/hooks/tickets';
 
 interface UserStatsCardsProps {
   userId?: number;
 }
 
 const UserStatsCards = ({ userId }: UserStatsCardsProps) => {
-  const { data, loading: analyticsLoading } = useTicketAnalytics(
-    userId !== undefined ? { raised_by: userId } : undefined
-  );
+  const { total, open, inProgress, resolved, pending, loading: countsLoading } = useUserTicketCounts(userId);
 
-  // Treat no userId as loading — prevents system-wide data flashing before user is known
-  const loading = analyticsLoading || userId === undefined;
-
-  const getCount = (status: string) =>
-    data?.status_counts?.find(s => s.status === status)?.count ?? 0;
-
-  const total      = userId !== undefined ? (data?.ticket_counts?.count ?? 0) : 0;
-  const open       = getCount('open');
-  const inProgress = getCount('in_progress') + getCount('assigned');
-  const resolved   = getCount('resolved');
+  // Treat no userId as loading — prevents flashing zeros before user is known
+  const loading = countsLoading || userId === undefined;
 
   const stats: StatConfig[] = [
     {
@@ -47,6 +37,14 @@ const UserStatsCards = ({ userId }: UserStatsCardsProps) => {
       icon: <Clock className="h-6 w-6 text-[#5c2d91]" />,
       iconBgColor: 'bg-[#f9f3ff]',
       badge: inProgress > 0 ? { value: 'Active', color: 'purple' } : { value: 'None', color: 'gray' },
+    },
+    {
+      title: 'On Hold',
+      value: pending,
+      description: 'Awaiting more information',
+      icon: <PauseCircle className="h-6 w-6 text-[#ca5010]" />,
+      iconBgColor: 'bg-[#fff4e5]',
+      badge: pending > 0 ? { value: 'Pending', color: 'amber' } : { value: 'None', color: 'gray' },
     },
     {
       title: 'Resolved',

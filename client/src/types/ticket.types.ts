@@ -8,7 +8,7 @@ export interface AssignedUser {
 }
 
 export interface EscalationStatus {
-  code: 'none' | 'section_head' | 'hod' | 'director' | 'unknown';
+  code: 'none' | 'head_of_section' | 'hod' | 'manager' | 'unknown';
   label: string;
 }
 
@@ -41,7 +41,7 @@ export interface Ticket {
   ticket_no: string;
   title: string;
   description: string;
-  status: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+  status: 'open' | 'assigned' | 'in_progress' | 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'resolved' | 'closed';
   priority?: 'low' | 'medium' | 'high' | 'critical';
 
   // Write-only IDs (sent on create/update)
@@ -74,6 +74,16 @@ export interface Ticket {
   is_due_for_escalation?: boolean;
   organizational_path?: OrganizationalPath | null;
 
+  // Location fields
+  floor?: number | null;
+  floor_name?: string | null;
+  room?: number | null;
+  room_name?: string | null;
+  location_detail?: string;
+
+  // Scheduling
+  due_date?: string | null;
+
   // Nested data (detail view only)
   comments?: Comment[];
   feedback?: Feedback;
@@ -90,7 +100,12 @@ export interface CreateTicketPayload {
   title: string;
   description: string;
   section_id: number;
-  facility_id: number;
+  facility_id?: number | null;
+  floor_id?: number | null;
+  room_id?: number | null;
+  location_detail?: string;
+  service_item_id?: number | null;
+  form_data?: Record<string, unknown> | null;
 }
 
 export interface UpdateTicketPayload {
@@ -102,6 +117,14 @@ export interface UpdateTicketPayload {
   assigned_to_id?: number | null;
   pending_reason?: string | null;
   pending_comment?: string | null;
+}
+
+export interface ApproveTicketPayload {
+  notes?: string;
+}
+
+export interface RejectTicketPayload {
+  reason: string;
 }
 
 export interface BulkStatusUpdatePayload {

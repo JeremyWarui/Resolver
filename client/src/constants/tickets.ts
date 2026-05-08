@@ -22,6 +22,9 @@ export const STATUS_LABELS: Record<Ticket['status'], string> = {
   assigned: 'Assigned',
   in_progress: 'In Progress',
   pending: 'Pending',
+  pending_approval: 'Pending Approval',
+  approved: 'Approved',
+  rejected: 'Rejected',
   resolved: 'Resolved',
   closed: 'Closed',
 };
@@ -32,6 +35,9 @@ export const ALL_TICKET_STATUSES: Ticket['status'][] = [
   'assigned',
   'in_progress',
   'pending',
+  'pending_approval',
+  'approved',
+  'rejected',
   'resolved',
   'closed',
 ];

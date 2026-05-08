@@ -11,6 +11,7 @@ import {
   PenToolIcon as Tool,
   LogOut,
   FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { useLogout } from '@/hooks/useLogout';
 import FullScreenLoading from './FullScreenLoading';
@@ -28,6 +29,7 @@ export interface Section {
     | 'organizations'
     | 'campuses'
     | 'departments'
+    | 'analytics'
     | 'inventory'
     | 'settings';
   label: string;
@@ -46,6 +48,7 @@ const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
     { id: 'dashboard', label: 'Dashboard', icon: BarChart },
     { id: 'tickets', label: 'Tickets', icon: ClipboardList },
     { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'schedule', label: 'Schedule', icon: CalendarIcon },
     { id: 'technicians', label: 'Technicians', icon: Users },
     { id: 'facilities', label: 'Facilities', icon: Building },

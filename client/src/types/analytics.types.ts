@@ -190,11 +190,42 @@ export interface HODAnalytics {
 }
 
 // ============================================
-// DIRECTOR ANALYTICS  (/analytics/director/)
+// MANAGER ANALYTICS  (/analytics/manager/)
 // ============================================
 
-export interface CampusStat {
-  campus: { id: number; name: string; code: string; location: string };
+export interface ManagerCampusStat {
+  campus: { id: number; name: string; code: string };
+  department_id: number;
+  total_tickets: number;
+  open_tickets: number;
+  escalated_tickets: number;
+  avg_resolution_hours: number | null;
+  sla_compliance: number;
+}
+
+export interface ManagerSectionStat {
+  section: {
+    id: number;
+    name: string;
+    code: string;
+    campus: string | null;
+    head_of_section: string | null;
+  };
+  total_tickets: number;
+  open_tickets: number;
+  escalated_tickets: number;
+  avg_resolution_hours: number | null;
+  technician_count: number;
+}
+
+export interface ManagerTechnicianStat {
+  technician: { id: number; name: string; username: string };
+  total_assigned: number;
+  resolved: number;
+  avg_resolution_hours: number | null;
+}
+
+export interface ManagerOverview {
   total_tickets: number;
   open_tickets: number;
   overdue_tickets: number;
@@ -203,27 +234,61 @@ export interface CampusStat {
   sla_compliance: number;
 }
 
-export interface DeptPerformanceStat {
-  department: { id: number; name: string; code: string; campus: string; hod: string | null };
-  ticket_count: number;
-  open_count: number;
-  resolved_count: number;
-}
-
-export interface DirectorOverview {
-  total_tickets: number;
-  total_open: number;
-  total_escalated: number;
-  avg_resolution_time: number | null;
-}
-
-export interface DirectorAnalytics {
-  organization: { id: number; name: string; code: string };
-  overview: DirectorOverview;
-  campus_stats: CampusStat[];
-  dept_performance: DeptPerformanceStat[];
+export interface ManagerAnalytics {
+  department: { name: string; code: string; campuses_count: number };
+  overview: ManagerOverview;
+  campuses: ManagerCampusStat[];
+  sections: ManagerSectionStat[];
+  technicians: ManagerTechnicianStat[];
+  status_distribution: { status: string; count: number }[];
+  period_days: number;
 }
 
 export interface RoleAnalyticsParams {
   days?: number;
+}
+
+export interface OrgCampusStat {
+  campus: { id: number; name: string; code: string };
+  total_tickets: number;
+  open_tickets: number;
+  resolved_tickets: number;
+  resolution_rate: number;
+  avg_resolution_hours: number | null;
+  sla_compliance: number;
+}
+
+export interface OrgServiceItem {
+  id: number;
+  name: string;
+  category: string;
+  ticket_count: number;
+}
+
+export interface OrgSectionStat {
+  section: { id: number; name: string };
+  department: string;
+  campus: string;
+  ticket_count: number;
+}
+
+export interface OrgTrendEntry {
+  date: string;
+  count: number;
+}
+
+export interface OrganisationAnalytics {
+  summary: {
+    total_tickets: number;
+    open_tickets: number;
+    resolved_tickets: number;
+    new_24h: number;
+    past_7_days: number;
+    past_30_days: number;
+    avg_resolution_time_hours: number | null;
+  };
+  campus_breakdown: OrgCampusStat[];
+  top_service_items: OrgServiceItem[];
+  busiest_sections: OrgSectionStat[];
+  trend: OrgTrendEntry[];
 }

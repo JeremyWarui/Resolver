@@ -19,16 +19,17 @@ interface UseTicketsResult {
  * @param params - Optional filtering and pagination parameters
  * @returns Tickets data with loading states
  */
-export const useTickets = (params?: TicketsParams): UseTicketsResult => {
+export const useTickets = (params?: TicketsParams, skip = false): UseTicketsResult => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [totalTickets, setTotalTickets] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
-    
+
     try {
       // Fetch only tickets data
       const ticketsResponse = await ticketsService.getTickets(params);
@@ -41,6 +42,7 @@ export const useTickets = (params?: TicketsParams): UseTicketsResult => {
       setLoading(false);
     }
   }, [
+    skip,
     params?.page,
     params?.page_size,
     params?.search,

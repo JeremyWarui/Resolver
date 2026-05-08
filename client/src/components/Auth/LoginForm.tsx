@@ -61,7 +61,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         user: '/user',
         section_head: '/section-head',
         hod: '/hod',
-        director: '/director',
+        manager: '/manager',
       };
 
       const redirectPath = roleRedirect[result.role] ?? '/dashboard';

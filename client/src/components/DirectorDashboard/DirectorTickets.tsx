@@ -4,13 +4,13 @@ import { createTicketTableFilters } from '@/components/Common/DataTable/utils/Ti
 import { createTicketTableColumns } from '@/components/Common/DataTable/utils/TicketTableColumns';
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/Common/DataTable/DataTable';
-import { TicketDetailsSidebar } from '@/components/Common/DataTable';
+import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 
 const DirectorTickets = ({ userId }: { userId?: number }) => {
-  const table = useTicketTable({ role: 'director', currentUserId: userId });
+  const table = useTicketTable({ role: 'manager', currentUserId: userId });
 
   const columns = useMemo(() => createTicketTableColumns({
-    role: 'director',
+    role: 'manager',
     allStatuses: table.allStatuses,
     setSelectedTicket: table.setSelectedTicket,
     setIsTicketDialogOpen: table.setIsTicketDialogOpen,
@@ -23,7 +23,7 @@ const DirectorTickets = ({ userId }: { userId?: number }) => {
     includeUser: false,
   });
 
-  const columnVisibility = createTicketColumnVisibility({ role: 'director' });
+  const columnVisibility = createTicketColumnVisibility({ role: 'manager' });
 
   return (
     <>
@@ -46,17 +46,12 @@ const DirectorTickets = ({ userId }: { userId?: number }) => {
         manualPagination={true}
       />
 
-      {table.selectedTicket && (
-        <TicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          sections={table.sections}
-          users={table.users}
-          role="director"
-          onUpdate={table.handleTicketUpdate}
-        />
-      )}
+      <TicketDetailModal
+        ticketId={table.selectedTicket?.id ?? null}
+        isOpen={table.isTicketDialogOpen}
+        onOpenChange={table.setIsTicketDialogOpen}
+        onTicketUpdate={table.refetch}
+      />
     </>
   );
 };

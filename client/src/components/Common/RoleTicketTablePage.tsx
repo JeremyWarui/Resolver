@@ -6,7 +6,7 @@ import { createTicketTableColumns } from '@/components/Common/DataTable/utils/Ti
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { AdminTableHeader } from '@/components/Common/DataTable/utils/TableHeaders';
-import { TicketDetailsSidebar } from '@/components/Common/DataTable';
+import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 import QuickFilterPills from './QuickFilterPills';
 import type { ReactNode } from 'react';
 
@@ -18,7 +18,7 @@ const QUICK_FILTERS = [
 ] as const;
 
 interface RoleTicketTablePageProps {
-  role: 'hod' | 'section_head';
+  role: 'hod' | 'head_of_section';
   userId?: number;
   /** Page header row — title, subtitle, action buttons */
   header: ReactNode;
@@ -93,17 +93,12 @@ const RoleTicketTablePage = ({ role, userId, header, statsRow }: RoleTicketTable
         renderHeader={AdminTableHeader}
       />
 
-      {table.selectedTicket && (
-        <TicketDetailsSidebar
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          ticket={table.selectedTicket}
-          sections={table.sections}
-          users={table.users}
-          role={role}
-          onUpdate={table.handleTicketUpdate}
-        />
-      )}
+      <TicketDetailModal
+        ticketId={table.selectedTicket?.id ?? null}
+        isOpen={table.isTicketDialogOpen}
+        onOpenChange={table.setIsTicketDialogOpen}
+        onTicketUpdate={table.refetch}
+      />
     </div>
   );
 };

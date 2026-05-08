@@ -17,9 +17,6 @@ export const createTicketSchema = z.object({
   section_id: z.string().min(1, {
     message: 'Please select a section.',
   }),
-  facility_id: z.string().min(1, {
-    message: 'Please select a facility.',
-  }),
 });
 
 /**

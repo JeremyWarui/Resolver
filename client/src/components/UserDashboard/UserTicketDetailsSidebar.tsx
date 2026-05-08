@@ -18,7 +18,7 @@ import { formatDate } from '@/utils/date';
 import { getStatusBadgeVariant } from '@/components/Common/DataTable/utils/TicketDetailsUtils';
 import { TicketComments } from '@/components/Common/DataTable/sidebar/TicketComments';
 import ticketsService from '@/api/services/ticketsService';
-import useUserData from '@/hooks/users/useUserData';
+import { useCurrentUser } from '@/contexts/UserDataContext';
 import { useUsers } from '@/hooks/users';
 
 export interface UserTicketDetailsSidebarProps {
@@ -42,7 +42,7 @@ export function UserTicketDetailsSidebar({
   const [ratingComment, setRatingComment] = useState(ticket.feedback?.comment || '');
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
-  const { userData } = useUserData();
+  const { userData } = useCurrentUser();
   const isTicketOwner = userData?.username === ticket.raised_by;
 
   const { users } = useUsers({ page_size: 100 });

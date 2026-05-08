@@ -42,7 +42,7 @@ export interface TicketDetailsSidebarProps {
   sections?: Section[]; // For looking up section ID from section name
   users?: { id: number; username: string; first_name: string; last_name: string; }[]; // For displaying raised_by full name
   currentUser?: string;
-  role?: 'admin' | 'user' | 'technician' | 'section_head' | 'hod' | 'director';
+  role?: 'admin' | 'user' | 'technician' | 'head_of_section' | 'hod' | 'manager';
   onUpdate?: (updatedTicket: Ticket) => Promise<void>;
   viewOnly?: boolean;
 }
@@ -72,7 +72,7 @@ export function TicketDetailsSidebar({
     (raisedByUser ? `${raisedByUser.first_name} ${raisedByUser.last_name}` : ticket.raised_by);
   
   const sectionId = ticket.section?.id;
-  const isManagementRole = role === 'admin' || role === 'section_head' || role === 'hod' || role === 'director';
+  const isManagementRole = role === 'admin' || role === 'head_of_section' || role === 'hod' || role === 'manager';
 
   // Fetch technicians filtered by section when in edit mode
   useEffect(() => {

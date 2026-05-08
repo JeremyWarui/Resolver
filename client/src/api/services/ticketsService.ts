@@ -6,6 +6,8 @@ import type {
   UpdateTicketPayload,
   BulkStatusUpdatePayload,
   TicketsParams,
+  ApproveTicketPayload,
+  RejectTicketPayload,
 } from '@/types';
 
 const ticketsService = {
@@ -40,6 +42,16 @@ const ticketsService = {
 
   closeTicket: async (ticketId: number): Promise<Ticket> => {
     const response = await apiClient.post(`/tickets/${ticketId}/close/`);
+    return response.data;
+  },
+
+  approveTicket: async (ticketId: number, payload?: ApproveTicketPayload): Promise<Ticket> => {
+    const response = await apiClient.post(`/tickets/${ticketId}/approve/`, payload ?? {});
+    return response.data;
+  },
+
+  rejectTicket: async (ticketId: number, payload: RejectTicketPayload): Promise<Ticket> => {
+    const response = await apiClient.post(`/tickets/${ticketId}/reject/`, payload);
     return response.data;
   },
 

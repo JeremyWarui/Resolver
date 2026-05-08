@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import useTickets from './useTickets';
 import useUpdateTicket from './useUpdateTicket';
 import { useSharedData } from '@/contexts/SharedDataContext';
@@ -14,9 +14,9 @@ export interface UseTicketTableConfig {
    * - 'admin': Show all tickets with full filtering
    * - 'user': Show only tickets raised by current user
    * - 'technician': Show only tickets assigned to current technician
-   * - 'section_head' | 'hod' | 'director': Management roles — full access
+   * - 'head_of_section' | 'hod' | 'manager': Management roles — full access
    */
-  role: 'admin' | 'user' | 'technician' | 'section_head' | 'hod' | 'director';
+  role: 'admin' | 'user' | 'technician' | 'head_of_section' | 'hod' | 'manager';
   
   /**
    * Current user ID for role-based filtering
@@ -50,6 +50,13 @@ export interface UseTicketTableConfig {
    * Page size for fetching technicians/users lists (default: 100)
    */
   listPageSize?: number;
+
+  /**
+   * Hold the fetch in loading state until currentUserId is defined.
+   * Opt-in only — tables that intentionally omit currentUserId (e.g. campus-wide
+   * view-only tables) must not set this, so they fetch immediately.
+   */
+  skipUntilUserId?: boolean;
 }
 
 /**
@@ -102,7 +109,7 @@ export interface UseTicketTableResult {
   
   // Actions
   handleViewTicket: (ticket: Ticket) => void;
-  handleTicketUpdate: (updatedTicket: Ticket) => Promise<void>;
+  handleTicketUpdate: (updatedTicket: Ticket) => Promise<Ticket | undefined>;
   handlePageChange: (newPageIndex: number) => void;
   handlePageSizeChange: (newPageSize: number) => void;
   updateTicket: (ticket: Ticket) => Promise<Ticket>;
@@ -149,6 +156,19 @@ export interface UseTicketTableResult {
  *   defaultStatusFilter: 'in_progress'
  * });
  */
+const ALL_TICKET_STATUSES = [
+  'open', 'assigned', 'in_progress', 'pending',
+  'pending_approval', 'approved', 'rejected', 'resolved', 'closed',
+];
+
+const COMMON_TABLE_PROPS = {
+  searchPlaceholder: 'Search by ID or title...',
+  emptyStateMessage: 'No tickets found',
+  emptyStateDescription: 'Try changing your filters or check back later',
+  defaultSorting: [{ id: 'updated_at', desc: true }],
+  manualPagination: true,
+};
+
 export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResult => {
   const {
     role,
@@ -157,6 +177,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     defaultPageSize = 10,
     ordering = '-id',
     fetchSectionTickets = false,
+    skipUntilUserId = false,
   } = config;
 
   // ==================== STATE ====================
@@ -206,7 +227,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
         params.assigned_to = currentUserId;
       }
     } else {
-      // admin, section_head, hod, director — full access with optional filters
+      // admin, head_of_section, hod, manager — full access with optional filters
       params.assigned_to = technicianFilter || undefined;
       params.raised_by = userFilter || undefined;
     }
@@ -233,7 +254,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     totalTickets,
     loading: ticketsLoading,
     refetch,
-  } = useTickets(ticketParams);
+  } = useTickets(ticketParams, skipUntilUserId && currentUserId === undefined);
 
   // Get shared reference data from context (no API calls - already cached at layout level)
   const {
@@ -282,67 +303,34 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   }, [tickets, allUsersData]);
 
   // ==================== HANDLERS ====================
-  /**
-   * Open ticket details dialog
-   */
-  const handleViewTicket = (ticket: Ticket) => {
+  const handleViewTicket = useCallback((ticket: Ticket) => {
     setSelectedTicket(ticket);
     setIsTicketDialogOpen(true);
-  };
+  }, []);
 
-  /**
-   * Update ticket and show success/error toast
-   */
-  const handleTicketUpdate = async (updatedTicket: Ticket) => {
+  const handleTicketUpdate = useCallback(async (updatedTicket: Ticket) => {
     try {
-      // Extract only writable fields from the ticket object
-      // This prevents sending read-only fields (section, facility, raised_by, etc.) to the API
       const updatePayload = {
         id: updatedTicket.id,
         ...extractWritableFields(updatedTicket),
       };
-      
-      console.log('Updating ticket with payload:', updatePayload);
-      
-      // Update ticket via API and get the updated ticket back
       const result = await updateTicket(updatePayload);
-      
-      console.log('Ticket updated successfully:', result);
-      
-      // Refetch tickets to sync UI with backend
       refetch();
-      
       setIsTicketDialogOpen(false);
+      return result;
     } catch (error) {
       console.error('Failed to update ticket:', error);
     }
-  };
+  }, [updateTicket, refetch]);
 
-  /**
-   * Handle page change
-   */
-  const handlePageChange = (newPageIndex: number) => {
+  const handlePageChange = useCallback((newPageIndex: number) => {
     setPageIndex(newPageIndex);
-  };
+  }, []);
 
-  /**
-   * Handle page size change (resets to first page)
-   */
-  const handlePageSizeChange = (newPageSize: number) => {
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
     setPageSize(newPageSize);
     setPageIndex(0);
-  };
-
-  // ==================== CONSTANTS ====================
-  const allStatuses = ['open', 'assigned', 'in_progress', 'pending', 'resolved', 'closed'];
-  
-  const commonTableProps = {
-    searchPlaceholder: 'Search by ID or title...',
-    emptyStateMessage: 'No tickets found',
-    emptyStateDescription: 'Try changing your filters or check back later',
-    defaultSorting: [{ id: 'updated_at', desc: true }],
-    manualPagination: true,
-  };
+  }, []);
 
   // ==================== LOADING STATE ====================
   const loading =
@@ -407,8 +395,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     refetch,
 
     // Constants
-    allStatuses,
-    commonTableProps,
+    allStatuses: ALL_TICKET_STATUSES,
+    commonTableProps: COMMON_TABLE_PROPS,
   };
 };
 
