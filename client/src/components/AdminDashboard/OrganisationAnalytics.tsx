@@ -96,7 +96,7 @@ export function OrganisationAnalytics() {
                 />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip
-                  formatter={(v: number) => [v, 'Tickets']}
+                  formatter={(v) => [v, 'Tickets']}
                   labelFormatter={l => `Date: ${l}`}
                 />
                 <Bar dataKey="count" fill="#6366f1" radius={[3, 3, 0, 0]} />

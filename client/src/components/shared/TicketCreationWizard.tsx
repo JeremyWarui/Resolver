@@ -134,7 +134,7 @@ export function TicketCreationWizard({
   const [formData, setFormData] = useState<RequestData>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const campusId = userData?.primary_campus_id ?? userData?.campus ?? null
+  const campusId = userData?.primary_campus_id ?? null
 
   const { data: departments, isLoading: depsLoading } = useDepartments(
     campusId != null ? campusId : undefined

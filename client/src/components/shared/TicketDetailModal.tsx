@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { X, MapPin, Calendar, User, AlertCircle, Clock, Building2 } from 'lucide-react';
+import { X, MapPin, Calendar, User as UserIcon, AlertCircle, Clock, Building2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -154,6 +154,7 @@ export function TicketDetailModal({
     if (!isOpen) { setTicket(null); setNewStatus(''); setSectionTechs([]); setSelectedTechId(''); }
   }, [isOpen, ticketId, fetchTicket]);
 
+  const role = userData?.role ?? 'user';
   const ASSIGN_ROLES = ['admin', 'hod', 'manager', 'head_of_section'];
   const TERMINAL_STATUSES = ['resolved', 'closed', 'rejected', 'pending_approval'];
 
@@ -215,7 +216,6 @@ export function TicketDetailModal({
     onTicketUpdate?.(updated);
   };
 
-  const role = userData?.role ?? 'user';
   const nextStatuses = ticket ? getNextStatuses(role, ticket.status) : [];
   const canApproveReject =
     ticket?.status === 'pending_approval' &&
@@ -279,9 +279,9 @@ export function TicketDetailModal({
 
                   <Section label="Details">
                     <dl className="space-y-2 text-sm">
-                      <Row icon={<User className="h-3.5 w-3.5" />} label="Raised by" value={ticket.raised_by} />
+                      <Row icon={<UserIcon className="h-3.5 w-3.5" />} label="Raised by" value={ticket.raised_by} />
                       {ticket.assigned_to && (
-                        <Row icon={<User className="h-3.5 w-3.5" />} label="Assigned to" value={ticket.assigned_to.name || ticket.assigned_to.username || '—'} />
+                        <Row icon={<UserIcon className="h-3.5 w-3.5" />} label="Assigned to" value={ticket.assigned_to.name || ticket.assigned_to.username || '—'} />
                       )}
                       {ticket.section && (
                         <Row icon={<Building2 className="h-3.5 w-3.5" />} label="Section" value={ticket.section.name} />

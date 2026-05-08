@@ -81,7 +81,7 @@ const CreateTicket = ({
     },
   });
 
-  const campusId = userData?.campus ?? userData?.primary_campus_id ?? null;
+  const campusId = userData?.primary_campus_id ?? null;
   const visibleSections = sections.filter((section) => {
     if (!campusId) {
       return true;
