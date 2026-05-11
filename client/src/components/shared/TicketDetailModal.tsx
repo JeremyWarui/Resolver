@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { MapPin, Calendar, User as UserIcon, AlertCircle, Clock, Building2, Star, ArrowUpCircle, XCircle } from 'lucide-react';
+import { AlertCircle, Star, ArrowUpCircle, XCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
