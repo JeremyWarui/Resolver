@@ -3,12 +3,12 @@ import UserSideBar, { Section } from './UserSideBar';
 import Header from '../Common/Header';
 import FullScreenLoading from '../Common/FullScreenLoading';
 import { SharedDataProvider } from '@/contexts/SharedDataContext';
-import { UserDataProvider, useCurrentUser } from '@/contexts/UserDataContext';
+import { useCurrentUser } from '@/contexts/UserDataContext';
 
 // Import your view components (or use placeholders)
 import UserDashboard from './UserDashboard';
 import UserTickets from './UserTickets';
-import CreateTicket from './CreateTicket';
+import { TicketCreationWizard } from '@/components/shared/TicketCreationWizard';
 
 // A placeholder component for sections not yet implemented
 function ComingSoonSection({ section }: { section: string }) {
@@ -109,7 +109,7 @@ const UserLayoutContent = () => {
       </div>
 
       {/* Create Ticket Modal */}
-      <CreateTicket
+      <TicketCreationWizard
         isOpen={isCreateTicketOpen}
         onOpenChange={setIsCreateTicketOpen}
         onSuccess={handleTicketCreated}
@@ -120,11 +120,9 @@ const UserLayoutContent = () => {
 
 const UserLayout = () => {
   return (
-    <UserDataProvider>
-      <SharedDataProvider>
-        <UserLayoutContent />
-      </SharedDataProvider>
-    </UserDataProvider>
+    <SharedDataProvider>
+      <UserLayoutContent />
+    </SharedDataProvider>
   );
 };
 

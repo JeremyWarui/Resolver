@@ -35,13 +35,13 @@ const ticketsService = {
     await apiClient.delete(`/tickets/${id}/`);
   },
 
-  escalateTicket: async (ticketId: number): Promise<Ticket> => {
-    const response = await apiClient.post(`/tickets/${ticketId}/escalate/`);
+  escalateTicket: async (ticketId: number, reason?: string): Promise<Ticket> => {
+    const response = await apiClient.post(`/tickets/${ticketId}/escalate/`, { reason: reason ?? '' });
     return response.data;
   },
 
-  closeTicket: async (ticketId: number): Promise<Ticket> => {
-    const response = await apiClient.post(`/tickets/${ticketId}/close/`);
+  closeTicket: async (ticketId: number, closureNotes?: string): Promise<Ticket> => {
+    const response = await apiClient.post(`/tickets/${ticketId}/close/`, { closure_notes: closureNotes ?? '' });
     return response.data;
   },
 
