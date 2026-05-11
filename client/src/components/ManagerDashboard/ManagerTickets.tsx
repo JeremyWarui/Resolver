@@ -6,7 +6,7 @@ import { createTicketColumnVisibility } from '@/components/Common/DataTable/util
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 
-const DirectorTickets = ({ userId }: { userId?: number }) => {
+const ManagerTickets = ({ userId }: { userId?: number }) => {
   const table = useTicketTable({ role: 'manager', currentUserId: userId });
 
   const columns = useMemo(() => createTicketTableColumns({
@@ -56,4 +56,4 @@ const DirectorTickets = ({ userId }: { userId?: number }) => {
   );
 };
 
-export default DirectorTickets;
+export default ManagerTickets;

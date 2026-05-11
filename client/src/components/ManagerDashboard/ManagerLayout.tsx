@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import DirectorSideBar, { type ManagerSection } from './DirectorSideBar';
+import ManagerSideBar, { type ManagerSection } from './ManagerSideBar';
 import Header from '@/components/Common/Header';
 import FullScreenLoading from '@/components/Common/FullScreenLoading';
-import ManagerDashboard from './DirectorDashboard';
-import ManagerTickets from './DirectorTickets';
+import ManagerDashboard from './ManagerDashboard';
+import ManagerTickets from './ManagerTickets';
 import { useUserData } from '@/hooks/users';
 import { SharedDataProvider } from '@/contexts/SharedDataContext';
 
@@ -38,7 +38,7 @@ const ManagerLayoutContent = () => {
   return (
     <div className="flex h-screen bg-gray-100">
       {userLoading && <FullScreenLoading message="Loading your dashboard..." />}
-      <DirectorSideBar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <ManagerSideBar activeSection={activeSection} onSectionChange={setActiveSection} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           title={headerTitle[activeSection]}

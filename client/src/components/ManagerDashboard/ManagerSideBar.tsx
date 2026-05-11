@@ -10,7 +10,7 @@ interface SideBarProps {
   onSectionChange: (id: ManagerSection) => void;
 }
 
-const DirectorSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
+const ManagerSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const { handleLogout, isLoading } = useLogout();
 
   const sections = [
@@ -55,4 +55,4 @@ const DirectorSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   );
 };
 
-export default DirectorSideBar;
+export default ManagerSideBar;

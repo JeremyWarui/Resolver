@@ -12,7 +12,7 @@ const UserLayout = lazy(() => import("./components/UserDashboard/UserLayout"));
 const TechnicianLayout = lazy(() => import("./components/TechnicianDashboard/TechnicianLayout"));
 const SectionHeadLayout = lazy(() => import("./components/SectionHeadDashboard/SectionHeadLayout"));
 const HODLayout = lazy(() => import("./components/HODDashboard/HODLayout"));
-const DirectorLayout = lazy(() => import("./components/DirectorDashboard/DirectorLayout"));
+const ManagerLayout = lazy(() => import("./components/ManagerDashboard/ManagerLayout"));
 
 // Loading component for lazy routes
 const RouteLoading = () => (
@@ -98,7 +98,7 @@ const App = () => {
             path="/manager/*"
             element={
               <ProtectedRoute requiredRoles={['manager']}>
-                <DirectorLayout />
+                <ManagerLayout />
               </ProtectedRoute>
             }
           />
