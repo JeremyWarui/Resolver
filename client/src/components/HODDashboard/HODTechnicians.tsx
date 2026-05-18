@@ -1,71 +1,48 @@
-import { useMemo } from 'react';
-import { useSharedData } from '@/contexts/SharedDataContext';
-import { useHODAnalytics } from '@/hooks/analytics';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { useHODDashboard } from '@/contexts/HODDashboardContext';
+import useTechnicians from '@/hooks/technicians/useTechnicians';
 
 const HODTechnicians = () => {
-  const { technicians, techniciansLoading, sections } = useSharedData();
-  const { data, loading } = useHODAnalytics();
+  const { data } = useHODDashboard();
 
-  const campusSectionIds = useMemo(
-    () => new Set(data?.section_performance?.map(s => s.section.id) ?? []),
-    [data?.section_performance]
+  const campusDepartmentId = data?.campus_department?.id;
+  const { technicians, loading } = useTechnicians(
+    campusDepartmentId ? { campus_department_id: campusDepartmentId } : undefined
   );
-
-  const campusTechnicians = useMemo(
-    () => technicians.filter(t => t.sections.some(sId => campusSectionIds.has(sId))),
-    [technicians, campusSectionIds]
-  );
-
-  const sectionNameMap = useMemo(
-    () => new Map(sections.map(s => [s.id, s.name])),
-    [sections]
-  );
-
-  const isLoading = loading || techniciansLoading;
 
   return (
     <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
       <div className="mb-4">
         <h2 className="text-xl font-semibold text-gray-800">Technicians</h2>
         <p className="text-sm text-gray-600">
-          {campusTechnicians.length} technician{campusTechnicians.length !== 1 ? 's' : ''}
+          {technicians.length} technician{technicians.length !== 1 ? 's' : ''}
         </p>
       </div>
+
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Technician List</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-3">
+        <CardContent className="pt-2">
+          {loading ? (
+            <div className="space-y-3 p-4">
               {[1, 2, 3].map(i => (
                 <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />
               ))}
             </div>
-          ) : campusTechnicians.length > 0 ? (
-            <div className="divide-y max-h-[600px] overflow-y-auto">
-              {campusTechnicians.map(t => {
-                const sectionNames = t.sections
-                  .map(id => sectionNameMap.get(id) ?? String(id))
-                  .join(', ');
-                return (
-                  <div key={t.id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">
-                        {t.first_name} {t.last_name}
-                      </p>
-                      <p className="text-xs text-gray-500">{t.email}</p>
-                      <p className="text-xs text-gray-500">
-                        {sectionNames || 'No section assigned'}
-                      </p>
-                    </div>
+          ) : technicians.length > 0 ? (
+            <div className="divide-y">
+              {technicians.map(t => (
+                <div key={t.id} className="py-3 flex items-center gap-3 px-1">
+                  <div className="h-8 w-8 rounded-full bg-[#e5f2fc] flex items-center justify-center text-xs font-semibold text-[#0078d4] shrink-0">
+                    {t.name.charAt(0).toUpperCase()}
                   </div>
-                );
-              })}
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{t.name}</p>
+                    <p className="text-xs text-gray-500">@{t.username}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 text-center py-6">No technicians found</p>
+            <p className="text-sm text-gray-500 text-center py-8">No technicians found</p>
           )}
         </CardContent>
       </Card>

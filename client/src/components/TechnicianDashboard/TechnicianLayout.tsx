@@ -5,8 +5,8 @@ import FullScreenLoading from '../Common/FullScreenLoading';
 import TechTicketsPage from './TechTicketsPage';
 import TechSectionTickets from './TechSectionTickets';
 import TechReport from './TechReport';
-import { useUserData } from '@/hooks/users';
-import { SharedDataProvider } from '@/contexts/SharedDataContext';
+import { useCurrentUser } from '@/contexts/UserDataContext';
+import { TechnicianDashboardProvider, useTechDashboard } from '@/contexts/TechnicianDashboardContext';
 
 // Import your view components (or use placeholders)
 
@@ -36,9 +36,12 @@ function ComingSoonSection({ section }: { section: string }) {
 const TechnicianLayoutContent = () => {
   const [activeSection, setActiveSection] =
     useState<Section['id']>('dashboard');
-  
+
   // Fetch current user data
-  const { userData, loading: userLoading } = useUserData();
+  const { userData, loading: userLoading } = useCurrentUser();
+
+  // Fetch dashboard data
+  const { loading: dashboardLoading } = useTechDashboard();
 
   const headerTitle: Record<Section['id'], string> = {
     dashboard: 'Section Tickets',
@@ -47,11 +50,13 @@ const TechnicianLayoutContent = () => {
     settings: 'Settings',
   };
 
+  const isLoading = userLoading || dashboardLoading;
+
   return (
     <div className='flex h-screen bg-gray-100'>
-      {/* Show loading spinner while fetching user data */}
-      {userLoading && <FullScreenLoading message="Loading your dashboard..." />}
-      
+      {/* Show loading spinner while fetching data */}
+      {isLoading && <FullScreenLoading message="Loading your dashboard..." />}
+
       {/* Sidebar with controlled active state */}
       <TechSideBar
         activeSection={activeSection}
@@ -84,9 +89,9 @@ const TechnicianLayoutContent = () => {
 
 const TechnicianLayout = () => {
   return (
-    <SharedDataProvider>
+    <TechnicianDashboardProvider>
       <TechnicianLayoutContent />
-    </SharedDataProvider>
+    </TechnicianDashboardProvider>
   );
 };
 

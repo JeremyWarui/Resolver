@@ -9,12 +9,13 @@ interface UseHODAnalyticsResult {
   refetch: () => void;
 }
 
-export const useHODAnalytics = (params?: RoleAnalyticsParams): UseHODAnalyticsResult => {
+export const useHODAnalytics = (params?: RoleAnalyticsParams, skip = false): UseHODAnalyticsResult => {
   const [data, setData] = useState<HODAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
     try {
@@ -25,7 +26,7 @@ export const useHODAnalytics = (params?: RoleAnalyticsParams): UseHODAnalyticsRe
     } finally {
       setLoading(false);
     }
-  }, [params?.days]);
+  }, [params?.days, skip]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

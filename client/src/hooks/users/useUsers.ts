@@ -17,13 +17,14 @@ interface UseUsersResult {
   refetch: () => void;
 }
 
-const useUsers = (params: UseUsersParams = {}): UseUsersResult => {
+const useUsers = (params: UseUsersParams = {}, skip = false): UseUsersResult => {
   const [users, setUsers] = useState<User[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchUsers = async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
 
@@ -47,9 +48,9 @@ const useUsers = (params: UseUsersParams = {}): UseUsersResult => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    if (!skip) fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.role, params.sections, params.page, params.page_size]);
+  }, [params.role, params.sections, params.page, params.page_size, skip]);
 
   return {
     users,

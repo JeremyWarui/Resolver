@@ -1,21 +1,19 @@
 import { useMemo } from 'react';
-import { useSharedData } from '@/contexts/SharedDataContext';
-import { useSectionHeadAnalytics } from '@/hooks/analytics';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSectionHeadDashboard } from '@/contexts/SectionHeadDashboardContext';
+import { Card, CardContent } from '@/components/ui/card';
+import useTechnicians from '@/hooks/technicians/useTechnicians';
 
 const SectionHeadTechnicians = () => {
-  const { technicians, techniciansLoading } = useSharedData();
-  const { data, loading } = useSectionHeadAnalytics();
+  const { data } = useSectionHeadDashboard();
 
-  const techList = useMemo(() => {
-    if (!data?.tech_performance) return [];
-    return data.tech_performance.map(tp => {
-      const full = technicians.find(t => t.id === tp.technician.id);
-      return { ...tp, email: full?.email ?? '' };
-    });
-  }, [data?.tech_performance, technicians]);
+  const sectionIds = useMemo(() => {
+    const ids = (data?.sections ?? []).map(s => s.id).join(',');
+    return ids || undefined;
+  }, [data?.sections]);
 
-  const isLoading = loading || techniciansLoading;
+  const { technicians: techList, loading: isLoading } = useTechnicians(
+    sectionIds ? { section_ids: sectionIds } : undefined
+  );
 
   return (
     <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
@@ -26,10 +24,7 @@ const SectionHeadTechnicians = () => {
         </p>
       </div>
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">Technician List</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-2">
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
@@ -38,20 +33,14 @@ const SectionHeadTechnicians = () => {
             </div>
           ) : techList.length > 0 ? (
             <div className="divide-y max-h-[600px] overflow-y-auto">
-              {techList.map(tp => (
-                <div key={tp.technician.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      {tp.technician.name}
-                    </p>
-                    <p className="text-xs text-gray-500">{tp.email}</p>
-                    <p className="text-xs text-gray-500">
-                      {tp.technician.sections.join(', ') || 'No section assigned'}
-                    </p>
+              {techList.map(t => (
+                <div key={t.id} className="py-3 flex items-center gap-3 px-1">
+                  <div className="h-8 w-8 rounded-full bg-[#e5f2fc] flex items-center justify-center text-xs font-semibold text-[#0078d4] shrink-0">
+                    {t.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="text-right text-sm">
-                    <p className="text-green-600 font-medium">{tp.resolved} resolved</p>
-                    <p className="text-gray-500 text-xs">{tp.total_assigned} total</p>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{t.name}</p>
+                    <p className="text-xs text-gray-500">@{t.username}</p>
                   </div>
                 </div>
               ))}

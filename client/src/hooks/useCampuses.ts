@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getCampuses } from '@/api/services/organisationService'
+import { campusesService } from '@/api/services/organizationsService'
 import type { Campus } from '@/types'
 
 export function useCampuses() {
@@ -10,8 +10,8 @@ export function useCampuses() {
   const fetch = useCallback(async () => {
     try {
       setIsLoading(true)
-      const res = await getCampuses()
-      setData(res.data)
+      const campuses = await campusesService.getCampuses()
+      setData(campuses)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load campuses')
     } finally {

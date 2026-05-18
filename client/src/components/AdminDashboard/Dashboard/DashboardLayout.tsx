@@ -17,7 +17,8 @@ import FacilityAndWorkload from "./FacilityAndWorkload";
 import RecentTicketsTable from "./RecentTickets";
 import reportsService from "@/api/services/reportsService";
 import type { GenerateReportParams } from "@/api/services/reportsService";
-import { useSharedData } from '@/contexts/SharedDataContext';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { useTicketAnalytics } from '@/hooks/analytics';
 
 const MainContent = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -25,9 +26,28 @@ const MainContent = () => {
   const [selectedReportType, setSelectedReportType] = useState<GenerateReportParams['report_type'] | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
-  // Get current user data from shared context for the welcome message
-  const { currentUser: userData, userLoading } = useSharedData();
+  const [ticketTimeframe, setTicketTimeframe] = useState<'week' | 'month'>("week");
+  const [categoryTimeframe, setCategoryTimeframe] = useState<'day' | 'week' | 'month'>("week");
+  const [facilityTimeframe, setFacilityTimeframe] = useState<'day' | 'week' | 'month'>("month");
+
+  // Get current user data and analytics from admin dashboard context
+  const { data: dashboardData, loading: dashboardLoading } = useAdminDashboard();
+  const userData = dashboardData?.admin ? {
+    first_name: dashboardData.admin.name.split(' ')[0],
+  } : null;
+
+  // Lift ticket analytics calls here to avoid duplication
+  // ChartsSection analytics
+  const { data: chartsAnalyticsData, loading: chartsLoading } = useTicketAnalytics({
+    timeframe: categoryTimeframe,
+    days: ticketTimeframe === 'week' ? 7 : 30,
+    group_by: ticketTimeframe === 'week' ? 'day' : 'week',
+  });
+
+  // FacilityChart analytics
+  const { data: facilityAnalyticsData, loading: facilityLoading } = useTicketAnalytics({
+    timeframe: facilityTimeframe,
+  });
 
   const handleExport = async () => {
     if (!selectedReportType) {
@@ -86,10 +106,10 @@ const MainContent = () => {
       <div className="flex justify-between mb-2">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">
-            Maintenance Overview
+            System Overview
           </h2>
           <p className="text-sm text-gray-600">
-            Welcome back, {userLoading ? '...' : userData?.first_name || 'Admin'} 👋
+            Welcome back, {dashboardLoading ? '...' : userData?.first_name || 'Admin'} 👋
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -122,11 +142,23 @@ const MainContent = () => {
 
       {/* Stats Cards */}
       <StatsCards />
-      
+
       {/* Charts - First Row */}
-      <ChartSection />
+      <ChartSection
+        analyticsData={chartsAnalyticsData}
+        loading={chartsLoading}
+        ticketTimeframe={ticketTimeframe}
+        setTicketTimeframe={setTicketTimeframe}
+        categoryTimeframe={categoryTimeframe}
+        setCategoryTimeframe={setCategoryTimeframe}
+      />
       {/* Charts and Tables - Second Row */}
-      <FacilityAndWorkload />
+      <FacilityAndWorkload
+        facilityAnalyticsData={facilityAnalyticsData}
+        facilityLoading={facilityLoading}
+        facilityTimeframe={facilityTimeframe}
+        setFacilityTimeframe={setFacilityTimeframe}
+      />
       {/*Recent Tickets */}
       <RecentTicketsTable />
 

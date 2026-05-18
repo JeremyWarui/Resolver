@@ -6,21 +6,36 @@ import { createTicketColumnVisibility } from '@/components/Common/DataTable/util
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { UserTableHeader } from '../Common/DataTable/utils/TableHeaders';
 import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
+import type { Ticket } from '@/types';
 
 interface PostedTicketsTableProps {
   currentUser?: number;
   viewOnly?: boolean;
   statusFilter?: string;
   waitForUserId?: boolean;
+  initialData?: Ticket[];
+  onDataFetched?: (tickets: Ticket[]) => void;
 }
 
-function PostedTicketsTable({ currentUser, statusFilter, waitForUserId = false }: PostedTicketsTableProps) {
+function PostedTicketsTable({
+  currentUser,
+  statusFilter,
+  waitForUserId = false,
+  initialData,
+  onDataFetched,
+}: PostedTicketsTableProps) {
   const table = useTicketTable({
     role: 'user',
     currentUserId: currentUser,
     defaultPageSize: 10,
     ordering: '-updated_at',
     skipUntilUserId: waitForUserId,
+    initialData,
+    onDataFetched: (tickets, _total) => {
+      if (onDataFetched) {
+        onDataFetched(tickets);
+      }
+    },
   });
 
   useEffect(() => {

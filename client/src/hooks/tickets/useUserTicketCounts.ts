@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import ticketsService from '@/api/services/ticketsService';
+import analyticsService from '@/api/services/analyticsService';
 
 interface UserTicketCounts {
   total: number;
@@ -8,6 +8,20 @@ interface UserTicketCounts {
   resolved: number;
   pending: number;
   loading: boolean;
+}
+
+interface UserAnalyticsResponse {
+  summary: {
+    total: number;
+    open: number;
+    closed: number;
+    pending: number;
+    pending_approval: number;
+    escalated: number;
+    rejected: number;
+    avg_resolution_hours: number;
+  };
+  status_distribution: Array<{ status: string; count: number }>;
 }
 
 export const useUserTicketCounts = (userId?: number): UserTicketCounts => {
@@ -20,26 +34,27 @@ export const useUserTicketCounts = (userId?: number): UserTicketCounts => {
     let isMounted = true;
     setLoading(true);
 
-    Promise.all([
-      ticketsService.getTickets({ raised_by: userId, page_size: 1 }),
-      ticketsService.getTickets({ raised_by: userId, status: 'open', page_size: 1 }),
-      ticketsService.getTickets({ raised_by: userId, status: 'in_progress', page_size: 1 }),
-      ticketsService.getTickets({ raised_by: userId, status: 'assigned', page_size: 1 }),
-      ticketsService.getTickets({ raised_by: userId, status: 'resolved', page_size: 1 }),
-      ticketsService.getTickets({ raised_by: userId, status: 'pending', page_size: 1 }),
-    ])
-      .then(([total, open, inProgress, assigned, resolved, pending]) => {
+    analyticsService
+      .getUserAnalytics()
+      .then((data: UserAnalyticsResponse) => {
         if (!isMounted) return;
+
+        // Extract counts from status distribution
+        const statusMap = new Map(data.status_distribution.map(s => [s.status, s.count]));
+
         setCounts({
-          total: total.count,
-          open: open.count,
-          inProgress: inProgress.count + assigned.count,
-          resolved: resolved.count,
-          pending: pending.count,
+          total: data.summary.total,
+          open: statusMap.get('open') || 0,
+          inProgress: (statusMap.get('assigned') || 0) + (statusMap.get('in_progress') || 0),
+          resolved: data.summary.closed,
+          pending: data.summary.pending,
         });
       })
       .catch(err => {
         console.error('Failed to fetch user ticket counts:', err);
+        if (isMounted) {
+          setCounts({ total: 0, open: 0, inProgress: 0, resolved: 0, pending: 0 });
+        }
       })
       .finally(() => {
         if (isMounted) setLoading(false);

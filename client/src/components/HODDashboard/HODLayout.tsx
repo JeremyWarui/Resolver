@@ -5,8 +5,9 @@ import FullScreenLoading from '@/components/Common/FullScreenLoading';
 import HODDashboard from './HODDashboard';
 import HODTickets from './HODTickets';
 import HODTechnicians from './HODTechnicians';
-import { useUserData } from '@/hooks/users';
-import { SharedDataProvider } from '@/contexts/SharedDataContext';
+import HODSections from './HODSections';
+import { useCurrentUser } from '@/contexts/UserDataContext';
+import { HODDashboardProvider } from '@/contexts/HODDashboardContext';
 
 function ComingSoon({ section }: { section: string }) {
   return (
@@ -27,12 +28,13 @@ function ComingSoon({ section }: { section: string }) {
 
 const HODLayoutContent = () => {
   const [activeSection, setActiveSection] = useState<HODSection>('dashboard');
-  const { userData, loading: userLoading } = useUserData();
+  const { userData, loading: userLoading } = useCurrentUser();
 
   const headerTitle: Record<HODSection, string> = {
     dashboard: 'Dashboard',
     tickets: 'Campus Tickets',
     technicians: 'Technicians',
+    sections: 'Sections',
     reports: 'Reports',
     settings: 'Settings',
   };
@@ -52,6 +54,7 @@ const HODLayoutContent = () => {
           {activeSection === 'dashboard' && <HODDashboard />}
           {activeSection === 'tickets' && <HODTickets userId={userData?.id} />}
           {activeSection === 'technicians' && <HODTechnicians />}
+          {activeSection === 'sections' && <HODSections />}
           {activeSection === 'reports' && <ComingSoon section="Reports" />}
           {activeSection === 'settings' && <ComingSoon section="Settings" />}
         </main>
@@ -61,9 +64,9 @@ const HODLayoutContent = () => {
 };
 
 const HODLayout = () => (
-  <SharedDataProvider>
+  <HODDashboardProvider>
     <HODLayoutContent />
-  </SharedDataProvider>
+  </HODDashboardProvider>
 );
 
 export default HODLayout;

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -29,7 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTicketAnalytics } from "@/hooks/analytics";
+import type { TicketAnalytics } from "@/types/analytics.types";
 
 const timePeriodLabels = {
   day: "Today",
@@ -45,16 +45,23 @@ const chartConfig = {
   label: {
     color: "gray", // Changed to black
   },
-} satisfies ChartConfig; 
+} satisfies ChartConfig;
 
 type TimePeriod = "day" | "week" | "month";
-export function FacilityChart() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("month");
 
-  // Fetch facility distribution data
-  const { data: analyticsData, loading } = useTicketAnalytics({
-    timeframe: timePeriod,
-  });
+interface FacilityChartProps {
+  analyticsData: TicketAnalytics | null;
+  loading: boolean;
+  timePeriod: TimePeriod;
+  setTimePeriod: (period: TimePeriod) => void;
+}
+
+export function FacilityChart({
+  analyticsData,
+  loading,
+  timePeriod,
+  setTimePeriod,
+}: FacilityChartProps) {
 
   // Transform facility distribution data
   const facilityData = useMemo(() => {

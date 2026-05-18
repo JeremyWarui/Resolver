@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getFacilityFloors } from '@/api/services/organisationService'
+import { facilitiesService } from '@/api/services/organizationsService'
 import type { FacilityFloor } from '@/types'
 
 export function useFacilityFloors(facilityId: number | null) {
@@ -14,8 +14,8 @@ export function useFacilityFloors(facilityId: number | null) {
     }
     try {
       setIsLoading(true)
-      const res = await getFacilityFloors(facilityId)
-      setData(res.data)
+      const floors = await facilitiesService.getFacilityFloors(facilityId)
+      setData(floors)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load floors')
     } finally {

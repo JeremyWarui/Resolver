@@ -4,7 +4,11 @@ import type { Section, SectionsResponse } from '@/types';
 const sectionsService = {
   // Get all sections
   getSections: async (): Promise<SectionsResponse> => {
-    const response = await apiClient.get('/sections/');
+    const response = await apiClient.get('/sections/', {
+      params: {
+        page_size: 1000,
+      },
+    });
     return response.data;
   },
 

@@ -9,12 +9,13 @@ interface UseSectionHeadAnalyticsResult {
   refetch: () => void;
 }
 
-export const useSectionHeadAnalytics = (params?: RoleAnalyticsParams): UseSectionHeadAnalyticsResult => {
+export const useSectionHeadAnalytics = (params?: RoleAnalyticsParams, skip = false): UseSectionHeadAnalyticsResult => {
   const [data, setData] = useState<SectionHeadAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
     try {
@@ -25,7 +26,7 @@ export const useSectionHeadAnalytics = (params?: RoleAnalyticsParams): UseSectio
     } finally {
       setLoading(false);
     }
-  }, [params?.days]);
+  }, [params?.days, skip]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

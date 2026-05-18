@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 import { useSharedData } from '@/contexts/SharedDataContext';
+import { formatSectionObj } from '@/utils/formatSection';
 import SectionForm from './SectionForm';
 import SectionDetails from './SectionDetails';
 
@@ -68,7 +69,7 @@ function SectionsTable() {
   const dataWithSearchField = useMemo(() => {
     return sections.map((s) => ({
       ...s,
-      techniciansCount: s.technicians ? s.technicians.length : 0,
+      techniciansCount: s.technician_count ?? 0,
       searchField: `${String(s.id).toLowerCase()} ${s.name.toLowerCase()} ${String(s.description || '').toLowerCase()}`,
     }));
   }, [sections]);
@@ -96,7 +97,7 @@ function SectionsTable() {
           </Button>
         </div>
       ),
-      cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
+      cell: ({ row }) => <div className="font-medium">{formatSectionObj(row.original)}</div>,
     },
     {
       accessorKey: 'description',

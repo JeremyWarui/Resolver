@@ -13,7 +13,6 @@ export interface EscalationStatus {
 }
 
 export interface OrganizationalPath {
-  organization: NestedRef | null;
   campus: NestedRef | null;
   department: NestedRef | null;
   section: NestedRef;
@@ -52,7 +51,8 @@ export interface Ticket {
   // Read-only nested objects
   section: NestedRef;
   facility: NestedRef;
-  raised_by: string;
+  raised_by: string;    // full name (e.g. "Alex Mugo"), falls back to username if no name set
+  raised_by_id: number; // user ID — use this for ownership checks, not raised_by
   assigned_to: AssignedUser | null;
 
   // Timestamps
@@ -87,6 +87,13 @@ export interface Ticket {
   // Nested data (detail view only)
   comments?: Comment[];
   feedback?: Feedback;
+  service_item?: {
+    id: number;
+    name: string;
+    category_name: string;
+    requires_approval: boolean;
+  } | null;
+  form_data?: Record<string, unknown> | null;
 }
 
 export interface TicketsResponse {
@@ -106,6 +113,23 @@ export interface CreateTicketPayload {
   location_detail?: string;
   service_item_id?: number | null;
   form_data?: Record<string, unknown> | null;
+}
+
+export interface CreateTicketCataloguePayload {
+  department_id: number;
+  service_item_id: number;
+  title: string;
+  description: string;
+  facility_id?: number | null;
+  location_detail?: string;
+  form_data?: Record<string, unknown> | null;
+}
+
+export interface CreateTicketCatalogueResponse {
+  ticket: Ticket;
+  campus_department: { id: number; campus: { code: string; name: string }; department: { code: string; name: string } };
+  section: { id: number; name: string; code: string };
+  eligible_technicians: { id: number; username: string; full_name: string }[];
 }
 
 export interface UpdateTicketPayload {

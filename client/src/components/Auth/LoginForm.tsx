@@ -59,7 +59,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         admin: '/dashboard',
         technician: '/technician',
         user: '/user',
-        section_head: '/section-head',
+        head_of_section: '/section-head',
         hod: '/hod',
         manager: '/manager',
       };

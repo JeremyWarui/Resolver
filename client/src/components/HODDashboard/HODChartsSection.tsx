@@ -21,33 +21,32 @@ const Placeholder = ({ message }: { message: string }) => (
 const HODChartsSection = ({ data, loading }: HODChartsSectionProps) => {
   const truncate = (s: string, max: number) => s.length > max ? s.slice(0, max) + '…' : s;
 
-  const deptData = (data?.dept_stats ?? []).map(d => ({
-    name: truncate(d.department.name, 14),
-    Open: d.open_tickets,
-    Total: d.total_tickets,
+  const statusData = (data?.status_distribution ?? []).map(s => ({
+    name: truncate(s.status.replace(/_/g, ' '), 14),
+    Count: s.count,
   }));
 
-  const sectionData = (data?.section_performance ?? []).slice(0, 8).map(s => ({
+  const sectionData = (data?.by_section ?? []).slice(0, 8).map(s => ({
     name: truncate(s.section.name, 12),
-    value: s.open_count,
+    value: s.open,
   }));
 
   return (
     <div className="grid grid-cols-7 gap-2 mb-2">
       <ChartCard
         className="col-span-4"
-        title="Tickets by Department"
-        description="Open vs total tickets per department"
+        title="Status Distribution"
+        description="Ticket counts by current status"
         contentClassName="p-5 pt-1"
       >
         {loading ? (
           <Placeholder message="Loading chart data..." />
-        ) : deptData.length === 0 ? (
-          <Placeholder message="No department data available" />
+        ) : statusData.length === 0 ? (
+          <Placeholder message="No status data available" />
         ) : (
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RechartsBarChart data={deptData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }} barCategoryGap={40}>
+              <RechartsBarChart data={statusData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }} barCategoryGap={40}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#edebe9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} dy={20} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} width={30} />
@@ -55,14 +54,13 @@ const HODChartsSection = ({ data, loading }: HODChartsSectionProps) => {
                   content={({ active, payload, label }) =>
                     active && payload?.length ? (
                       <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-                        <p className="text-xs font-medium text-gray-800">{label}</p>
+                        <p className="text-xs font-medium text-gray-800 capitalize">{label}</p>
                         {payload.map((p, i) => <p key={i} className="text-xs text-gray-600">{p.name}: {p.value}</p>)}
                       </div>
                     ) : null
                   }
                 />
-                <Bar dataKey="Total" fill="#bfdbfe" radius={[4, 4, 0, 0]} barSize={16} />
-                <Bar dataKey="Open" fill="#0078d4" radius={[4, 4, 0, 0]} barSize={16} />
+                <Bar dataKey="Count" fill="#0078d4" radius={[4, 4, 0, 0]} barSize={20} />
               </RechartsBarChart>
             </ResponsiveContainer>
           </div>

@@ -2,7 +2,8 @@ import { useState, Suspense, lazy } from "react";
 import SideBar, { Section } from "../Common/Sidebar";
 import Header from "../Common/Header";
 import FullScreenLoading from "../Common/FullScreenLoading";
-import { SharedDataProvider, useSharedData } from "@/contexts/SharedDataContext";
+import { AdminDashboardProvider, useAdminDashboard } from "@/contexts/AdminDashboardContext";
+import { SharedDataProvider } from "@/contexts/SharedDataContext";
 
 const MainContent = lazy(() => import("./Dashboard/DashboardLayout"));
 const TicketsPage = lazy(() => import("./TicketsPage/TicketsPage"));
@@ -11,9 +12,9 @@ const FacilitiesPage = lazy(() => import("./Facilities/FacilitiesPage"));
 const SectionsPage = lazy(() => import("./Sections/SectionsPage"));
 const ReportsPage = lazy(() => import("./Reports").then(module => ({ default: module.ReportsPageEnhanced })));
 const OrganisationAnalyticsPage = lazy(() => import("./OrganisationAnalytics").then(m => ({ default: m.OrganisationAnalytics })));
-const OrganizationsPage = lazy(() => import("./Organizations/OrganizationsPage"));
 const CampusesPage = lazy(() => import("./Campuses/CampusesPage"));
 const DepartmentsPage = lazy(() => import("./Departments/DepartmentsPage"));
+const CataloguePage = lazy(() => import("./Catalogue/CataloguePage"));
 
 const PageLoading = () => (
   <div className="flex items-center justify-center h-64">
@@ -48,20 +49,19 @@ const headerTitles: Record<Section["id"], string> = {
   technicians: "Technicians",
   facilities: "Facilities",
   sections: "Sections",
-  organizations: "Organizations",
   campuses: "Campuses",
   departments: "Departments",
-  inventory: "Inventory Management",
+  inventory: "Service Catalogue",
   settings: "Settings",
 };
 
 function AdminLayoutContent() {
   const [activeSection, setActiveSection] = useState<Section["id"]>("dashboard");
-  const { currentUser: userData, isLoading } = useSharedData();
+  const { loading } = useAdminDashboard();
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {isLoading && <FullScreenLoading message="Loading dashboard..." />}
+      {loading && <FullScreenLoading message="Loading dashboard..." />}
 
       <SideBar activeSection={activeSection} onSectionChange={setActiveSection} />
 
@@ -69,7 +69,7 @@ function AdminLayoutContent() {
         <Header
           title={headerTitles[activeSection]}
           searchPlaceholder="Search..."
-          currentUser={userData}
+          currentUser={null}
           onSearchChange={() => {}}
         />
         <main className="flex-1 overflow-y-auto">
@@ -81,12 +81,11 @@ function AdminLayoutContent() {
             {activeSection === "technicians" && <TechniciansPage />}
             {activeSection === "sections" && <SectionsPage />}
             {activeSection === "facilities" && <FacilitiesPage />}
-            {activeSection === "organizations" && <OrganizationsPage />}
             {activeSection === "campuses" && <CampusesPage />}
             {activeSection === "departments" && <DepartmentsPage />}
           </Suspense>
           {activeSection === "schedule" && <ComingSoonSection section="Schedule" />}
-          {activeSection === "inventory" && <ComingSoonSection section="Inventory" />}
+          {activeSection === "inventory" && <CataloguePage />}
           {activeSection === "settings" && <ComingSoonSection section="Settings" />}
         </main>
       </div>
@@ -96,8 +95,10 @@ function AdminLayoutContent() {
 
 export default function AdminLayout() {
   return (
-    <SharedDataProvider>
-      <AdminLayoutContent />
-    </SharedDataProvider>
+    <AdminDashboardProvider>
+      <SharedDataProvider>
+        <AdminLayoutContent />
+      </SharedDataProvider>
+    </AdminDashboardProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getCampusDepartments, getDepartments } from '@/api/services/organisationService'
+import { departmentsService } from '@/api/services/organizationsService'
 import type { Department } from '@/types'
 
 export function useDepartments(campusId?: number) {
@@ -10,10 +10,10 @@ export function useDepartments(campusId?: number) {
   const fetch = useCallback(async () => {
     try {
       setIsLoading(true)
-      const res = campusId != null
-        ? await getCampusDepartments(campusId)
-        : await getDepartments()
-      setData(res.data)
+      const departments = campusId != null
+        ? await departmentsService.getCampusDepartments(campusId)
+        : await departmentsService.getDepartments()
+      setData(departments)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load departments')
     } finally {

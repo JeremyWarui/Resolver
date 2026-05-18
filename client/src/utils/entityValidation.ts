@@ -18,6 +18,7 @@ export const createTechnicianSchema = z.object({
   email: z.string().email({ message: 'Valid email required' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   sections: z.array(z.number()).optional(),
+  primary_department_id: z.number().nullable().optional(),
 });
 
 export type CreateSectionFormValues = z.infer<typeof createSectionSchema>;

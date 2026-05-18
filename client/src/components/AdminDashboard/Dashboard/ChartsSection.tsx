@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -28,34 +28,37 @@ import {
   Legend,
 } from "recharts";
 import { ChevronDown } from "lucide-react";
-import { useTicketAnalytics } from "@/hooks/analytics";
+import type { TicketAnalytics } from "@/types/analytics.types";
 
 // FluentUI theme colors
 const COLORS = ["#0078d4", "#107c10", "#ffaa44", "#d13438", "#5c2d91"];
 
-const ChartSection = () => {
-  const [ticketTimeframe, setTicketTimeframe] = useState<'week' | 'month'>("week");
-  const [categoryTimeframe, setCategoryTimeframe] = useState<'day' | 'week' | 'month'>("week");
+interface ChartSectionProps {
+  analyticsData: TicketAnalytics | null;
+  loading: boolean;
+  ticketTimeframe: 'week' | 'month';
+  setTicketTimeframe: (timeframe: 'week' | 'month') => void;
+  categoryTimeframe: 'day' | 'week' | 'month';
+  setCategoryTimeframe: (timeframe: 'day' | 'week' | 'month') => void;
+}
 
-  // Fetch ticket analytics for section distribution
-  const { data: analyticsData, loading: analyticsLoading } = useTicketAnalytics({
-    timeframe: categoryTimeframe,
-  });
-
-  // Fetch trend data for tickets raised chart (7 days for week, 30 days for month)
-  const { data: trendData, loading: trendLoading } = useTicketAnalytics({
-    days: ticketTimeframe === 'week' ? 7 : 30,
-    group_by: ticketTimeframe === 'week' ? 'day' : 'week',
-  });
+const ChartSection = ({
+  analyticsData,
+  loading: analyticsLoading,
+  ticketTimeframe,
+  setTicketTimeframe,
+  categoryTimeframe,
+  setCategoryTimeframe,
+}: ChartSectionProps) => {
 
   // Transform trend data for bar chart
   const ticketsRaisedData = useMemo(() => {
-    if (!trendData?.trend_data) return [];
-    
+    if (!analyticsData?.trend_data) return [];
+
     if (ticketTimeframe === 'week') {
       // For weekly view, show last 7 days with day names
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      return trendData.trend_data.slice(-7).map(item => {
+      return analyticsData.trend_data.slice(-7).map(item => {
         const date = new Date(item.period);
         return {
           name: dayNames[date.getDay()],
@@ -64,16 +67,16 @@ const ChartSection = () => {
       });
     } else {
       // For monthly view, show last 4 weeks
-      return trendData.trend_data.slice(-4).map((item, index) => ({
+      return analyticsData.trend_data.slice(-4).map((item, index) => ({
         name: `Week ${index + 1}`,
         tickets: item.count,
       }));
     }
-  }, [trendData, ticketTimeframe]);
+  }, [analyticsData, ticketTimeframe]);
 
   // Transform section distribution data for pie chart
   const categoryData = analyticsData?.section_distribution.map(section => ({
-    name: section.name,
+    name: section.display_name ?? section.name,
     value: section.ticket_count,
   })) || [];
   return (
@@ -103,16 +106,16 @@ const ChartSection = () => {
           </DropdownMenu>
         </CardHeader>
         <CardContent className="p-5 pt-1">
-          {trendLoading ? (
-            <div className="h-[250px] w-full flex items-center justify-center">
+          {analyticsLoading ? (
+            <div className="h-[375px] w-full flex items-center justify-center">
               <p className="text-sm text-muted-foreground">Loading ticket data...</p>
             </div>
           ) : ticketsRaisedData.length === 0 ? (
-            <div className="h-[250px] w-full flex items-center justify-center">
+            <div className="h-[375px] w-full flex items-center justify-center">
               <p className="text-sm text-muted-foreground">No data available</p>
             </div>
           ) : (
-            <div className="h-[250px] w-full">
+            <div className="h-[375px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RechartsBarChart
                 data={ticketsRaisedData}
@@ -197,23 +200,23 @@ const ChartSection = () => {
         </CardHeader>
         <CardContent className="p-4 pt-0">
           {analyticsLoading ? (
-            <div className="h-[250px] w-full flex items-center justify-center">
+            <div className="h-[375px] w-full flex items-center justify-center">
               <p className="text-sm text-muted-foreground">Loading categories...</p>
             </div>
           ) : categoryData.length === 0 ? (
-            <div className="h-[250px] w-full flex items-center justify-center">
+            <div className="h-[375px] w-full flex items-center justify-center">
               <p className="text-sm text-muted-foreground">No data available</p>
             </div>
           ) : (
-            <div className="h-[250px] w-full">
+            <div className="h-[375px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={categoryData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
+                    innerRadius={75}
+                    outerRadius={120}
                     paddingAngle={5}
                     dataKey="value"
                     label={({ percent = 0 }: { percent?: number }) => {

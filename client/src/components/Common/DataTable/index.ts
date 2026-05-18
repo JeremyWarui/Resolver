@@ -6,10 +6,6 @@ export * from './utils/TableUtils';
 export * from './utils/FilterUtils';
 export * from './utils/TableContent';
 
-// Ticket details sidebar component
-export { TicketDetailsSidebar } from './TicketDetailsSidebar';
-export type { TicketDetailsSidebarProps } from './TicketDetailsSidebar';
-
 // Sidebar sub-components
 export { TicketComments } from './sidebar/TicketComments';
 

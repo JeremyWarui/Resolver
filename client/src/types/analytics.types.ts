@@ -25,6 +25,7 @@ export interface FacilityDistribution {
 export interface SectionDistribution {
   name: string;
   ticket_count: number;
+  display_name?: string | null;
 }
 
 export interface TicketAnalytics {
@@ -51,6 +52,7 @@ export interface TicketAnalyticsParams {
 export interface TechnicianPerformance {
   id: number;
   username: string;
+  email: string;
   full_name: string;
   total_tickets: number;
   resolved_tickets: number;
@@ -81,14 +83,18 @@ export interface TechnicianAnalyticsParams {
 // ============================================
 
 export interface SystemOverview {
-  total_tickets: number;
-  open_tickets: number;
-  resolved_tickets: number;
-  resolution_rate: number;
-  new_tickets_24h: number;
-  tickets_past_week: number;
-  tickets_past_month: number;
-  avg_resolution_time_hours: number | null;
+  total: number;
+  open: number;
+  closed: number;
+  pending: number;
+  pending_approval: number;
+  escalated: number;
+  new_24h: number;
+  new_7d: number;
+  new_30d: number;
+  resolution_rate_pct: number;
+  avg_resolution_hours: number | null;
+  sla_24h_pct: number;
 }
 
 export interface OverdueTicket {
@@ -109,84 +115,112 @@ export interface AdminDashboardAnalytics {
 }
 
 // ============================================
-// SECTION HEAD ANALYTICS  (/analytics/section-head/)
+// SECTION HEAD ANALYTICS  (/section-head/me/dashboard/)
 // ============================================
 
-export interface SectionStat {
-  section: { id: number; name: string; code: string; section_head: string | null };
-  total_tickets: number;
-  open_tickets: number;
-  escalated_tickets: number;
+export interface SectionHeadOverview {
+  total: number;
+  open: number;
+  closed: number;
+  in_progress: number;
+  pending: number;
+  escalated: number;
   avg_resolution_hours: number | null;
-  technician_count: number;
+  sla_24h_pct: number;
 }
 
-export interface TechPerformanceStat {
-  technician: { id: number; name: string; username: string; sections: string[] };
+export interface SectionHeadBySectionStat {
+  section: {
+    id: number;
+    name: string;
+    code: string;
+    section_type: string | null;
+    campus_code: string;
+    department: string;
+  };
+  technician_count: number;
+  total: number;
+  open: number;
+  closed: number;
+  escalated: number;
+  avg_resolution_hours: number | null;
+  sla_24h_pct: number;
+}
+
+export interface SectionHeadTechnicianWorkload {
+  technician: { id: number; name: string; username: string };
   total_assigned: number;
   resolved: number;
   open: number;
+  escalated: number;
   avg_resolution_hours: number | null;
-  escalation_count: number;
-}
-
-export interface SectionHeadOverview {
-  total_tickets: number;
-  open_tickets: number;
-  overdue_tickets: number;
-  escalated_tickets: number;
-  avg_resolution_hours: number | null;
-}
-
-export interface SectionHeadDepartment {
-  name: string;
-  code: string;
-  campus: string | null;
-  sections_count: number;
 }
 
 export interface SectionHeadAnalytics {
-  department: SectionHeadDepartment;
+  head_of_section: { id: number; username: string; sections_count: number };
+  period_days: number;
   overview: SectionHeadOverview;
-  section_stats: SectionStat[];
-  tech_performance: TechPerformanceStat[];
+  by_section: SectionHeadBySectionStat[];
+  technician_workload: SectionHeadTechnicianWorkload[];
+  pending_reasons: { pending_reason: string; count: number }[];
+  ticket_inflow: { date: string; count: number }[];
   status_distribution: StatusCount[];
+  escalation_trends: { date: string; escalated: number }[];
 }
 
 // ============================================
-// HOD ANALYTICS  (/analytics/hod/)
+// HOD ANALYTICS  (/hod/me/dashboard/)
 // ============================================
-
-export interface DeptStat {
-  department: { id: number; name: string; code: string; hod: string | null };
-  total_tickets: number;
-  open_tickets: number;
-  escalated_tickets: number;
-  avg_resolution_hours: number | null;
-  sla_compliance: number;
-}
-
-export interface SectionPerformanceStat {
-  section: { id: number; name: string; code: string; department: string; section_head: string | null };
-  ticket_count: number;
-  open_count: number;
-  avg_resolution_hours: number | null;
-  technician_count: number;
-}
 
 export interface HODOverview {
-  total_tickets: number;
-  open_tickets: number;
-  overdue_tickets: number;
-  escalated_tickets: number;
+  total: number;
+  open: number;
+  closed: number;
+  pending: number;
+  escalated: number;
+  avg_resolution_hours: number | null;
+  sla_24h_pct: number;
+}
+
+export interface HODCampusDepartment {
+  id: number;
+  campus: { id: number; name: string; code: string };
+  department: { id: number; name: string; code: string };
+  head_of_department: { id: number; username: string; name: string } | null;
+}
+
+export interface HODBySectionStat {
+  section: { id: number; name: string; code: string; section_type: string | null };
+  head_of_section: { id: number; username: string; name: string } | null;
+  technician_count: number;
+  total: number;
+  open: number;
+  closed: number;
+  pending: number;
+  escalated: number;
+  avg_resolution_hours: number | null;
+  sla_24h_pct: number;
+}
+
+export interface HODTechnicianWorkload {
+  technician: { id: number; name: string; username: string };
+  sections: { id: number; name: string; code: string }[];
+  total_assigned: number;
+  resolved: number;
+  open: number;
+  escalated: number;
+  avg_resolution_hours: number | null;
 }
 
 export interface HODAnalytics {
-  campus: { id: number; name: string; code: string; location: string };
+  campus_department: HODCampusDepartment;
+  period_days: number;
   overview: HODOverview;
-  dept_stats: DeptStat[];
-  section_performance: SectionPerformanceStat[];
-  tech_performance: TechPerformanceStat[];
+  by_section: HODBySectionStat[];
+  technician_workload: HODTechnicianWorkload[];
+  ticket_inflow: { date: string; count: number }[];
+  status_distribution: StatusCount[];
+  escalation_trends: { date: string; escalated: number }[];
 }
 
 // ============================================
@@ -195,12 +229,14 @@ export interface HODAnalytics {
 
 export interface ManagerCampusStat {
   campus: { id: number; name: string; code: string };
-  department_id: number;
-  total_tickets: number;
-  open_tickets: number;
-  escalated_tickets: number;
+  campus_department_id: number;
+  head_of_department: { id: number; name: string; username: string } | null;
+  total: number;
+  open: number;
+  closed: number;
+  escalated: number;
   avg_resolution_hours: number | null;
-  sla_compliance: number;
+  sla_24h_pct: number;
 }
 
 export interface ManagerSectionStat {
@@ -208,14 +244,17 @@ export interface ManagerSectionStat {
     id: number;
     name: string;
     code: string;
-    campus: string | null;
-    head_of_section: string | null;
+    section_type: string;
   };
-  total_tickets: number;
-  open_tickets: number;
-  escalated_tickets: number;
-  avg_resolution_hours: number | null;
+  campus: { code: string; name: string };
+  head_of_section: { id: number; username: string; name: string } | null;
   technician_count: number;
+  total: number;
+  open: number;
+  closed: number;
+  escalated: number;
+  avg_resolution_hours: number | null;
+  sla_24h_pct: number;
 }
 
 export interface ManagerTechnicianStat {
@@ -226,19 +265,20 @@ export interface ManagerTechnicianStat {
 }
 
 export interface ManagerOverview {
-  total_tickets: number;
-  open_tickets: number;
-  overdue_tickets: number;
-  escalated_tickets: number;
+  total: number;
+  open: number;
+  closed: number;
+  pending: number;
+  escalated: number;
   avg_resolution_hours: number | null;
-  sla_compliance: number;
+  sla_24h_pct: number;
 }
 
 export interface ManagerAnalytics {
   department: { name: string; code: string; campuses_count: number };
   overview: ManagerOverview;
-  campuses: ManagerCampusStat[];
-  sections: ManagerSectionStat[];
+  by_campus: ManagerCampusStat[];
+  by_section: ManagerSectionStat[];
   technicians: ManagerTechnicianStat[];
   status_distribution: { status: string; count: number }[];
   period_days: number;
@@ -266,7 +306,7 @@ export interface OrgServiceItem {
 }
 
 export interface OrgSectionStat {
-  section: { id: number; name: string };
+  section: { id: number; name: string; display_name?: string | null };
   department: string;
   campus: string;
   ticket_count: number;

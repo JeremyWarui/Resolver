@@ -11,17 +11,16 @@ interface SectionHeadStatsCardsProps {
 const SectionHeadStatsCards = ({ data, loading }: SectionHeadStatsCardsProps) => {
   const overview = data?.overview;
 
-  const getStatusCount = (status: string) =>
-    data?.status_distribution?.find(s => s.status === status)?.count ?? 0;
-
-  const resolvedCount   = getStatusCount('resolved');
-  const inProgressCount = getStatusCount('in_progress') + getStatusCount('assigned');
-  const overdueCount    = overview?.overdue_tickets ?? 0;
+  const totalCount     = overview?.total ?? 0;
+  const openCount      = overview?.open ?? 0;
+  const closedCount    = overview?.closed ?? 0;
+  const inProgressCount = overview?.in_progress ?? 0;
+  const escalatedCount = overview?.escalated ?? 0;
 
   const stats: StatConfig[] = [
     {
       title: 'Total Tickets',
-      value: overview?.total_tickets ?? 0,
+      value: totalCount,
       description: 'All section tickets',
       icon: <FileText className="h-6 w-6 text-[#0078d4]" />,
       iconBgColor: 'bg-[#e5f2fc]',
@@ -29,23 +28,23 @@ const SectionHeadStatsCards = ({ data, loading }: SectionHeadStatsCardsProps) =>
     },
     {
       title: 'Open Tickets',
-      value: overview?.open_tickets ?? 0,
+      value: openCount,
       description: 'Awaiting assignment',
       icon: <AlertTriangle className="h-6 w-6 text-[#ca5010]" />,
       iconBgColor: 'bg-[#fcf0e5]',
-      badge: overview && overview.open_tickets > 0
+      badge: openCount > 0
         ? { value: 'Active', color: 'amber' }
         : { value: 'Clear', color: 'green' },
     },
     {
       title: 'Resolved',
-      value: resolvedCount,
+      value: closedCount,
       description: overview?.avg_resolution_hours
         ? `Avg: ${overview.avg_resolution_hours.toFixed(0)}h resolution`
         : 'Successfully closed',
       icon: <CheckCircle className="h-6 w-6 text-[#107c10]" />,
       iconBgColor: 'bg-[#e5f9e5]',
-      badge: { value: resolvedCount > 0 ? 'Done' : 'None yet', color: resolvedCount > 0 ? 'green' : 'gray' },
+      badge: { value: closedCount > 0 ? 'Done' : 'None yet', color: closedCount > 0 ? 'green' : 'gray' },
     },
     {
       title: 'In Progress',
@@ -58,14 +57,14 @@ const SectionHeadStatsCards = ({ data, loading }: SectionHeadStatsCardsProps) =>
         : { value: 'None', color: 'gray' },
     },
     {
-      title: 'Overdue',
-      value: overdueCount,
-      description: overdueCount > 0 ? 'Need immediate attention' : 'All on track',
+      title: 'Escalated',
+      value: escalatedCount,
+      description: escalatedCount > 0 ? 'Flagged for review' : 'All on track',
       icon: <AlertCircle className="h-6 w-6 text-[#d13438]" />,
       iconBgColor: 'bg-[#fde7e9]',
       badge: {
-        value: overdueCount > 0 ? `${overdueCount} overdue` : 'On track',
-        color: overdueCount > 0 ? 'red' : 'green',
+        value: escalatedCount > 0 ? `${escalatedCount} escalated` : 'On track',
+        color: escalatedCount > 0 ? 'red' : 'green',
       },
     },
   ];

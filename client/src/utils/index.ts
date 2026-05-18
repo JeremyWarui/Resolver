@@ -3,3 +3,4 @@ export * from './cn';
 export * from './date';
 export * from './ticketValidation';
 export * from './ticketHelpers';
+export * from './formatSection';

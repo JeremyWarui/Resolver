@@ -30,10 +30,10 @@ const Placeholder = ({ message }: { message: string }) => (
 const SectionHeadChartsSection = ({ data, loading }: SectionHeadChartsSectionProps) => {
   const truncate = (s: string, max: number) => s.length > max ? s.slice(0, max) + '…' : s;
 
-  const sectionBarData = (data?.section_stats ?? []).map(s => ({
+  const sectionBarData = (data?.by_section ?? []).map(s => ({
     name: truncate(s.section.name, 13),
-    Open: s.open_tickets,
-    Total: s.total_tickets,
+    Open: s.open,
+    Total: s.total,
   }));
 
   const statusPieData = (data?.status_distribution ?? [])

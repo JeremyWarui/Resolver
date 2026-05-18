@@ -8,31 +8,28 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Download, FileSpreadsheet, TrendingUp, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import reportsService, { type GenerateReportParams } from '@/api/services/reportsService';
-import { useTickets } from '@/hooks/tickets';
+import { useTechDashboard } from '@/contexts/TechnicianDashboardContext';
 import { useAuth } from '@/hooks/useAuth';
 
 const TechReport = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { user } = useAuth();
-  
+
+  // Get dashboard data from context
+  const { data: dashboardData, loading } = useTechDashboard();
+
   // Get technician ID from authenticated user
   const technicianId = user?.id;
   const [showDateDialog, setShowDateDialog] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Fetch technician's tickets for stats
-  const { tickets, loading } = useTickets({
-    assigned_to: technicianId,
-    page_size: 100,
-  });
-
-  // Calculate statistics
+  // Use KPIs from dashboard data
   const stats = {
-    total: tickets.length,
-    resolved: tickets.filter(t => t.status === 'resolved').length,
-    pending: tickets.filter(t => t.status === 'pending').length,
-    inProgress: tickets.filter(t => t.status === 'in_progress').length,
+    total: dashboardData?.kpis.total_assigned ?? 0,
+    resolved: dashboardData?.kpis.total_resolved ?? 0,
+    pending: 0, // Not available in KPIs, can be calculated from context if needed
+    inProgress: dashboardData?.kpis.open_assignments ?? 0,
   };
 
   const handleDownloadReport = async () => {
@@ -55,11 +52,11 @@ const TechReport = () => {
         ...(startDate && endDate && { start_date: startDate, end_date: endDate }),
         ...(technicianId && { technician_id: technicianId }),
       };
-      
+
       await reportsService.generateAndDownload(params);
 
       toast.success('Report downloaded successfully!', {
-        description: technicianId 
+        description: technicianId
           ? 'Your performance report has been saved to your downloads folder'
           : 'All technicians performance report has been saved to your downloads folder',
       });
@@ -203,15 +200,21 @@ const TechReport = () => {
             <div className="space-y-3">
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                 <span className="text-sm font-medium text-orange-900">Avg Resolution Time</span>
-                <span className="text-lg font-bold text-orange-600">2.3 days</span>
+                <span className="text-lg font-bold text-orange-600">
+                  {dashboardData?.kpis.avg_resolution_hours ? `${(dashboardData.kpis.avg_resolution_hours / 24).toFixed(1)} days` : 'N/A'}
+                </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span className="text-sm font-medium text-blue-900">Fastest Resolution</span>
-                <span className="text-lg font-bold text-blue-600">45 min</span>
+                <span className="text-sm font-medium text-blue-900">Resolution Rate</span>
+                <span className="text-lg font-bold text-blue-600">
+                  {dashboardData?.kpis.resolution_rate_pct.toFixed(1)}%
+                </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span className="text-sm font-medium text-purple-900">Response Time</span>
-                <span className="text-lg font-bold text-purple-600">1.2 hrs</span>
+                <span className="text-sm font-medium text-purple-900">Average Rating</span>
+                <span className="text-lg font-bold text-purple-600">
+                  {dashboardData?.kpis.avg_rating.toFixed(1)} / 5
+                </span>
               </div>
             </div>
           </CardContent>
@@ -231,29 +234,33 @@ const TechReport = () => {
           </CardHeader>
           <CardContent className="px-6 pb-6 space-y-4">
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">4.7</div>
+              <div className="text-4xl font-bold text-green-600 mb-2">
+                {dashboardData?.kpis.avg_rating.toFixed(1) ?? 'N/A'}
+              </div>
               <div className="text-sm text-gray-600 mb-3">Average Rating</div>
               <div className="flex justify-center gap-1 mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <CheckCircle
                     key={star}
-                    className={`h-5 w-5 ${star <= 4.7 ? 'text-green-500' : 'text-gray-300'}`}
+                    className={`h-5 w-5 ${
+                      star <= (dashboardData?.kpis.avg_rating ?? 0) ? 'text-green-500' : 'text-gray-300'
+                    }`}
                   />
                 ))}
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Recent Reviews</span>
-                <span className="text-green-600">87% Positive</span>
+                <span>Resolution Rate</span>
+                <span className="text-green-600">{dashboardData?.kpis.resolution_rate_pct.toFixed(0)}%</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Response Quality</span>
-                <span className="text-blue-600">Excellent</span>
+                <span>Total Resolved</span>
+                <span className="text-blue-600">{dashboardData?.kpis.total_resolved ?? 0}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Communication</span>
-                <span className="text-green-600">Very Good</span>
+                <span>This Month</span>
+                <span className="text-green-600">{dashboardData?.kpis.resolved_this_month ?? 0}</span>
               </div>
             </div>
           </CardContent>
@@ -271,24 +278,27 @@ const TechReport = () => {
           <CardContent className="px-6 pb-6 space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Tickets Resolved</span>
+                <span className="text-sm text-gray-600">Resolved This Month</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold">12</span>
-                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">+15%</span>
+                  <span className="text-lg font-semibold">
+                    {dashboardData?.kpis.resolved_this_month ?? 0}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Avg Response Time</span>
+                <span className="text-sm text-gray-600">Resolved This Week</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold">1.2 hrs</span>
-                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">-8%</span>
+                  <span className="text-lg font-semibold">
+                    {dashboardData?.kpis.resolved_this_week ?? 0}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Customer Rating</span>
+                <span className="text-sm text-gray-600">Resolved Today</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold">4.8</span>
-                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">+0.2</span>
+                  <span className="text-lg font-semibold">
+                    {dashboardData?.kpis.resolved_today ?? 0}
+                  </span>
                 </div>
               </div>
             </div>

@@ -1,17 +1,24 @@
 import { FileText, AlertTriangle, Clock, CheckCircle, PauseCircle } from 'lucide-react';
 import RoleStatsGrid from './RoleStatsGrid';
 import type { StatConfig } from './RoleStatsGrid';
-import { useUserTicketCounts } from '@/hooks/tickets';
+import { useUserDashboard } from '@/contexts/UserDashboardContext';
 
 interface UserStatsCardsProps {
   userId?: number;
 }
 
-const UserStatsCards = ({ userId }: UserStatsCardsProps) => {
-  const { total, open, inProgress, resolved, pending, loading: countsLoading } = useUserTicketCounts(userId);
+const UserStatsCards = (_props: UserStatsCardsProps) => {
+  const { data, loading } = useUserDashboard();
 
-  // Treat no userId as loading — prevents flashing zeros before user is known
-  const loading = countsLoading || userId === undefined;
+  // Extract counts from dashboard summary
+  const total = data?.summary.total ?? 0;
+  const open = data?.summary.open ?? 0;
+  const pending = data?.summary.pending ?? 0;
+
+  // Derive in_progress and resolved from status_distribution array
+  const statusDistribution = data?.status_distribution ?? [];
+  const inProgress = statusDistribution.find(s => s.status === 'in_progress')?.count ?? 0;
+  const resolved = statusDistribution.find(s => s.status === 'resolved' || s.status === 'closed')?.count ?? 0;
 
   const stats: StatConfig[] = [
     {

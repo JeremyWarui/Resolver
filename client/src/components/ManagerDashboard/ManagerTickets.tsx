@@ -5,9 +5,17 @@ import { createTicketTableColumns } from '@/components/Common/DataTable/utils/Ti
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
+import { useManagerDashboard } from '@/contexts/ManagerDashboardContext';
+import ManagerStatsCards from './ManagerStatsCards';
 
 const ManagerTickets = ({ userId }: { userId?: number }) => {
-  const table = useTicketTable({ role: 'manager', currentUserId: userId });
+  const { managerTickets, setManagerTickets, data, loading } = useManagerDashboard();
+  const table = useTicketTable({
+    role: 'manager',
+    currentUserId: userId,
+    initialData: managerTickets || undefined,
+    onDataFetched: (tickets) => setManagerTickets(tickets),
+  });
 
   const columns = useMemo(() => createTicketTableColumns({
     role: 'manager',
@@ -27,6 +35,8 @@ const ManagerTickets = ({ userId }: { userId?: number }) => {
 
   return (
     <>
+      <ManagerStatsCards data={data} loading={loading} />
+
       <DataTable
         variant="admin"
         columns={columns}

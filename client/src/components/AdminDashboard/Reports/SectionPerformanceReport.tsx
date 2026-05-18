@@ -39,13 +39,13 @@ export default function SectionPerformanceReport() {
 
   // Prepare chart data
   const sectionBarData = analytics.section_distribution.map((item, index) => ({
-    name: item.name,
+    name: item.display_name ?? item.name,
     tickets: item.ticket_count,
     fill: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
   const sectionPieData = analytics.section_distribution.map((item, index) => ({
-    name: item.name,
+    name: item.display_name ?? item.name,
     value: item.ticket_count,
     fill: CHART_COLORS[index % CHART_COLORS.length],
   }));
@@ -77,9 +77,9 @@ export default function SectionPerformanceReport() {
           description="Last 90 days"
           icon={<TrendingUp className="h-6 w-6 text-[#107c10]" />}
           iconBgColor="bg-[#e5f9e5]"
-          badge={{ 
-            value: `${topSection.name} leads`, 
-            color: 'green' 
+          badge={{
+            value: `${topSection.display_name ?? topSection.name} leads`,
+            color: 'green'
           }}
           className="bg-white"
         />
@@ -186,7 +186,7 @@ export default function SectionPerformanceReport() {
                     style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900">{section.name}</div>
+                    <div className="font-semibold text-gray-900">{section.display_name ?? section.name}</div>
                     <div className="text-sm text-gray-500">{section.ticket_count} tickets</div>
                   </div>
                   <div className="text-right flex-shrink-0">

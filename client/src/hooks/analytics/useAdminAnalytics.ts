@@ -16,12 +16,13 @@ interface UseAdminAnalyticsResult {
  * 
  * @returns Admin dashboard analytics with loading and error states
  */
-export const useAdminAnalytics = (): UseAdminAnalyticsResult => {
+export const useAdminAnalytics = (skip = false): UseAdminAnalyticsResult => {
   const [data, setData] = useState<AdminDashboardAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
 
@@ -34,7 +35,7 @@ export const useAdminAnalytics = (): UseAdminAnalyticsResult => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [skip]);
 
   useEffect(() => {
     fetchData();

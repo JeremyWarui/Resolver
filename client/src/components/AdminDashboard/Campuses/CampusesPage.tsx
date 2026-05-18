@@ -12,33 +12,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { campusesService, type Campus } from '@/api/services/organizationsService';
-import organizationsService, { type Organization } from '@/api/services/organizationsService';
+import { campusesService } from '@/api/services/organizationsService';
+import type { Campus } from '@/types/organisationStructure';
 
-function CampusForm({ campus, organizations, onSuccess, onClose }: {
+function CampusForm({ campus, onSuccess, onClose }: {
   campus: Campus | null;
-  organizations: Organization[];
   onSuccess: () => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState(campus?.name ?? '');
   const [code, setCode] = useState(campus?.code ?? '');
   const [location, setLocation] = useState(campus?.location ?? '');
-  const [orgId, setOrgId] = useState<string>(campus?.organization?.id?.toString() ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgId) { toast.error('Please select an organization'); return; }
     setSaving(true);
     try {
       if (campus) {
-        await campusesService.updateCampus(campus.id, { name, code, location, organization_id: Number(orgId) });
+        await campusesService.updateCampus(campus.id, { name, code, location });
         toast.success('Campus updated');
       } else {
-        await campusesService.createCampus({ name, code, location, organization_id: Number(orgId) });
+        await campusesService.createCampus({ name, code, location });
         toast.success('Campus created');
       }
       onSuccess();
@@ -51,15 +47,6 @@ function CampusForm({ campus, organizations, onSuccess, onClose }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Organization</Label>
-        <Select value={orgId} onValueChange={setOrgId}>
-          <SelectTrigger><SelectValue placeholder="Select organization" /></SelectTrigger>
-          <SelectContent>
-            {organizations.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
       <div className="space-y-2">
         <Label>Name</Label>
         <Input value={name} onChange={e => setName(e.target.value)} placeholder="Campus name" required />
@@ -84,7 +71,6 @@ function CampusForm({ campus, organizations, onSuccess, onClose }: {
 
 const CampusesPage = () => {
   const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -98,12 +84,8 @@ const CampusesPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [campusRes, orgRes] = await Promise.all([
-        campusesService.getCampuses(),
-        organizationsService.getOrganizations(),
-      ]);
-      setCampuses(campusRes.results);
-      setOrganizations(orgRes.results);
+      const campusRes = await campusesService.getCampuses();
+      setCampuses(campusRes);
     } catch {
       toast.error('Failed to load campuses');
     } finally {
@@ -115,11 +97,10 @@ const CampusesPage = () => {
 
   const data = useMemo(() => campuses.map(c => ({
     ...c,
-    orgName: c.organization?.name ?? '—',
-    searchField: `${c.name.toLowerCase()} ${c.code.toLowerCase()} ${(c.organization?.name ?? '').toLowerCase()}`,
+    searchField: `${c.name.toLowerCase()} ${c.code.toLowerCase()}`,
   })), [campuses]);
 
-  const columns: ColumnDef<Campus & { orgName: string; searchField: string }>[] = [
+  const columns: ColumnDef<Campus & { searchField: string }>[] = [
     { accessorKey: 'id', header: 'ID', cell: ({ row }) => <div>{row.getValue('id')}</div> },
     {
       accessorKey: 'name',
@@ -135,7 +116,6 @@ const CampusesPage = () => {
     },
     { accessorKey: 'code', header: 'Code', cell: ({ row }) => <div>{row.getValue('code')}</div> },
     { accessorKey: 'location', header: 'Location', cell: ({ row }) => <div>{row.getValue('location') || '—'}</div> },
-    { accessorKey: 'orgName', header: 'Organization', cell: ({ row }) => <div>{row.getValue('orgName')}</div> },
     { accessorKey: 'searchField', header: 'Search', enableHiding: true },
     {
       id: 'actions',
@@ -278,7 +258,6 @@ const CampusesPage = () => {
           </DialogHeader>
           <CampusForm
             campus={editing}
-            organizations={organizations}
             onSuccess={() => { setIsFormOpen(false); setEditing(null); fetchData(); }}
             onClose={() => { setIsFormOpen(false); setEditing(null); }}
           />

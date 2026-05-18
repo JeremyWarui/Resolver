@@ -79,11 +79,6 @@ try {
 }
 
 function TicketCommentsInner({ ticket }: TicketCommentsProps) {
-  // Log ticket prop only when ticket id or updated_at changes
-  useEffect(() => {
-    console.log('TicketComments: ticket prop', ticket);
-  }, [ticket.id, (ticket as unknown as { updated_at?: string }).updated_at]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState<boolean>(true);

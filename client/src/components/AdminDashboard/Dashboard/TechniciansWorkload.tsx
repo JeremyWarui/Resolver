@@ -17,9 +17,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTechnicianAnalytics } from "@/hooks/analytics";
 
 const TechniciansWorkload = () => {
-  const { data, loading } = useTechnicianAnalytics();
-  
-  const technicians = data?.technician_performance?.slice(0, 10) || [];
+  const { data, loading: analyticsLoading } = useTechnicianAnalytics();
+
+  const technicians = data?.technician_performance?.slice(0, 10) ?? [];
 
   return (
     <Card className="py-7 px-2">
@@ -30,7 +30,7 @@ const TechniciansWorkload = () => {
         </div>
       </CardHeader>
       <CardContent className="p-5 pt-0">
-        {loading ? (
+        {analyticsLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
@@ -56,21 +56,21 @@ const TechniciansWorkload = () => {
               </TableHeader>
               <TableBody>
                 {technicians.map((tech) => (
-                  <TableRow key={tech.id}>
+                  <TableRow key={tech.technician.id}>
                     <TableCell className="font-medium text-sm">
-                      {tech.full_name}
+                      {tech.technician.name}
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      {tech.username}
+                      {tech.technician.email || tech.technician.username}
                     </TableCell>
                     <TableCell className="text-center text-sm text-[#0078d4] font-medium">
-                      {tech.total_tickets}
+                      {tech.total_assigned}
                     </TableCell>
                     <TableCell className="text-center text-sm text-[#107c10] font-medium">
-                      {tech.resolved_tickets}
+                      {tech.resolved}
                     </TableCell>
                     <TableCell className="text-center text-sm text-[#ffaa44] font-medium">
-                      {tech.pending_tickets}
+                      {tech.open}
                     </TableCell>
                   </TableRow>
                 ))}

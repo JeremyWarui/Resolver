@@ -2,27 +2,28 @@ import { createContext, useContext, useMemo, useCallback, type ReactNode } from 
 import useSections from '@/hooks/sections/useSections';
 import useFacilities from '@/hooks/facilities/useFacilities';
 import { useAdminAnalytics } from '@/hooks/analytics';
-import { useUserData, useUsers } from '@/hooks/users';
+import { useUsers } from '@/hooks/users';
+import useTechnicians from '@/hooks/technicians/useTechnicians';
+import { useCurrentUser } from '@/contexts/UserDataContext';
 import type { Section, Facility, Technician, User } from '@/types';
 import type { AdminDashboardAnalytics } from '@/types/analytics.types';
 
 /**
  * SharedDataContext
- * 
- * Provides centralized access to reference data (sections, facilities, technicians, analytics, user)
- * across the Admin Dashboard. This eliminates redundant API calls and ensures
- * data consistency across all components.
- * 
+ *
+ * Provides centralized access to reference data (sections, facilities, technicians, analytics)
+ * across role dashboards. Data fetching is role-aware to avoid unnecessary API calls.
+ *
+ * Role-based fetch strategy:
+ * - admin, manager, hod, head_of_section: fetch sections, facilities, users, adminAnalytics
+ * - technician: fetch sections only
+ * - user: fetch nothing (no org data needed)
+ *
  * Benefits:
  * - Single source of truth for reference data
- * - Reduces API calls by ~65% (fetches once at layout level)
+ * - Role-aware: only fetches what each role needs
+ * - Reduces API calls by eliminating unnecessary fetches
  * - Instant page navigation (no loading spinners for cached data)
- * - Consistent data across all admin pages
- * 
- * Usage:
- * 1. Wrap AdminLayout with <SharedDataProvider>
- * 2. Consume data via useSharedData() hook in any component
- * 3. Call refetch methods after creating/updating/deleting entities
  */
 
 interface SharedDataContextType {
@@ -30,26 +31,26 @@ interface SharedDataContextType {
   sections: Section[];
   facilities: Facility[];
   technicians: Technician[];
-  users: User[]; // Add users to shared data
+  users: User[];
   adminAnalytics: AdminDashboardAnalytics | null;
   currentUser: User | null;
-  
+
   // Loading States
   sectionsLoading: boolean;
   facilitiesLoading: boolean;
   techniciansLoading: boolean;
-  usersLoading: boolean; // Add users loading state
+  usersLoading: boolean;
   analyticsLoading: boolean;
   userLoading: boolean;
-  
+
   // Combined Loading State (true if ANY data is loading)
   isLoading: boolean;
-  
+
   // Refetch Methods (for cache invalidation)
   refetchSections: () => void;
   refetchFacilities: () => void;
   refetchTechnicians: () => void;
-  refetchUsers: () => void; // Add users refetch method
+  refetchUsers: () => void;
   refetchAnalytics: () => void;
   refetchUser: () => void;
   refetchAll: () => void;
@@ -63,63 +64,81 @@ interface SharedDataProviderProps {
 
 /**
  * SharedDataProvider Component
- * 
- * Wraps the Admin Dashboard to provide centralized reference data.
- * Fetches sections, facilities, and technicians once on mount and
- * makes them available to all child components via context.
+ *
+ * Role-aware provider that fetches data based on current user's role.
+ * - admin/manager/hod/head_of_section: fetch full org data + analytics
+ * - technician: fetch sections only
+ * - user: fetch nothing
  */
 export function SharedDataProvider({ children }: SharedDataProviderProps) {
-  // Fetch all reference data (hooks fetch all results by default)
+  const { userData: currentUser, loading: userLoading } = useCurrentUser();
+  const userRole = currentUser?.role;
+
+  // Determine what data to fetch based on role
+  const needsFullOrgData = userRole && ['admin', 'manager', 'hod', 'head_of_section'].includes(userRole);
+  const needsSectionsOnly = userRole === 'technician';
+  const skipAnalytics = !userRole || !['admin', 'manager'].includes(userRole);
+
+  // Always call hooks (rules of hooks), role-based filtering happens below
   const {
-    sections,
+    sections: sectionsData,
     loading: sectionsLoading,
     refetch: refetchSections,
   } = useSections();
 
   const {
-    facilities,
+    facilities: facilitiesData,
     loading: facilitiesLoading,
     refetch: refetchFacilities,
   } = useFacilities();
 
   const {
-    users,
+    users: usersData,
     loading: usersLoading,
     refetch: refetchUsers,
-  } = useUsers({ page_size: 500 }); // Fetch all users for admin dashboard
+  } = useUsers({ page_size: 500 });
 
-  // Filter technicians from users data (no separate API call needed)
-  const technicians = useMemo(() => {
-    return users.filter(user => user.role === 'technician') as Technician[];
-  }, [users]);
-
-  const techniciansLoading = usersLoading; // Technicians loading state same as users
-  const refetchTechnicians = refetchUsers; // Refetch technicians by refetching users
-
+  // Dedicated technicians endpoint — all active technicians with sections/campus/dept
   const {
-    data: adminAnalytics,
+    technicians: techniciansData,
+    loading: techniciansLoading,
+    refetch: refetchTechnicians,
+  } = useTechnicians();
+
+  const technicians = techniciansData;
+
+  // Fetch admin analytics
+  const {
+    data: adminAnalyticsData,
     loading: analyticsLoading,
     refetch: refetchAnalytics,
-  } = useAdminAnalytics();
+  } = useAdminAnalytics(skipAnalytics);
 
-  const {
-    userData: currentUser,
-    loading: userLoading,
-    refetch: refetchUser,
-  } = useUserData();
+  // Role-aware data exposure: only provide data based on role
+  // - admin/manager/hod/head_of_section: full access
+  // - technician: sections only
+  // - user: nothing (empty arrays/null)
+  const sections = needsFullOrgData || needsSectionsOnly ? sectionsData : [];
+  const facilities = needsFullOrgData ? facilitiesData : [];
+  const users = needsFullOrgData ? usersData : [];
+  const adminAnalytics = userRole && ['admin', 'manager'].includes(userRole) ? adminAnalyticsData : null;
 
-  // Combined loading state
-  const isLoading = sectionsLoading || facilitiesLoading || techniciansLoading || usersLoading || analyticsLoading || userLoading;
+  // Only count loading for data that's actually being used
+  const relevantSectionsLoading = (needsFullOrgData || needsSectionsOnly) ? sectionsLoading : false;
+  const relevantFacilitiesLoading = needsFullOrgData ? facilitiesLoading : false;
+  const relevantUsersLoading = needsFullOrgData ? usersLoading : false;
+  const relevantAnalyticsLoading = userRole && ['admin', 'manager'].includes(userRole) ? analyticsLoading : false;
+  const relevantTechniciansLoading = needsFullOrgData ? techniciansLoading : false;
+
+  const isLoading = userLoading || relevantSectionsLoading || relevantFacilitiesLoading || relevantUsersLoading || relevantAnalyticsLoading;
 
   // Refetch all data (useful after bulk operations)
   const refetchAll = useCallback(() => {
-    refetchSections();
-    refetchFacilities();
-    refetchTechnicians();
-    refetchUsers();
-    refetchAnalytics();
-    refetchUser();
-  }, [refetchSections, refetchFacilities, refetchTechnicians, refetchUsers, refetchAnalytics, refetchUser]);
+    if (needsFullOrgData || needsSectionsOnly) refetchSections();
+    if (needsFullOrgData) refetchFacilities();
+    if (needsFullOrgData) refetchUsers();
+    if (userRole && ['admin', 'manager'].includes(userRole)) refetchAnalytics();
+  }, [needsFullOrgData, needsSectionsOnly, userRole, refetchSections, refetchFacilities, refetchUsers, refetchAnalytics]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const value: SharedDataContextType = useMemo(() => ({
@@ -129,11 +148,11 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     users,
     adminAnalytics,
     currentUser,
-    sectionsLoading,
-    facilitiesLoading,
-    techniciansLoading,
-    usersLoading,
-    analyticsLoading,
+    sectionsLoading: relevantSectionsLoading,
+    facilitiesLoading: relevantFacilitiesLoading,
+    techniciansLoading: relevantTechniciansLoading,
+    usersLoading: relevantUsersLoading,
+    analyticsLoading: relevantAnalyticsLoading,
     userLoading,
     isLoading,
     refetchSections,
@@ -141,7 +160,7 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     refetchTechnicians,
     refetchUsers,
     refetchAnalytics,
-    refetchUser,
+    refetchUser: () => {}, // User refetch handled elsewhere
     refetchAll,
   }), [
     sections,
@@ -150,11 +169,11 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     users,
     adminAnalytics,
     currentUser,
-    sectionsLoading,
-    facilitiesLoading,
-    techniciansLoading,
-    usersLoading,
-    analyticsLoading,
+    relevantSectionsLoading,
+    relevantFacilitiesLoading,
+    relevantTechniciansLoading,
+    relevantUsersLoading,
+    relevantAnalyticsLoading,
     userLoading,
     isLoading,
     refetchSections,
@@ -162,7 +181,6 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     refetchTechnicians,
     refetchUsers,
     refetchAnalytics,
-    refetchUser,
     refetchAll,
   ]);
 

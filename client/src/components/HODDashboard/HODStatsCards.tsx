@@ -10,13 +10,16 @@ interface HODStatsCardsProps {
 
 const HODStatsCards = ({ data, loading }: HODStatsCardsProps) => {
   const overview = data?.overview;
-  const resolvedCount = (data?.tech_performance ?? []).reduce((sum, t) => sum + t.resolved, 0);
-  const overdueCount  = overview?.overdue_tickets ?? 0;
+  const totalCount     = overview?.total ?? 0;
+  const openCount      = overview?.open ?? 0;
+  const closedCount    = overview?.closed ?? 0;
+  const pendingCount   = overview?.pending ?? 0;
+  const escalatedCount = overview?.escalated ?? 0;
 
   const stats: StatConfig[] = [
     {
       title: 'Total Tickets',
-      value: overview?.total_tickets ?? 0,
+      value: totalCount,
       description: 'All campus tickets',
       icon: <FileText className="h-6 w-6 text-[#0078d4]" />,
       iconBgColor: 'bg-[#e5f2fc]',
@@ -24,40 +27,40 @@ const HODStatsCards = ({ data, loading }: HODStatsCardsProps) => {
     },
     {
       title: 'Open Tickets',
-      value: overview?.open_tickets ?? 0,
+      value: openCount,
       description: 'Awaiting assignment',
       icon: <AlertTriangle className="h-6 w-6 text-[#ca5010]" />,
       iconBgColor: 'bg-[#fcf0e5]',
-      badge: overview && overview.open_tickets > 0
+      badge: openCount > 0
         ? { value: 'Active', color: 'amber' }
         : { value: 'Clear', color: 'green' },
     },
     {
       title: 'Resolved',
-      value: resolvedCount,
-      description: 'Closed by technicians',
+      value: closedCount,
+      description: 'Completed tickets',
       icon: <CheckCircle className="h-6 w-6 text-[#107c10]" />,
       iconBgColor: 'bg-[#e5f9e5]',
-      badge: { value: resolvedCount > 0 ? 'Done' : 'None yet', color: resolvedCount > 0 ? 'green' : 'gray' },
+      badge: { value: closedCount > 0 ? 'Done' : 'None yet', color: closedCount > 0 ? 'green' : 'gray' },
     },
     {
-      title: 'Overdue',
-      value: overdueCount,
-      description: overdueCount > 0 ? 'Need immediate attention' : 'All on track',
+      title: 'In Progress',
+      value: pendingCount,
+      description: 'Being worked on',
       icon: <AlertCircle className="h-6 w-6 text-[#d13438]" />,
       iconBgColor: 'bg-[#fde7e9]',
       badge: {
-        value: overdueCount > 0 ? `${overdueCount} overdue` : 'On track',
-        color: overdueCount > 0 ? 'red' : 'green',
+        value: pendingCount > 0 ? `${pendingCount} pending` : 'None',
+        color: pendingCount > 0 ? 'amber' : 'green',
       },
     },
     {
       title: 'Escalated',
-      value: overview?.escalated_tickets ?? 0,
+      value: escalatedCount,
       description: 'Flagged for review',
       icon: <Users className="h-6 w-6 text-[#5c2d91]" />,
       iconBgColor: 'bg-[#f9f3ff]',
-      badge: overview && overview.escalated_tickets > 0
+      badge: escalatedCount > 0
         ? { value: 'Flagged', color: 'purple' }
         : { value: 'None', color: 'gray' },
     },

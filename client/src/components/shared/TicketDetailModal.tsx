@@ -24,6 +24,7 @@ import { useCurrentUser } from '@/contexts/UserDataContext';
 import ticketsService from '@/api/services/ticketsService';
 import usersService from '@/api/services/usersService';
 import { formatDate } from '@/utils/date';
+import { formatSectionDisplay } from '@/utils/formatSection';
 import type { Ticket, User } from '@/types';
 
 interface TicketDetailModalProps {
@@ -319,7 +320,7 @@ export function TicketDetailModal({
   };
 
   const nextStatuses = ticket ? getNextStatuses(role, ticket.status) : [];
-  const isRaiser = ticket?.raised_by === userData?.username;
+  const isRaiser = ticket?.raised_by_id === userData?.id;
 
   const canApproveReject =
     ticket?.status === 'pending_approval' &&
@@ -332,6 +333,7 @@ export function TicketDetailModal({
 
   const canEscalate =
     ticket != null &&
+    role !== 'manager' && // Managers cannot escalate (backend CanEscalateTickets excludes them)
     ['technician', 'head_of_section', 'hod', 'admin'].includes(role) &&
     !['resolved', 'closed', 'rejected'].includes(ticket.status) &&
     (ticket.escalation_level ?? 0) < 2;
@@ -359,11 +361,11 @@ export function TicketDetailModal({
         capped by max-h on each column.
       */}
       <DialogContent
-        className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] min-w-[640px] flex flex-col p-0 gap-0"
+        className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] min-w-160 flex flex-col p-0 gap-0"
         aria-describedby={undefined}
       >
         {/* Header — shadcn renders its own close button (absolute top-4 right-4) */}
-        <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+        <DialogHeader className="px-6 py-4 border-b shrink-0">
           <div className="flex items-center gap-3 min-w-0 pr-8">
             {loading || !ticket ? (
               <>
@@ -409,12 +411,52 @@ export function TicketDetailModal({
                       </div>
                     </div>
 
+                    {/* Service Request Section */}
+                    {ticket.service_item && (
+                      <div className="space-y-2">
+                        <SectionHeading label="Service Request" />
+                        <div className="bg-white border rounded-lg divide-y">
+                          <DetailRow label="Category">{ticket.service_item.category_name}</DetailRow>
+                          <DetailRow label="Service">
+                            <div className="flex items-center gap-2">
+                              <span>{ticket.service_item.name}</span>
+                              {ticket.service_item.requires_approval && (
+                                <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">
+                                  Requires Approval
+                                </Badge>
+                              )}
+                            </div>
+                          </DetailRow>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Request Details Section */}
+                    {ticket.form_data && Object.keys(ticket.form_data).length > 0 && (
+                      <div className="space-y-2">
+                        <SectionHeading label="Request Details" />
+                        <div className="bg-white border rounded-lg divide-y">
+                          {Object.entries(ticket.form_data).map(([key, value]) => (
+                            <DetailRow key={key} label={key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}>
+                              {Array.isArray(value) ? (
+                                value.join(', ')
+                              ) : value === null || value === undefined ? (
+                                <span className="text-gray-400 italic">—</span>
+                              ) : (
+                                String(value)
+                              )}
+                            </DetailRow>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Info table */}
                     <div className="space-y-2">
                       <SectionHeading label="Ticket Information" />
                       <div className="bg-white border rounded-lg divide-y">
                         <DetailRow label="Raised by">{ticket.raised_by}</DetailRow>
-                        <DetailRow label="Section">{ticket.section.name}</DetailRow>
+                        <DetailRow label="Section">{formatSectionDisplay(ticket.section)}</DetailRow>
                         {ticket.facility && (
                           <DetailRow label="Facility">{ticket.facility.name}</DetailRow>
                         )}
@@ -545,10 +587,21 @@ export function TicketDetailModal({
                     {/* ── Assign To ── */}
                     {canAssign && (
                       <ActionCard>
-                        <SectionHeading label="Technician/Officer" />
+                        <SectionHeading label={
+                          ticket.status === 'open' && !ticket.assigned_to
+                            ? 'Assign Technician'
+                            : ticket.assigned_to
+                              ? 'Reassign Technician'
+                              : 'Technician/Officer'
+                        } />
                         {ticket.assigned_to && (
                           <p className="text-xs text-gray-500">
                             Currently assigned: <span className="font-medium text-gray-800">{ticket.assigned_to.name || ticket.assigned_to.username}</span>
+                          </p>
+                        )}
+                        {ticket.status === 'open' && !ticket.assigned_to && (
+                          <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1">
+                            Assigning a technician will also move the status to <span className="font-medium">Assigned</span>.
                           </p>
                         )}
                         {loadingTechs ? (
@@ -559,12 +612,14 @@ export function TicketDetailModal({
                         ) : techsError ? (
                           <p className="text-xs text-red-500 italic">Failed to load technicians. Check console for details.</p>
                         ) : sectionTechs.length === 0 ? (
-                          <p className="text-xs text-gray-400 italic">No technicians assigned to this section.</p>
+                          !ticket.assigned_to && (
+                            <p className="text-xs text-gray-400 italic">No technicians assigned to this section.</p>
+                          )
                         ) : (
                           <>
                             <Select value={selectedTechId} onValueChange={setSelectedTechId}>
                               <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Select Technician/Officer" />
+                                <SelectValue placeholder={ticket.assigned_to ? 'Select a different technician' : 'Select technician'} />
                               </SelectTrigger>
                               <SelectContent>
                                 {sectionTechs.map(t => (
@@ -586,7 +641,11 @@ export function TicketDetailModal({
                               onClick={handleAssign}
                               disabled={!selectedTechId || isAssigning}
                             >
-                              {isAssigning ? 'Assigning…' : 'Assign'}
+                              {isAssigning
+                                ? 'Assigning…'
+                                : ticket.status === 'open' && !ticket.assigned_to
+                                  ? 'Assign Ticket'
+                                  : 'Reassign'}
                             </Button>
                           </>
                         )}

@@ -5,8 +5,11 @@ import FullScreenLoading from '@/components/Common/FullScreenLoading';
 import SectionHeadDashboard from './SectionHeadDashboard';
 import SectionHeadTickets from './SectionHeadTickets';
 import SectionHeadTechnicians from './SectionHeadTechnicians';
-import { useUserData } from '@/hooks/users';
-import { SharedDataProvider } from '@/contexts/SharedDataContext';
+import { useCurrentUser } from '@/contexts/UserDataContext';
+import {
+  SectionHeadDashboardProvider,
+  useSectionHeadDashboard,
+} from '@/contexts/SectionHeadDashboardContext';
 
 function ComingSoon({ section }: { section: string }) {
   return (
@@ -27,19 +30,22 @@ function ComingSoon({ section }: { section: string }) {
 
 const SectionHeadLayoutContent = () => {
   const [activeSection, setActiveSection] = useState<SectionHeadSection>('dashboard');
-  const { userData, loading: userLoading } = useUserData();
+  const { userData, loading: userLoading } = useCurrentUser();
+  const { loading: dashboardLoading } = useSectionHeadDashboard();
 
   const headerTitle: Record<SectionHeadSection, string> = {
     dashboard: 'Dashboard',
-    tickets: 'Department Tickets',
+    tickets: 'Section Tickets',
     technicians: 'Technicians',
     reports: 'Reports',
     settings: 'Settings',
   };
 
+  const isLoading = userLoading || dashboardLoading;
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {userLoading && <FullScreenLoading message="Loading your dashboard..." />}
+      {isLoading && <FullScreenLoading message="Loading your dashboard..." />}
       <SectionHeadSideBar activeSection={activeSection} onSectionChange={setActiveSection} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
@@ -61,9 +67,9 @@ const SectionHeadLayoutContent = () => {
 };
 
 const SectionHeadLayout = () => (
-  <SharedDataProvider>
+  <SectionHeadDashboardProvider>
     <SectionHeadLayoutContent />
-  </SharedDataProvider>
+  </SectionHeadDashboardProvider>
 );
 
 export default SectionHeadLayout;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import UserSideBar, { Section } from './UserSideBar';
 import Header from '../Common/Header';
 import FullScreenLoading from '../Common/FullScreenLoading';
-import { SharedDataProvider } from '@/contexts/SharedDataContext';
+import { UserDashboardProvider } from '@/contexts/UserDashboardContext';
 import { useCurrentUser } from '@/contexts/UserDataContext';
 
 // Import your view components (or use placeholders)
@@ -120,9 +120,9 @@ const UserLayoutContent = () => {
 
 const UserLayout = () => {
   return (
-    <SharedDataProvider>
+    <UserDashboardProvider>
       <UserLayoutContent />
-    </SharedDataProvider>
+    </UserDashboardProvider>
   );
 };
 

@@ -5,7 +5,6 @@ import {
   ClipboardList,
   Users,
   Building,
-  Building2,
   MapPin,
   Layers,
   PenToolIcon as Tool,
@@ -26,7 +25,6 @@ export interface Section {
     | 'sections'
     | 'technicians'
     | 'facilities'
-    | 'organizations'
     | 'campuses'
     | 'departments'
     | 'analytics'
@@ -53,10 +51,9 @@ const SideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
     { id: 'technicians', label: 'Technicians', icon: Users },
     { id: 'facilities', label: 'Facilities', icon: Building },
     { id: 'sections', label: 'Sections', icon: FileText },
-    { id: 'organizations', label: 'Organizations', icon: Building2 },
     { id: 'campuses', label: 'Campuses', icon: MapPin },
     { id: 'departments', label: 'Departments', icon: Layers },
-    { id: 'inventory', label: 'Inventory', icon: Tool },
+    { id: 'inventory', label: 'Service Catalogue', icon: Tool },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

@@ -1,9 +1,9 @@
-import { LayoutDashboard, ClipboardList, BarChart2, Settings, LogOut, Users } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BarChart2, Settings, LogOut, Users, Layers } from 'lucide-react';
 import NavButton from '@/components/Common/NavButton';
 import FullScreenLoading from '@/components/Common/FullScreenLoading';
 import { useLogout } from '@/hooks/useLogout';
 
-export type HODSection = 'dashboard' | 'tickets' | 'technicians' | 'reports' | 'settings';
+export type HODSection = 'dashboard' | 'tickets' | 'technicians' | 'sections' | 'reports' | 'settings';
 
 interface SideBarProps {
   activeSection: HODSection;
@@ -17,6 +17,7 @@ const HODSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'tickets' as const, label: 'Campus Tickets', icon: ClipboardList },
     { id: 'technicians' as const, label: 'Technicians', icon: Users },
+    { id: 'sections' as const, label: 'Sections', icon: Layers },
     { id: 'reports' as const, label: 'Reports', icon: BarChart2 },
     { id: 'settings' as const, label: 'Settings', icon: Settings },
   ];

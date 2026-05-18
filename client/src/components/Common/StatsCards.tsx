@@ -1,11 +1,20 @@
 import { AlertTriangle, CheckCircle, Clock, FileText, AlertCircle } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSharedData } from '@/contexts/SharedDataContext';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import StatCard from './StatCard';
 
-const StatsCards = () => {
-  // Use admin analytics from shared context (no API call - already cached!)
-  const { adminAnalytics: analytics, analyticsLoading: loading } = useSharedData();
+interface StatsCardsProps {
+  analyticsData?: any;
+  loading?: boolean;
+}
+
+const StatsCards = ({ analyticsData, loading: externalLoading }: StatsCardsProps) => {
+  // Get admin analytics from context
+  const { data: dashboardData, loading: contextLoading } = useAdminDashboard();
+
+  // Use provided analytics or fallback to context data
+  const analytics = analyticsData || dashboardData?.analytics;
+  const loading = externalLoading !== undefined ? externalLoading : contextLoading;
 
   // Create a skeleton loader for a stat card
   const SkeletonStatCard = () => (
@@ -37,78 +46,61 @@ const StatsCards = () => {
     );
   }
 
-  // Extract system overview data after loading
   const systemOverview = analytics?.system_overview;
 
-  // Calculate in-progress tickets (assigned + in_progress status)
-  const inProgressTickets = systemOverview 
-    ? systemOverview.total_tickets - systemOverview.open_tickets - systemOverview.resolved_tickets
-    : 0;
-
-  // Calculate percentage changes (you can enhance this with historical data)
-  const resolutionRate = systemOverview?.resolution_rate || 0;
-  const newTickets24h = systemOverview?.new_tickets_24h || 0;
-  const ticketsThisWeek = systemOverview?.tickets_past_week || 0;
-  const ticketsThisMonth = systemOverview?.tickets_past_month || 0;
-  const overdueCount = analytics?.overdue_tickets?.length || 0;
+  const totalCount      = systemOverview?.total ?? 0;
+  const openCount       = systemOverview?.open ?? 0;
+  const closedCount     = systemOverview?.closed ?? 0;
+  const escalatedCount  = systemOverview?.escalated ?? 0;
+  const overdueCount    = analytics?.overdue_tickets?.length ?? 0;
+  const resolutionRate  = systemOverview?.resolution_rate_pct ?? 0;
+  const newToday        = systemOverview?.new_24h ?? 0;
+  const newThisMonth    = systemOverview?.new_30d ?? 0;
+  const avgHours        = systemOverview?.avg_resolution_hours ?? null;
 
   return (
     <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-2'>
       <>
         <StatCard
           title="Total Tickets"
-          value={systemOverview?.total_tickets || 0}
+          value={totalCount}
           description="All tickets in system"
           icon={<FileText className='h-6 w-6 text-[#0078d4]' />}
           iconBgColor="bg-[#e5f2fc]"
-          badge={{ 
-            value: `${ticketsThisMonth} this month`, 
-            color: "blue" 
-          }}
+          badge={{ value: `${newThisMonth} this month`, color: "blue" }}
           className="bg-white"
           isLoading={loading}
         />
 
         <StatCard
           title="Open Tickets"
-          value={systemOverview?.open_tickets || 0}
+          value={openCount}
           description="Awaiting assignment"
           icon={<AlertTriangle className='h-6 w-6 text-[#ca5010]' />}
           iconBgColor="bg-[#fcf0e5]"
-          badge={{ 
-            value: `${ticketsThisWeek} this week`, 
-            color: "amber" 
-          }}
+          badge={{ value: openCount > 0 ? 'Active' : 'Clear', color: openCount > 0 ? "amber" : "green" }}
           className="bg-white"
           isLoading={loading}
         />
 
         <StatCard
           title="Resolved Tickets"
-          value={systemOverview?.resolved_tickets || 0}
+          value={closedCount}
           description={`${resolutionRate.toFixed(0)}% resolution rate`}
           icon={<CheckCircle className='h-6 w-6 text-[#107c10]' />}
           iconBgColor="bg-[#e5f9e5]"
-          badge={{ 
-            value: `${resolutionRate.toFixed(0)}% rate`, 
-            color: resolutionRate > 70 ? "green" : "amber"
-          }}
+          badge={{ value: `${resolutionRate.toFixed(0)}% rate`, color: resolutionRate > 70 ? "green" : "amber" }}
           className="bg-white"
           isLoading={loading}
         />
 
         <StatCard
           title="In Progress"
-          value={inProgressTickets}
-          description={systemOverview?.avg_resolution_time_hours 
-            ? `Avg: ${systemOverview.avg_resolution_time_hours.toFixed(0)}h resolution` 
-            : 'Being worked on'}
+          value={escalatedCount}
+          description={avgHours ? `Avg: ${avgHours.toFixed(0)}h resolution` : 'Being worked on'}
           icon={<Clock className='h-6 w-6 text-[#5c2d91]' />}
           iconBgColor="bg-[#f9f3ff]"
-          badge={{ 
-            value: `${newTickets24h} new today`, 
-            color: "purple"
-          }}
+          badge={{ value: `${newToday} new today`, color: "purple" }}
           className="bg-white"
           isLoading={loading}
         />
@@ -119,10 +111,7 @@ const StatsCards = () => {
           description={overdueCount > 0 ? 'Need immediate attention' : 'All on track'}
           icon={<AlertCircle className='h-6 w-6 text-[#d13438]' />}
           iconBgColor="bg-[#fde7e9]"
-          badge={{ 
-            value: overdueCount > 0 ? `${overdueCount} overdue` : 'On track', 
-            color: overdueCount > 0 ? "red" : "green"
-          }}
+          badge={{ value: overdueCount > 0 ? `${overdueCount} overdue` : 'On track', color: overdueCount > 0 ? "red" : "green" }}
           className="bg-white"
           isLoading={loading}
         />

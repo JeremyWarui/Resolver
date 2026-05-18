@@ -1,0 +1,63 @@
+export interface Campus {
+  id: number
+  name: string
+  code: string
+  location: string
+  is_headquarters: boolean
+  is_active: boolean
+}
+
+export interface DepartmentType {
+  id: number
+  name: string
+  code: string
+  description: string
+  is_active: boolean
+}
+
+export interface SectionType {
+  id: number
+  name: string
+  code: string
+  department_type: number
+  department_type_name: string
+  description: string
+  default_sla_hours: number
+  staff_label: 'Technician' | 'Officer' | string
+  is_active: boolean
+}
+
+export interface Department {
+  id: number
+  department_type: number | null
+  department_type_name: string | null
+  campus: number
+  campus_name: string
+  head_of_department: { id: number; username: string; name: string } | null
+  name: string
+  code: string
+  is_active: boolean
+}
+
+export interface Section {
+  id: number
+  section_type: SectionType | null
+  section_type_detail: SectionType | null
+  department: number
+  department_name: string
+  campus_name: string | null
+  head_of_section: number | null
+  name: string
+  code: string | null
+  description: string
+  sla_hours: number | null
+  effective_sla_hours: number
+  is_active: boolean
+}
+
+export interface CampusDepartment {
+  id: number;
+  campus: { id: number; code: string; name: string };
+  department: { id: number; code: string; name: string };
+  head_of_department: { id: number; username: string; name: string } | null;
+}

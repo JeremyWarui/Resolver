@@ -5,10 +5,15 @@ export * from './facility.types';
 export * from './technician.types';
 export * from './section.types';
 export * from './analytics.types';
+export * from './hod.types';
+export * from './sectionHead.types';
+export * from './manager.types';
+export * from './admin.types';
 export type {
 	Campus,
 	Department,
 	DepartmentType,
 	SectionType,
-} from './organisation';
+	CampusDepartment,
+} from './organisationStructure';
 export * from './catalogue';

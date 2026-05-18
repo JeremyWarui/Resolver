@@ -4,8 +4,9 @@ import Header from '@/components/Common/Header';
 import FullScreenLoading from '@/components/Common/FullScreenLoading';
 import ManagerDashboard from './ManagerDashboard';
 import ManagerTickets from './ManagerTickets';
-import { useUserData } from '@/hooks/users';
-import { SharedDataProvider } from '@/contexts/SharedDataContext';
+import ManagerAnalytics from './ManagerAnalytics';
+import { useCurrentUser } from '@/contexts/UserDataContext';
+import { ManagerDashboardProvider } from '@/contexts/ManagerDashboardContext';
 
 function ComingSoon({ section }: { section: string }) {
   return (
@@ -26,12 +27,12 @@ function ComingSoon({ section }: { section: string }) {
 
 const ManagerLayoutContent = () => {
   const [activeSection, setActiveSection] = useState<ManagerSection>('dashboard');
-  const { userData, loading: userLoading } = useUserData();
+  const { userData, loading: userLoading } = useCurrentUser();
 
   const headerTitle: Record<ManagerSection, string> = {
     dashboard: 'Dashboard',
     tickets: 'Department Tickets',
-    reports: 'Reports',
+    reports: 'Analytics',
     settings: 'Settings',
   };
 
@@ -49,7 +50,7 @@ const ManagerLayoutContent = () => {
         <main className="flex-1 overflow-y-auto">
           {activeSection === 'dashboard' && <ManagerDashboard />}
           {activeSection === 'tickets' && <ManagerTickets userId={userData?.id} />}
-          {activeSection === 'reports' && <ComingSoon section="Reports" />}
+          {activeSection === 'reports' && <ManagerAnalytics />}
           {activeSection === 'settings' && <ComingSoon section="Settings" />}
         </main>
       </div>
@@ -58,9 +59,9 @@ const ManagerLayoutContent = () => {
 };
 
 const ManagerLayout = () => (
-  <SharedDataProvider>
+  <ManagerDashboardProvider>
     <ManagerLayoutContent />
-  </SharedDataProvider>
+  </ManagerDashboardProvider>
 );
 
 export default ManagerLayout;

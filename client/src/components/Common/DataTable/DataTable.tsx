@@ -274,7 +274,7 @@ const DataTable = <TData, TValue>({
   // Build tableContentProps for the RenderTableContent component
   const tableContentProps = {
     table,
-    columns,
+    columns: columns as ColumnDef<TData>[],
     onRowClick,
     selectedRowId,
     actualTotalItems,

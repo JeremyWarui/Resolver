@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import UserStatsCards from "@/components/Common/UserStatsCards";
 import PostedTicketsTable from "./PostedTicketsTable";
 import { useCurrentUser } from "@/contexts/UserDataContext";
+import { useUserDashboard } from "@/contexts/UserDashboardContext";
 
 interface UserDashboardProps {
   onNavigate?: (section: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings') => void;
@@ -10,7 +12,12 @@ interface UserDashboardProps {
 
 const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
   const { userData, loading: userLoading } = useCurrentUser();
-  const currentUserId = userData?.id;
+  const { setUserTickets, refetch } = useUserDashboard();
+
+  // Refetch dashboard data on component mount (e.g., when a new ticket is created and remounts)
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const welcomeName = userLoading
     ? '...'
@@ -35,10 +42,10 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
         </div>
       </div>
 
-      <UserStatsCards userId={currentUserId} />
+      <UserStatsCards />
 
-      <p className="text-sm text-gray-500 mb-2">All tickets in your campus</p>
-      <PostedTicketsTable viewOnly={true} />
+      <p className="text-sm text-gray-500 mb-2">Recent tickets</p>
+      <PostedTicketsTable viewOnly={true} onDataFetched={setUserTickets} />
     </main>
   );
 };

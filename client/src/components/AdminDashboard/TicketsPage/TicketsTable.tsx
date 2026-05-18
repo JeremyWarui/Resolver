@@ -1,8 +1,7 @@
 // Import DRY utilities
 import { useMemo } from "react";
-import type { Ticket } from "@/types";
-import { useSharedData } from '@/contexts/SharedDataContext';
 import { useTicketTable } from "@/hooks/tickets";
+import { useSharedData } from "@/contexts/SharedDataContext";
 import { createTicketTableFilters } from "@/components/Common/DataTable/utils/TicketTableFilters";
 import { createTicketTableColumns } from "@/components/Common/DataTable/utils/TicketTableColumns";
 import { createTicketColumnVisibility } from "@/components/Common/DataTable/utils/TicketColumnVisibility";
@@ -15,97 +14,62 @@ import { AdminTableHeader } from "../../Common/DataTable/utils/TableHeaders";
 
 import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 
-// Check if ticket is overdue (7+ days old and still active)
-const isOverdue = (ticket: Ticket) => {
-  const activeStatuses = ['open', 'assigned', 'in_progress'];
-  if (!activeStatuses.includes(ticket.status)) return false;
-  const createdDate = new Date(ticket.created_at);
-  const now = new Date();
-  const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-  return daysDiff > 7;
-};
-
-interface AllTicketsTableProps {
-  activeQuickFilter?: QuickFilterType;
-  onFilterChange?: (filter: QuickFilterType) => void;
-}
-
-function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicketsTableProps) {
-  // ✨ Fetch ALL tickets once with large page_size for client-side filtering
+function AllTicketsTable() {
+  // ✨ Use hook's built-in filtering system (like TechTickets)
   const table = useTicketTable({
     role: 'admin',
-    defaultPageSize: 500, // Use backend maximum for optimal performance (was 1000, capped at 500)
-    defaultStatusFilter: 'all', // Fetch all statuses
+    defaultPageSize: 20,
+    defaultStatusFilter: 'all',
     ordering: '-updated_at',
   });
 
-  // Use server-side analytics when available to determine overdue tickets
-  // This keeps the QuickFilter counts consistent with the StatsCards which use admin analytics
+  // Get admin analytics from shared context (same source as StatsCards)
   const { adminAnalytics } = useSharedData();
-  const overdueIdSet = useMemo(() => {
-    if (!adminAnalytics || !adminAnalytics.overdue_tickets) return null;
-    return new Set(adminAnalytics.overdue_tickets.map((t) => t.id));
-  }, [adminAnalytics]);
 
-  // ✨ Client-side filtering based on activeQuickFilter (instant, no API calls!)
-  const filteredTickets = useMemo(() => {
-    switch (activeQuickFilter) {
-      case 'all':
-        return table.tickets;
-      case 'open':
-        return table.tickets.filter(t => t.status === 'open');
-      case 'unassigned':
-        return table.tickets.filter(t =>
-          !t.assigned_to_id && !t.assigned_to
-        );
-      case 'overdue':
-        return overdueIdSet
-          ? table.tickets.filter((t) => overdueIdSet.has(t.id))
-          : table.tickets.filter(isOverdue);
-      case 'in_progress':
-        return table.tickets.filter(t => t.status === 'in_progress');
-      case 'resolved':
-        return table.tickets.filter(t => t.status === 'resolved');
-      default:
-        return table.tickets;
-    }
-  }, [table.tickets, activeQuickFilter, overdueIdSet]);
-
-  // Calculate filter counts - use analytics total for "all" to match StatsCards
+  // Calculate filter counts from adminAnalytics (server-computed, matches StatsCards)
+  // Counts calculated from table.tickets for accuracy with actual filtering behavior
   const filterCounts = useMemo(() => {
-    return {
-      all: adminAnalytics?.system_overview?.total_tickets || table.tickets.length,
-      open: table.tickets.filter(t => t.status === 'open').length,
-      unassigned: table.tickets.filter(t =>
-        !t.assigned_to_id && !t.assigned_to
-      ).length,
-      overdue: overdueIdSet
-        ? table.tickets.filter((t) => overdueIdSet.has(t.id)).length
-        : table.tickets.filter(isOverdue).length,
-      in_progress: table.tickets.filter(t => t.status === 'in_progress').length,
-      resolved: table.tickets.filter(t => t.status === 'resolved').length,
-    };
-  }, [table.tickets, adminAnalytics, overdueIdSet]);
+    if (!adminAnalytics) {
+      return {
+        all: table.totalTickets,
+        open: 0,
+        unassigned: 0,
+        overdue: 0,
+        in_progress: 0,
+        resolved: 0,
+      };
+    }
 
-  // Transform filtered tickets with raisedByName
-  const filteredTableData = useMemo(() => {
-    return filteredTickets.map((ticket) => {
-      // Find in tableData which already has raisedByName computed
-      const enrichedTicket = table.tableData.find(t => t.id === ticket.id);
-      return enrichedTicket || ticket;
-    });
-  }, [filteredTickets, table.tableData]);
+    const { system_overview: overview, overdue_tickets } = adminAnalytics;
+    const totalTickets = overview?.total_tickets || 0;
+    const openTickets = overview?.open_tickets || 0;
+    const resolvedTickets = overview?.resolved_tickets || 0;
+    const overdueCount = overdue_tickets?.length || 0;
+    
+    // Calculate from current table data to match filter behavior
+    const unassignedCount = table.tickets.filter(t => !t.assigned_to_id && !t.assigned_to).length;
+    const inProgressCount = table.tickets.filter(t => t.status === 'in_progress').length;
+    
+    return {
+      all: totalTickets,
+      open: openTickets,
+      unassigned: unassignedCount,
+      overdue: overdueCount,
+      in_progress: inProgressCount,  // ← Now shows only 'in_progress' status tickets
+      resolved: resolvedTickets,
+    };
+  }, [adminAnalytics, table.tickets]);
 
   // ✨ Generate columns with one function call
-  const columns = createTicketTableColumns({
+  const columns = useMemo(() => createTicketTableColumns({
     role: 'admin',
     technicians: table.technicians,
     allStatuses: table.allStatuses,
     setSelectedTicket: table.setSelectedTicket,
     setIsTicketDialogOpen: table.setIsTicketDialogOpen,
-  });
+  }), [table.technicians, table.allStatuses, table.setSelectedTicket, table.setIsTicketDialogOpen]);
 
-  // ✨ Generate filters with one function call
+  // ✨ Generate filters (status, section, technician, user)
   const filters = createTicketTableFilters(table, {
     includeStatus: true,
     includeSection: true,
@@ -118,27 +82,40 @@ function AllTicketsTable({ activeQuickFilter = 'all', onFilterChange }: AllTicke
 
   return (
     <>
-      {/* Quick Filter Buttons */}
+      {/* Quick Filter Buttons — uses hook's statusFilter */}
       <QuickFilterButtons
-        activeFilter={activeQuickFilter}
-        onFilterChange={onFilterChange || (() => {})} // Pass through to parent
+        activeFilter={(table.statusFilter === 'all' ? 'all' : table.statusFilter) as QuickFilterType}
+        onFilterChange={(filter) => {
+          if (filter === 'overdue') {
+            // Overdue is a special filter combining status + age
+            table.setOverdueFilter(true);
+            table.setStatusFilter('all');
+            table.setPageIndex(0);
+          } else {
+            table.setOverdueFilter(false);
+            table.setStatusFilter(filter === 'all' ? 'all' : filter);
+            table.setPageIndex(0);
+          }
+        }}
         counts={filterCounts}
       />
       
       <DataTable
         variant="admin"
         columns={columns}
-        data={filteredTableData}
+        data={table.tableData}
         title="Tickets"
-        defaultPageSize={20} // Better default for admin ticket management
+        defaultPageSize={20}
         initialColumnVisibility={columnVisibility}
         filterOptions={filters}
-        totalItems={filteredTickets.length}
+        totalItems={table.totalTickets}
         loading={table.loading}
         onRowClick={table.handleViewTicket}
         selectedRowId={table.selectedTicket?.id || null}
         renderHeader={AdminTableHeader}
-        manualPagination={false} // Client-side pagination for filtered data
+        manualPagination={true}
+        onPageChange={table.handlePageChange}
+        onPageSizeChange={table.handlePageSizeChange}
       />
 
       <TicketDetailModal

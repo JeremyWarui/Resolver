@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTicketTable } from '@/hooks/tickets';
+import { useTechDashboard } from '@/contexts/TechnicianDashboardContext';
 import { createTicketTableFilters } from '@/components/Common/DataTable/utils/TicketTableFilters';
 import { createTicketTableColumns } from '@/components/Common/DataTable/utils/TicketTableColumns';
 import { createTicketColumnVisibility } from '@/components/Common/DataTable/utils/TicketColumnVisibility';
@@ -9,27 +10,49 @@ import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
 import type { TechQuickFilterType } from './QuickFilterButtons';
 import TechnicianStatsCards from './TechnicianStatsCards';
 import TechQuickFilterButtons from './QuickFilterButtons';
+import type { Section } from '@/types';
 
 type TechTicketsProps = {
   currentTechnicianId?: number;
 };
 
 function TechTickets({ currentTechnicianId }: TechTicketsProps) {
+  // Get dashboard data from context (assigned tickets + KPIs)
+  const { data: dashboardData } = useTechDashboard();
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Convert dashboard sections to Section type for table filters
+  const externalSections: Section[] | undefined = dashboardData?.sections.map(s => ({
+    id: s.id,
+    name: s.name,
+    code: s.code,
+    campus: { code: s.campus, name: s.campus } as any,
+    department: { code: s.department, name: s.department } as any,
+    section_type_name: s.section_type_name,
+  }));
+
+  // Lazy-fetch only when filter changes
   const table = useTicketTable({
     role: 'technician',
     currentUserId: currentTechnicianId,
-    defaultStatusFilter: 'all',
+    defaultStatusFilter: statusFilter,
     defaultPageSize: 20,
     ordering: '-updated_at',
+    externalSections,
+    skipUntilUserId: true,
   });
 
-  const filterCounts = useMemo(() => ({
-    all: table.totalTickets,
-    assigned: table.tableData.filter(t => t.status === 'assigned').length,
-    in_progress: table.tableData.filter(t => t.status === 'in_progress').length,
-    pending: table.tableData.filter(t => t.status === 'pending').length,
-    resolved: table.tableData.filter(t => t.status === 'resolved').length,
-  }), [table.tableData, table.totalTickets]);
+  // Derive counts from actual fetched tickets so stat cards match the table
+  const filterCounts = useMemo(() => {
+    const tickets = table.tickets;
+    return {
+      all: table.totalTickets,
+      assigned: tickets.filter(t => t.status === 'open' || t.status === 'assigned').length,
+      in_progress: tickets.filter(t => t.status === 'in_progress' || t.status === 'escalated').length,
+      pending: tickets.filter(t => t.status === 'pending').length,
+      resolved: tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length,
+    };
+  }, [table.tickets, table.totalTickets]);
 
   const columns = useMemo(() => createTicketTableColumns({
     role: 'technician',
@@ -47,23 +70,23 @@ function TechTickets({ currentTechnicianId }: TechTicketsProps) {
 
   const columnVisibility = createTicketColumnVisibility({ role: 'technician' });
 
+  const handleFilterChange = (filter: string) => {
+    setStatusFilter(filter);
+    table.setStatusFilter(filter);
+    table.setPageIndex(0);
+  };
+
   return (
     <>
       <TechnicianStatsCards
         counts={filterCounts}
         loading={table.loading}
-        onCardClick={(filter) => {
-          table.setStatusFilter(filter);
-          table.setPageIndex(0);
-        }}
+        onCardClick={(filter) => handleFilterChange(filter)}
       />
 
       <TechQuickFilterButtons
-        activeFilter={table.statusFilter as TechQuickFilterType}
-        onFilterChange={(filter) => {
-          table.setStatusFilter(filter);
-          table.setPageIndex(0);
-        }}
+        activeFilter={statusFilter as TechQuickFilterType}
+        onFilterChange={handleFilterChange}
         counts={filterCounts}
       />
 

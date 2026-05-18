@@ -25,7 +25,7 @@ function DeptForm({ dept, campuses, onSuccess, onClose }: {
 }) {
   const [name, setName] = useState(dept?.name ?? '');
   const [code, setCode] = useState(dept?.code ?? '');
-  const [campusId, setCampusId] = useState<string>(dept?.campus?.id?.toString() ?? '');
+  const [campusId, setCampusId] = useState<string>(String(dept?.campus ?? ''));
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,10 +34,10 @@ function DeptForm({ dept, campuses, onSuccess, onClose }: {
     setSaving(true);
     try {
       if (dept) {
-        await departmentsService.updateDepartment(dept.id, { name, code, campus_id: Number(campusId) });
+        await departmentsService.updateDepartment(dept.id, { name, code, campus: Number(campusId) });
         toast.success('Department updated');
       } else {
-        await departmentsService.createDepartment({ name, code, campus_id: Number(campusId) });
+        await departmentsService.createDepartment({ name, code, campus: Number(campusId) });
         toast.success('Department created');
       }
       onSuccess();
@@ -97,8 +97,8 @@ const DepartmentsPage = () => {
         departmentsService.getDepartments(),
         campusesService.getCampuses(),
       ]);
-      setDepts(deptRes.results);
-      setCampuses(campusRes.results);
+      setDepts(deptRes);
+      setCampuses(campusRes);
     } catch {
       toast.error('Failed to load departments');
     } finally {
@@ -110,9 +110,9 @@ const DepartmentsPage = () => {
 
   const data = useMemo(() => depts.map(d => ({
     ...d,
-    campusName: d.campus?.name ?? '—',
-    hodName: d.head_of_department?.name ?? '—',
-    searchField: `${d.name.toLowerCase()} ${d.code.toLowerCase()} ${(d.campus?.name ?? '').toLowerCase()}`,
+    campusNames: ((d as any).campuses ?? []).map((c: any) => c.name).join(', ') || '—',
+    hodNames: ((d as any).heads_of_department ?? []).map((h: any) => `${h.hod.name} (${h.campus})`).join('; ') || '—',
+    searchField: `${d.name.toLowerCase()} ${d.code.toLowerCase()} ${((d as any).campuses ?? []).map((c: any) => c.name.toLowerCase()).join(' ')}`,
   })), [depts]);
 
   const columns: ColumnDef<Department & { campusName: string; hodName: string; searchField: string }>[] = [
@@ -130,16 +130,42 @@ const DepartmentsPage = () => {
       cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
     },
     { accessorKey: 'code', header: 'Code', cell: ({ row }) => <div>{row.getValue('code')}</div> },
-    { accessorKey: 'campusName', header: 'Campus', cell: ({ row }) => <div>{row.getValue('campusName')}</div> },
-    { accessorKey: 'hodName', header: 'HOD', cell: ({ row }) => <div className="text-sm text-gray-600">{row.getValue('hodName')}</div> },
     {
-      accessorKey: 'is_active',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant="outline" className={row.getValue('is_active') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'}>
-          {row.getValue('is_active') ? 'Active' : 'Inactive'}
-        </Badge>
-      ),
+      accessorKey: 'campusNames',
+      header: 'Campuses',
+      cell: ({ row }) => {
+        const campuses = (row.original as any).campuses ?? [];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {campuses.length > 0
+              ? campuses.map((c: any) => (
+                  <Badge key={c.id} variant="outline" className="text-xs">{c.code}</Badge>
+                ))
+              : <span className="text-gray-400">—</span>
+            }
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'hodNames',
+      header: 'HODs',
+      cell: ({ row }) => {
+        const hods = (row.original as any).heads_of_department ?? [];
+        return (
+          <div className="space-y-0.5">
+            {hods.length > 0
+              ? hods.map((h: any, i: number) => (
+                  <div key={i} className="text-xs text-gray-600">
+                    <span className="font-medium">{h.hod.name}</span>
+                    <span className="text-gray-400 ml-1">({h.campus.replace(' Campus', '')})</span>
+                  </div>
+                ))
+              : <span className="text-gray-400 text-xs">Unassigned</span>
+            }
+          </div>
+        );
+      },
     },
     { accessorKey: 'searchField', header: 'Search', enableHiding: true },
     {

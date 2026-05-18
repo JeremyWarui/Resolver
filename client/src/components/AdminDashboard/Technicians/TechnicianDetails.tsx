@@ -74,7 +74,12 @@ export default function TechnicianDetails({ isOpen, onOpenChange, technician, on
 
   if (!technician) return null;
 
-  const sectionNames = (technician.sections || []).map(id => sections.find(s => s.id === id)?.name || String(id));
+  const sectionNames = (technician.section_names && technician.section_names.length > 0)
+    ? technician.section_names
+    : (technician.sections || []).map(id => {
+        const s = sections.find(sec => sec.id === id);
+        return s ? s.name : String(id);
+      });
 
   const handleClose = () => {
     setMode('view');
@@ -122,7 +127,7 @@ export default function TechnicianDetails({ isOpen, onOpenChange, technician, on
     <Sheet open={isOpen} onOpenChange={handleClose}>
       <SheetContent
         side='right'
-        className='sm:!max-w-none sm:w-[450px] lg:w-[500px] xl:w-[600px] p-0 flex flex-col'
+        className='sm:max-w-none! sm:w-112.5 lg:w-125 xl:w-150 p-0 flex flex-col'
       >
         {/* HEADER */}
         <SheetHeader className='px-6 py-4 border-b bg-gray-50/50 space-y-3'>
@@ -157,6 +162,14 @@ export default function TechnicianDetails({ isOpen, onOpenChange, technician, on
                     <span className='text-sm text-gray-900'>{technician.email}</span>
                   </div>
                   <div className='px-4 py-3 flex items-center justify-between'>
+                    <span className='text-sm font-medium text-gray-600'>Department</span>
+                    <span className='text-sm text-gray-900'>
+                      {technician.primary_department_name
+                        ? technician.primary_department_name
+                        : technician.primary_department_display ?? 'None'}
+                    </span>
+                  </div>
+                  <div className='px-4 py-3 flex items-center justify-between'>
                     <span className='text-sm font-medium text-gray-600'>Sections</span>
                     <span className='text-sm text-gray-900'>{sectionNames.join(', ') || 'None'}</span>
                   </div>
@@ -173,7 +186,7 @@ export default function TechnicianDetails({ isOpen, onOpenChange, technician, on
                     {/* Email */}
                     <div className='px-6 py-4'>
                       <div className='flex items-center gap-4'>
-                        <label className='text-sm font-medium text-gray-700 min-w-[120px]'>Email:</label>
+                        <label className='text-sm font-medium text-gray-700 min-w-30'>Email:</label>
                         <Input
                           value={editedEmail}
                           onChange={(e) => setEditedEmail(e.target.value)}

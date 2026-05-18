@@ -16,12 +16,13 @@ interface UseTechnicianAnalyticsResult {
  * @param params - Optional technician_id to get specific technician's data
  * @returns Technician analytics data with loading and error states
  */
-export const useTechnicianAnalytics = (params?: TechnicianAnalyticsParams): UseTechnicianAnalyticsResult => {
+export const useTechnicianAnalytics = (params?: TechnicianAnalyticsParams, skip = false): UseTechnicianAnalyticsResult => {
   const [data, setData] = useState<TechnicianAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
 
@@ -34,7 +35,7 @@ export const useTechnicianAnalytics = (params?: TechnicianAnalyticsParams): UseT
     } finally {
       setLoading(false);
     }
-  }, [params]);
+  }, [params, skip]);
 
   useEffect(() => {
     fetchData();

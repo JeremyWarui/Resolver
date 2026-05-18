@@ -9,12 +9,13 @@ interface UseManagerAnalyticsResult {
   refetch: () => void;
 }
 
-export const useManagerAnalytics = (params?: RoleAnalyticsParams): UseManagerAnalyticsResult => {
+export const useManagerAnalytics = (params?: RoleAnalyticsParams, skip = false): UseManagerAnalyticsResult => {
   const [data, setData] = useState<ManagerAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (skip) return;
     setLoading(true);
     setError(null);
     try {
@@ -25,7 +26,7 @@ export const useManagerAnalytics = (params?: RoleAnalyticsParams): UseManagerAna
     } finally {
       setLoading(false);
     }
-  }, [params?.days]);
+  }, [params?.days, skip]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

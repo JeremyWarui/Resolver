@@ -277,8 +277,16 @@ interface Ticket {
 
 **`NestedRef`** (`section.types.ts`):
 ```ts
-interface NestedRef { id: number; name: string; code?: string; }
+interface NestedRef {
+  id: number;
+  name: string;
+  code?: string;
+  campus_code?: string | null;      // populated by NestedSectionSerializer
+  department_code?: string | null;  // populated by NestedSectionSerializer
+}
 ```
+
+`ticket.section` is a `NestedRef`. The backend's `NestedSectionSerializer` now includes `campus_code` and `department_code`, so `ticket.section.campus_code` is available for display formatting (see §Section Display below).
 
 **Write payloads**: use `_id` suffix for FK fields:
 
@@ -576,6 +584,10 @@ export const FEATURES = {
 
 When a phase ships, flip the flag and remove the gate.
 
+### Ticket Creation Wizard (`TicketCreationWizard.tsx`)
+
+The wizard always enforces all 6 steps — there is no skip logic based on `hasCatalogue`. The fixture guarantees every section has a `section_type`, and every section type has an "Other / General Request" item, so step 3 (category) and step 4 (service item) are always reachable. If a section somehow lacks a `section_type`, step 3 renders a descriptive error rather than skipping. The "Other / General Request" item does not auto-fill the ticket title so the user is prompted to describe their request in the form field.
+
 ---
 
 ## 18. Building & Deployment
@@ -626,7 +638,37 @@ All frontend env vars must be prefixed `VITE_` to be exposed to the browser. Acc
 
 ---
 
-## 20. Common Pitfalls
+## 20. Section Display Formatting
+
+Sections are displayed as `{campus_code}-{section_name}` (e.g. "NRB-ICT Support") throughout the admin UI. Two utility functions in `src/utils/formatSection.ts` handle this:
+
+```ts
+// For ticket.section (NestedRef with campus_code from NestedSectionSerializer)
+formatSectionDisplay(section: { name: string; campus_code?: string | null } | null | undefined): string
+
+// For full Section objects (with campus?: NestedRef from SharedDataContext)
+formatSectionObj(section: { name: string; campus?: { code: string } | null } | null | undefined): string
+```
+
+Both are exported from `src/utils/index.ts`. Always import from `@/utils/formatSection` or `@/utils`.
+
+### Where each is used
+
+| Location | Function | Data source |
+|----------|----------|-------------|
+| `useTicketTable.ts` — `sectionName` field | `formatSectionDisplay` | `ticket.section` (NestedRef + campus_code) |
+| `TicketDetailModal.tsx` — Section row | `formatSectionDisplay` | `ticket.section` |
+| `TechnicianDetails.tsx` — section badge list | `formatSectionObj` | sections from SharedDataContext |
+| `TechniciansTable.tsx` — `sectionNames` field | `formatSectionObj` | sections from SharedDataContext |
+| `SectionsTable.tsx` — name column | `formatSectionObj` | `row.original` (full Section) |
+
+### Analytics display_name
+
+Analytics endpoints (`SectionDistribution`, `OrgSectionStat.section`) return a `display_name` field pre-computed by the backend (`"{campus_code}-{name}"`). Components use `display_name ?? name` as a fallback for backward compatibility with cached responses.
+
+---
+
+## 21. Common Pitfalls
 
 **Role string sync**: `UserRole` in `user.types.ts` uses `head_of_section` and `manager` (already aligned with backend). Routes live at `/section-head/*` and `/manager/*`. `DirectorDashboard/` is the folder for the manager dashboard — the folder was not renamed but all internal components use `Manager*` names.
 

@@ -2,15 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import TechTicketsTable from './TechTickets';
 import type { User } from '@/types';
-import { useAuth } from '@/hooks/useAuth';
 
 interface TechTicketsPageProps {
   userData?: User | null;
 }
 
 const TechTicketsPage = ({ userData }: TechTicketsPageProps) => {
-  const { user } = useAuth();
-  const technicianId = user?.id;
+  const technicianId = userData?.id;
 
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">

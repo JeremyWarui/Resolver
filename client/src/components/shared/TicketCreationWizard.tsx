@@ -15,7 +15,6 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDepartments } from '@/hooks/useDepartments'
-import { useSections } from '@/hooks/useSections'
 import { useServiceCategories } from '@/hooks/useServiceCategories'
 import { useServiceItems } from '@/hooks/useServiceItems'
 import { useCurrentUser } from '@/contexts/UserDataContext'
@@ -25,7 +24,6 @@ import ticketsService from '@/api/services/ticketsService'
 import type { LocationSelection } from '@/types'
 import type { ServiceCategory, ServiceItem, RequestData } from '@/types/catalogue'
 import type { Department } from '@/types'
-import type { Section } from '@/types'
 
 interface TicketCreationWizardProps {
   isOpen: boolean
@@ -33,23 +31,14 @@ interface TicketCreationWizardProps {
   onSuccess?: () => void
 }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6
+type Step = 1 | 2 | 3 | 4 | 5
 
 const STEP_LABELS: Record<Step, string> = {
   1: 'Department',
-  2: 'Section',
-  3: 'Category',
-  4: 'Service Item',
-  5: 'Details',
-  6: 'Review',
-}
-
-function getSectionTypeId(section: Section): number | null {
-  const st = section.section_type
-  if (st == null) return null
-  if (typeof st === 'number') return st
-  if (typeof st === 'object' && st !== null && 'id' in st) return (st as { id: number }).id
-  return null
+  2: 'Category',
+  3: 'Service',
+  4: 'Details',
+  5: 'Review',
 }
 
 function StepIndicator({ current, total }: { current: Step; total: number }) {
@@ -119,8 +108,7 @@ export function TicketCreationWizard({
   const { userData } = useCurrentUser()
 
   const [step, setStep] = useState<Step>(1)
-  const [departmentId, setDepartmentId] = useState<number | null>(null)
-  const [section, setSection] = useState<Section | null>(null)
+  const [department, setDepartment] = useState<Department | null>(null)
   const [category, setCategory] = useState<ServiceCategory | null>(null)
   const [item, setItem] = useState<ServiceItem | null>(null)
   const [title, setTitle] = useState('')
@@ -139,74 +127,36 @@ export function TicketCreationWizard({
   const { data: departments, isLoading: depsLoading } = useDepartments(
     campusId != null ? campusId : undefined
   )
-  const { data: sections, isLoading: sectionsLoading } = useSections(
-    departmentId ?? undefined
-  )
 
-  const sectionTypeId = section ? getSectionTypeId(section) : null
-  const hasCatalogue = sectionTypeId != null
+  // Use the department ID to load categories — no section step needed.
+  // Backend filter: section_type__department=<id> will find all SectionTypes for this Department
+  const departmentId = step >= 2 ? (department?.id ?? null) : null
+  const { data: categories, isLoading: catsLoading } = useServiceCategories(departmentId)
 
-  // Steps when section has a catalogue: 1-2-3-4-5-6
-  // Steps when no catalogue: 1-2-5-6 (skip 3 and 4)
-  const totalSteps: number = hasCatalogue ? 6 : 4
-  const visibleStep: number = hasCatalogue
-    ? step
-    : step <= 2
-      ? step
-      : step === 5
-        ? 3
-        : 4
-
-  const { data: categories, isLoading: catsLoading } = useServiceCategories(
-    step >= 3 ? sectionTypeId : null
-  )
   const { data: items, isLoading: itemsLoading } = useServiceItems(
-    step >= 4 ? (category?.id ?? null) : null
+    step >= 3 ? (category?.id ?? null) : null
   )
 
   const canAdvance = useMemo(() => {
-    if (step === 1) return departmentId != null
-    if (step === 2) return section != null
-    if (step === 3) return !hasCatalogue || category != null
-    if (step === 4) return !hasCatalogue || item != null
-    if (step === 5) return title.trim().length >= 3
+    if (step === 1) return department != null
+    if (step === 2) return category != null
+    if (step === 3) return item != null
+    if (step === 4) return title.trim().length >= 3
     return true
-  }, [step, departmentId, section, category, item, title, hasCatalogue])
+  }, [step, department, category, item, title])
 
   function handleNext() {
     if (!canAdvance) return
-    if (step === 2 && !hasCatalogue) {
-      setStep(5)
-      return
-    }
-    if (step === 4 && !hasCatalogue) {
-      setStep(5)
-      return
-    }
-    setStep((s) => Math.min(s + 1, 6) as Step)
+    setStep((s) => Math.min(s + 1, 5) as Step)
   }
 
   function handleBack() {
-    if (step === 5 && !hasCatalogue) {
-      setStep(2)
-      return
-    }
     setStep((s) => Math.max(s - 1, 1) as Step)
   }
 
   function handleDepartmentSelect(dept: Department) {
-    if (dept.id !== departmentId) {
-      setDepartmentId(dept.id)
-      setSection(null)
-      setCategory(null)
-      setItem(null)
-      setFormData({})
-    }
-  }
-
-  function handleSectionSelect(sec: Section) {
-    if (sec.id !== section?.id) {
-      setSection(sec)
+    if (dept.id !== department?.id) {
+      setDepartment(dept)
       setCategory(null)
       setItem(null)
       setFormData({})
@@ -225,14 +175,13 @@ export function TicketCreationWizard({
     if (si.id !== item?.id) {
       setItem(si)
       setFormData({})
-      if (!title && si.name) setTitle(si.name)
+      if (!title && si.name && si.name !== 'Other / General Request') setTitle(si.name)
     }
   }
 
   function resetWizard() {
     setStep(1)
-    setDepartmentId(null)
-    setSection(null)
+    setDepartment(null)
     setCategory(null)
     setItem(null)
     setTitle('')
@@ -247,28 +196,26 @@ export function TicketCreationWizard({
   }
 
   async function handleSubmit() {
-    if (!section) return
-    const missingRequired = item?.form_schema.filter(
+    if (!department || !item) return
+    const missingRequired = item.form_schema.filter(
       (f) => f.required && (formData[f.name] == null || formData[f.name] === '')
     )
-    if (missingRequired && missingRequired.length > 0) {
+    if (missingRequired.length > 0) {
       toast.error(`Required fields missing: ${missingRequired.map((f) => f.label).join(', ')}`)
       return
     }
     setIsSubmitting(true)
     try {
-      const result = await ticketsService.createTicket({
+      const result = await ticketsService.createTicketCatalogue({
+        department_id: department.id,
+        service_item_id: item.id,
         title: title.trim(),
         description: description.trim(),
-        section_id: section.id,
         facility_id: location.facility,
-        floor_id: location.floor,
-        room_id: location.room,
         location_detail: location.location_detail.trim() || undefined,
-        service_item_id: item?.id ?? null,
         form_data: Object.keys(formData).length > 0 ? (formData as Record<string, unknown>) : null,
       })
-      toast.success(`Ticket ${result.ticket_no} created`)
+      toast.success(`Ticket ${result.ticket.ticket_no} created`)
       resetWizard()
       onOpenChange(false)
       onSuccess?.()
@@ -279,7 +226,7 @@ export function TicketCreationWizard({
     }
   }
 
-  const selectedDept = departments.find((d) => d.id === departmentId)
+  const totalSteps = 5
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -292,7 +239,7 @@ export function TicketCreationWizard({
               <span className="text-xs text-muted-foreground">
                 {STEP_LABELS[step]}
               </span>
-              <StepIndicator current={visibleStep as Step} total={totalSteps} />
+              <StepIndicator current={step} total={totalSteps} />
             </div>
           </div>
         </DialogHeader>
@@ -318,7 +265,7 @@ export function TicketCreationWizard({
                     {departments.map((dept) => (
                       <OptionCard
                         key={dept.id}
-                        selected={dept.id === departmentId}
+                        selected={dept.id === department?.id}
                         onClick={() => handleDepartmentSelect(dept)}
                         title={dept.name}
                         badge={dept.code}
@@ -329,48 +276,23 @@ export function TicketCreationWizard({
               </>
             )}
 
-            {/* Step 2 — Section */}
+            {/* Step 2 — Category */}
             {step === 2 && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Select the section within{' '}
-                  <span className="font-medium text-foreground">{selectedDept?.name}</span>.
+                  What type of service do you need from{' '}
+                  <span className="font-medium text-foreground">{department?.name}</span>?
                 </p>
-                {sectionsLoading ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
-                  </div>
-                ) : sections.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No sections in this department.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {sections.map((sec) => (
-                      <OptionCard
-                        key={sec.id}
-                        selected={sec.id === section?.id}
-                        onClick={() => handleSectionSelect(sec)}
-                        title={sec.name}
-                        description={sec.description}
-                        badge={sec.code ?? undefined}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Step 3 — Category */}
-            {step === 3 && hasCatalogue && (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  What type of service do you need?
-                </p>
-                {catsLoading ? (
+                {!department ? (
+                  <p className="text-sm text-destructive">
+                    This department has no service catalogue configured. Please select a different department or contact admin.
+                  </p>
+                ) : catsLoading ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
                   </div>
                 ) : categories.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No categories available for this section.</p>
+                  <p className="text-sm text-muted-foreground italic">No service categories found for this department.</p>
                 ) : (
                   <div className="space-y-2">
                     {categories.map((cat) => (
@@ -380,6 +302,7 @@ export function TicketCreationWizard({
                         onClick={() => handleCategorySelect(cat)}
                         title={cat.name}
                         description={cat.description}
+                        badge={cat.section_type_name}
                       />
                     ))}
                   </div>
@@ -387,8 +310,8 @@ export function TicketCreationWizard({
               </>
             )}
 
-            {/* Step 4 — Service Item */}
-            {step === 4 && hasCatalogue && (
+            {/* Step 3 — Service Item */}
+            {step === 3 && (
               <>
                 <p className="text-sm text-muted-foreground">
                   Select the specific service item.
@@ -422,8 +345,8 @@ export function TicketCreationWizard({
               </>
             )}
 
-            {/* Step 5 — Details */}
-            {step === 5 && (
+            {/* Step 4 — Details */}
+            {step === 4 && (
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="title">
@@ -474,8 +397,8 @@ export function TicketCreationWizard({
               </div>
             )}
 
-            {/* Step 6 — Review */}
-            {step === 6 && (
+            {/* Step 5 — Review */}
+            {step === 5 && (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Review your request before submitting.
@@ -484,11 +407,7 @@ export function TicketCreationWizard({
                 <dl className="space-y-3 text-sm">
                   <div className="flex gap-2">
                     <dt className="text-muted-foreground w-28 shrink-0">Department</dt>
-                    <dd className="font-medium">{selectedDept?.name ?? '—'}</dd>
-                  </div>
-                  <div className="flex gap-2">
-                    <dt className="text-muted-foreground w-28 shrink-0">Section</dt>
-                    <dd className="font-medium">{section?.name ?? '—'}</dd>
+                    <dd className="font-medium">{department?.name ?? '—'}</dd>
                   </div>
                   {category && (
                     <div className="flex gap-2">
@@ -498,7 +417,7 @@ export function TicketCreationWizard({
                   )}
                   {item && (
                     <div className="flex gap-2">
-                      <dt className="text-muted-foreground w-28 shrink-0">Service Item</dt>
+                      <dt className="text-muted-foreground w-28 shrink-0">Service</dt>
                       <dd className="font-medium">
                         {item.name}
                         {item.requires_approval && (
@@ -517,12 +436,6 @@ export function TicketCreationWizard({
                     <div className="flex gap-2">
                       <dt className="text-muted-foreground w-28 shrink-0">Description</dt>
                       <dd className="whitespace-pre-wrap">{description}</dd>
-                    </div>
-                  )}
-                  {location.facility != null && (
-                    <div className="flex gap-2">
-                      <dt className="text-muted-foreground w-28 shrink-0">Facility</dt>
-                      <dd>{location.facility}</dd>
                     </div>
                   )}
                   {location.location_detail && (
@@ -584,7 +497,7 @@ export function TicketCreationWizard({
               Cancel
             </Button>
 
-            {step < 6 ? (
+            {step < 5 ? (
               <Button
                 size="sm"
                 onClick={handleNext}

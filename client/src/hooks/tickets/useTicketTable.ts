@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import useTickets from './useTickets';
 import useUpdateTicket from './useUpdateTicket';
 import { useSharedData } from '@/contexts/SharedDataContext';
 import { extractWritableFields } from '@/utils/ticketHelpers';
+import { formatSectionDisplay } from '@/utils/formatSection';
 import type { Ticket, Section, Facility, Technician, User, TicketsParams } from '@/types';
 
 /**
@@ -17,24 +18,22 @@ export interface UseTicketTableConfig {
    * - 'head_of_section' | 'hod' | 'manager': Management roles — full access
    */
   role: 'admin' | 'user' | 'technician' | 'head_of_section' | 'hod' | 'manager';
-  
+
   /**
    * Current user ID for role-based filtering
    */
   currentUserId?: number;
-  
+
   /**
    * Default status filter value
    */
   defaultStatusFilter?: string;
-  
+
   /**
    * Default page size for pagination
    */
   defaultPageSize?: number;
-  
-  // Note: technicians, users, and facilities are always available via SharedDataContext
-  
+
   /**
    * When true and role is 'technician', omits the assigned_to filter so all
    * section tickets are returned (used by the Section Tickets notice board).
@@ -45,7 +44,7 @@ export interface UseTicketTableConfig {
    * Custom ordering for tickets (e.g., '-created_at', 'ticket_no')
    */
   ordering?: string;
-  
+
   /**
    * Page size for fetching technicians/users lists (default: 100)
    */
@@ -57,6 +56,38 @@ export interface UseTicketTableConfig {
    * view-only tables) must not set this, so they fetch immediately.
    */
   skipUntilUserId?: boolean;
+
+  /**
+   * Optional external sections data. If provided, skips useSharedData().sections fetch.
+   */
+  externalSections?: Section[];
+
+  /**
+   * Optional external users data. If provided, skips useSharedData().users fetch.
+   */
+  externalUsers?: User[];
+
+  /**
+   * Optional external technicians data. If provided, skips useSharedData().technicians fetch.
+   */
+  externalTechnicians?: Technician[];
+
+  /**
+   * Optional external facilities data. If provided, skips useSharedData().facilities fetch.
+   */
+  externalFacilities?: Facility[];
+
+  /**
+   * Pre-load table with this data; skip initial fetch if provided.
+   * Subsequent filter/page changes still trigger API calls.
+   */
+  initialData?: Ticket[];
+
+  /**
+   * Callback fired after tickets are fetched from API.
+   * Useful for caching data in parent context.
+   */
+  onDataFetched?: (tickets: Ticket[], total: number) => void;
 }
 
 /**
@@ -178,6 +209,12 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     ordering = '-id',
     fetchSectionTickets = false,
     skipUntilUserId = false,
+    externalSections,
+    externalUsers,
+    externalTechnicians,
+    externalFacilities,
+    initialData,
+    onDataFetched,
   } = config;
 
   // ==================== STATE ====================
@@ -248,30 +285,51 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     fetchSectionTickets,
   ]);
 
+  // Determine if we should skip the initial fetch (have initialData and on first page)
+  const skipInitialFetch = initialData && pageIndex === 0;
+
   // Fetch tickets
   const {
-    tickets,
-    totalTickets,
+    tickets: fetchedTickets,
+    totalTickets: fetchedTotalTickets,
     loading: ticketsLoading,
     refetch,
-  } = useTickets(ticketParams, skipUntilUserId && currentUserId === undefined);
+  } = useTickets(
+    ticketParams,
+    skipUntilUserId && currentUserId === undefined
+  );
+
+  // Use initialData on first page if provided, otherwise use fetched data
+  const tickets = skipInitialFetch ? (initialData ?? []) : fetchedTickets;
+  const totalTickets = skipInitialFetch ? (initialData?.length ?? 0) : fetchedTotalTickets;
+
+  // Call onDataFetched after fetch completes
+  useEffect(() => {
+    if (!skipInitialFetch && !ticketsLoading && onDataFetched) {
+      onDataFetched(fetchedTickets, fetchedTotalTickets);
+    }
+  }, [skipInitialFetch, ticketsLoading, fetchedTickets, fetchedTotalTickets, onDataFetched]);
 
   // Get shared reference data from context (no API calls - already cached at layout level)
-  const {
-    sections, // Get sections from shared context instead of useTickets
-    technicians: allTechniciansData,
-    facilities: allFacilitiesData,
-    users: allUsersData, // Get users from shared context instead of separate API call
-    sectionsLoading,
-    techniciansLoading: techniciansLoadingContext,
-    facilitiesLoading: facilitiesLoadingContext,
-    usersLoading: usersLoadingContext,
-  } = useSharedData();
+  // Will throw error if not wrapped in SharedDataProvider - that's intentional
+  let sharedDataContext;
+  try {
+    sharedDataContext = useSharedData();
+  } catch {
+    // If external data is provided, allow hook to work without SharedDataProvider
+    sharedDataContext = undefined;
+  }
 
-  // SharedDataContext always provides this data
-  const techniciansLoading = techniciansLoadingContext;
-  const facilitiesLoading = facilitiesLoadingContext;
-  const usersLoading = usersLoadingContext;
+  // Use external data if provided, otherwise fall back to shared context
+  const sections = externalSections ?? sharedDataContext?.sections ?? [];
+  const allTechniciansData = externalTechnicians ?? sharedDataContext?.technicians ?? [];
+  const allFacilitiesData = externalFacilities ?? sharedDataContext?.facilities ?? [];
+  const allUsersData = externalUsers ?? sharedDataContext?.users ?? [];
+
+  const sectionsLoading = externalSections ? false : sharedDataContext?.sectionsLoading ?? false;
+  const techniciansLoading = externalTechnicians ? false : sharedDataContext?.techniciansLoading ?? false;
+  const facilitiesLoading = externalFacilities ? false : sharedDataContext?.facilitiesLoading ?? false;
+  const usersLoading = externalUsers ? false : sharedDataContext?.usersLoading ?? false;
 
   // Remove independent users fetching - now comes from SharedDataContext
   // const {
@@ -296,7 +354,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
       return {
         ...ticket,
         searchField: `${String(ticket.ticket_no).toLowerCase()} ${ticket.title.toLowerCase()}`,
-        sectionName: ticket.section?.name ?? '',
+        sectionName: formatSectionDisplay(ticket.section),
         raisedByName,
       };
     });
@@ -333,12 +391,10 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   }, []);
 
   // ==================== LOADING STATE ====================
-  const loading =
-    ticketsLoading ||
-    sectionsLoading ||
-    techniciansLoadingContext ||
-    usersLoadingContext ||
-    facilitiesLoadingContext;
+  // Only block the table on ticket data — filter reference data (sections,
+  // technicians, users, facilities) loads in the background. Ticket rows use
+  // username as a fallback when user data hasn't resolved yet.
+  const loading = ticketsLoading;
 
   // ==================== RETURN ====================
   return {

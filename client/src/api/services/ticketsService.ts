@@ -3,6 +3,8 @@ import type {
   Ticket,
   TicketsResponse,
   CreateTicketPayload,
+  CreateTicketCataloguePayload,
+  CreateTicketCatalogueResponse,
   UpdateTicketPayload,
   BulkStatusUpdatePayload,
   TicketsParams,
@@ -23,6 +25,11 @@ const ticketsService = {
 
   createTicket: async (data: CreateTicketPayload): Promise<Ticket> => {
     const response = await apiClient.post('/tickets/', data);
+    return response.data;
+  },
+
+  createTicketCatalogue: async (data: CreateTicketCataloguePayload): Promise<CreateTicketCatalogueResponse> => {
+    const response = await apiClient.post('/tickets/create/', data);
     return response.data;
   },
 

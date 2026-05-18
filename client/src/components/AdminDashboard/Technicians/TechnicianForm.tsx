@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -16,8 +16,10 @@ import {
 import { Plus, X } from 'lucide-react';
 import useCreateUser from '@/hooks/users/useCreateUser';
 import { useSharedData } from '@/contexts/SharedDataContext';
+import { useDepartments } from '@/hooks/useDepartments';
 import useUpdateUser from '@/hooks/users/useUpdateUser';
 import { createTechnicianSchema, type CreateTechnicianFormValues } from '@/utils/entityValidation';
+import { sectionsService } from '@/api/services/organizationsService';
 import type { Technician, CreateUserPayload, User } from '@/types';
 
 interface TechnicianFormProps {
@@ -29,37 +31,95 @@ interface TechnicianFormProps {
 
 const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: TechnicianFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sectionInputs, setSectionInputs] = useState<number[]>([0]); // Array of section IDs, start with one empty input
+  const [sectionInputs, setSectionInputs] = useState<number[]>([0]);
+  const [campusFilter, setCampusFilter] = useState<string>('__all__');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('__all__');
+  const [departmentSections, setDepartmentSections] = useState<Array<{ id: number; name: string }>>([]);
+  const [loadingDepartmentSections, setLoadingDepartmentSections] = useState(false);
   const { createUser } = useCreateUser();
   const { updateUser } = useUpdateUser();
   const { sections } = useSharedData();
+  const selectedCampusId = campusFilter !== '__all__' ? Number(campusFilter) : undefined;
+  const { data: departments } = useDepartments(selectedCampusId);
+  const departmentOptions = Array.isArray(departments) ? departments : [];
+
+  // Unique campuses derived from sections
+  const campuses = useMemo(() => {
+    const map = new Map<number, { id: number; code: string; name: string }>();
+    sections.forEach(s => {
+      if (s.campus?.id) map.set(s.campus.id, { id: s.campus.id, code: s.campus.code, name: s.campus.name });
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [sections]);
+
+  useEffect(() => {
+    const departmentId = departmentFilter !== '__all__' ? Number(departmentFilter) : null;
+
+    if (!departmentId || Number.isNaN(departmentId)) {
+      setDepartmentSections([]);
+      setSectionInputs([0]);
+      return;
+    }
+
+    let active = true;
+    setLoadingDepartmentSections(true);
+
+    sectionsService.getDepartmentSections(departmentId)
+      .then((sections) => {
+        if (!active) return;
+        setDepartmentSections(sections);
+        setSectionInputs(prev => (prev.length > 0 ? prev : [0]));
+      })
+      .catch(() => {
+        if (!active) return;
+        setDepartmentSections([]);
+      })
+      .finally(() => {
+        if (active) setLoadingDepartmentSections(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [departmentFilter]);
 
   const form = useForm<CreateTechnicianFormValues>({
     resolver: zodResolver(createTechnicianSchema),
-    defaultValues: { first_name: '', last_name: '', email: '', password: '', sections: [] },
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      sections: [],
+      primary_department_id: null,
+    },
   });
 
-  // If editing, populate defaults
   useEffect(() => {
     if (technician) {
       const techSections = technician.sections || [];
-      setSectionInputs(techSections.length > 0 ? techSections : [0]); // At least one input
+      setSectionInputs(techSections.length > 0 ? techSections : [0]);
+      setCampusFilter(technician.primary_campus_id ? String(technician.primary_campus_id) : '__all__');
+      setDepartmentFilter(technician.primary_department_id ? String(technician.primary_department_id) : '__all__');
       form.reset({
         first_name: technician.first_name || '',
         last_name: technician.last_name || '',
         email: technician.email || '',
         password: '',
         sections: techSections,
+        primary_department_id: technician.primary_department_id ?? null,
       });
     } else {
-      // Reset for new technician
       setSectionInputs([0]);
+      setCampusFilter('__all__');
+      setDepartmentFilter('__all__');
       form.reset({
         first_name: '',
         last_name: '',
         email: '',
         password: '',
         sections: [],
+        primary_department_id: null,
       });
     }
   }, [technician, form]);
@@ -102,6 +162,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           email: values.email,
           role: 'technician',
           sections: filteredSections,
+          primary_department_id: values.primary_department_id ?? null,
         };
         if (values.password) {
           updatePayload.password = values.password;
@@ -121,6 +182,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           password: values.password,
           role: 'technician',
           sections: filteredSections,
+          primary_department_id: values.primary_department_id ?? null,
         };
         await createUser(createPayload);
         toast.success('Technician created');
@@ -156,7 +218,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[600px]'>
+      <DialogContent className='sm:max-w-150'>
         <DialogHeader>
           <DialogTitle>New Technician</DialogTitle>
           <DialogDescription>Create a new technician account.</DialogDescription>
@@ -204,21 +266,98 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
               </FormItem>
             )} />
 
+            {/* Campus filter — narrows the section list below */}
+            <FormItem>
+              <FormLabel>Campus</FormLabel>
+              <Select
+                value={campusFilter}
+                onValueChange={val => {
+                  setCampusFilter(val);
+                  setDepartmentFilter('__all__');
+                  setDepartmentSections([]);
+                  form.setValue('primary_department_id', null);
+                  form.setValue('sections', []);
+                  setSectionInputs([0]);
+                  // Clear any section selections that no longer belong to this campus
+                  const validIds = sections
+                    .filter(s => val === '__all__' || String(s.campus?.id) === val)
+                    .map(s => s.id);
+                  const current = form.getValues('sections') || [];
+                  const kept = current.filter(id => validIds.includes(id));
+                  if (kept.length > 0) {
+                    form.setValue('sections', kept);
+                    setSectionInputs(kept.length > 0 ? kept : [0]);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='All campuses' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='__all__'>All campuses</SelectItem>
+                  {campuses.map(c => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name} ({c.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+
+            <FormField control={form.control} name='primary_department_id' render={({ field }) => (
+              <FormItem>
+                <FormLabel>Department</FormLabel>
+                <Select
+                  value={field.value != null ? String(field.value) : '__none__'}
+                  onValueChange={(value) => {
+                    const next = value === '__none__' ? null : Number(value);
+                    field.onChange(next);
+                    setDepartmentFilter(value === '__none__' ? '__all__' : value);
+                    setSectionInputs([0]);
+                    form.setValue('sections', []);
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select department' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='__none__'>No department</SelectItem>
+                    {departmentOptions.map((department) => (
+                      <SelectItem key={department.id} value={String(department.id)}>
+                        {department.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+
             <FormField control={form.control} name='sections' render={({ field }) => (
               <FormItem>
                 <FormLabel>Sections</FormLabel>
                 <div className='space-y-2'>
+                  {departmentFilter === '__all__' ? (
+                    <p className='text-sm text-muted-foreground'>Select a department first to see its sections.</p>
+                  ) : loadingDepartmentSections ? (
+                    <p className='text-sm text-muted-foreground'>Loading sections...</p>
+                  ) : departmentSections.length === 0 ? (
+                    <p className='text-sm text-muted-foreground'>No sections found for this department.</p>
+                  ) : null}
                   {sectionInputs.map((_, index) => (
                     <div key={index} className='flex items-center gap-2'>
                       <Select
                         value={field.value?.[index]?.toString() || ''}
                         onValueChange={(value) => handleSectionChange(index, value)}
+                        disabled={departmentFilter === '__all__' || loadingDepartmentSections || departmentSections.length === 0}
                       >
                         <SelectTrigger className='flex-1'>
                           <SelectValue placeholder='Select a section' />
                         </SelectTrigger>
                         <SelectContent>
-                          {sections.map((section) => (
+                          {departmentSections.map((section) => (
                             <SelectItem key={section.id} value={section.id.toString()}>
                               {section.name}
                             </SelectItem>

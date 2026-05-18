@@ -29,7 +29,9 @@ export default function SectionDetails({ isOpen, onOpenChange, section, onUpdate
   const [editedName, setEditedName] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
 
-  const { technicians } = useTechnicians({ page: 1, page_size: 100, sections: section?.id });
+  const { technicians, loading: techLoading } = useTechnicians(
+    section?.id ? { section_id: section.id } : undefined
+  );
 
   // Sync edit state
   useEffect(() => {
@@ -40,8 +42,6 @@ export default function SectionDetails({ isOpen, onOpenChange, section, onUpdate
   }, [section]);
 
   if (!section) return null;
-
-  const techNames = technicians ? technicians.map(t => `${t.first_name} ${t.last_name}`) : [];
 
   const handleClose = () => {
     setMode('view');
@@ -116,9 +116,30 @@ export default function SectionDetails({ isOpen, onOpenChange, section, onUpdate
                     <span className='text-sm font-medium text-gray-600'>Description</span>
                     <span className='text-sm text-gray-900'>{section.description || '—'}</span>
                   </div>
-                  <div className='px-6 py-4 flex items-center justify-between'>
-                    <span className='text-sm font-medium text-gray-600'>Technicians</span>
-                    <span className='text-sm text-gray-900'>{techNames.length ? techNames.join(', ') : 'None'}</span>
+                  <div className='px-6 py-4'>
+                    <span className='text-sm font-medium text-gray-600 block mb-2'>Technicians</span>
+                    {techLoading ? (
+                      <div className='space-y-2'>
+                        {[1, 2].map(i => (
+                          <div key={i} className='h-6 bg-gray-100 rounded animate-pulse' />
+                        ))}
+                      </div>
+                    ) : technicians.length > 0 ? (
+                      <div className='space-y-1'>
+                        {technicians.map(t => (
+                          <div key={t.id} className='flex items-center gap-2'>
+                            <div className='h-6 w-6 rounded-full bg-[#e5f2fc] flex items-center justify-center text-xs font-semibold text-[#0078d4] shrink-0'>
+                              {(t.first_name || t.username).charAt(0).toUpperCase()}
+                            </div>
+                            <span className='text-sm text-gray-900'>
+                              {t.first_name && t.last_name ? `${t.first_name} ${t.last_name}` : t.username}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className='text-sm text-gray-400'>No technicians assigned</span>
+                    )}
                   </div>
                 </div>
               </div>

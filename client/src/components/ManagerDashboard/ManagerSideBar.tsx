@@ -16,7 +16,7 @@ const ManagerSideBar = ({ activeSection, onSectionChange }: SideBarProps) => {
   const sections = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'tickets' as const, label: 'Department Tickets', icon: ClipboardList },
-    { id: 'reports' as const, label: 'Reports', icon: BarChart2 },
+    { id: 'reports' as const, label: 'Analytics', icon: BarChart2 },
     { id: 'settings' as const, label: 'Settings', icon: Settings },
   ];
 

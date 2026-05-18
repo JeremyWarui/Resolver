@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Download } from "lucide-react";
 import TicketsTable from "./TicketsTable";
 import StatsCards from "../../Common/StatsCards";
 
 const TicketsPage = () => {
-  const [activeQuickFilter, setActiveQuickFilter] = useState<'all' | 'open' | 'unassigned' | 'overdue' | 'in_progress' | 'resolved'>('all');
-
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
       <div className="flex justify-between mb-2">
@@ -37,7 +34,7 @@ const TicketsPage = () => {
       <StatsCards />
 
       {/* Tickets table with integrated quick filters */}
-      <TicketsTable activeQuickFilter={activeQuickFilter} onFilterChange={setActiveQuickFilter} />
+      <TicketsTable />
     </div>
   );
 };

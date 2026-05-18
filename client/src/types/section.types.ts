@@ -2,6 +2,8 @@ export interface NestedRef {
   id: number;
   code: string;
   name: string;
+  campus_code?: string | null;
+  department_code?: string | null;
 }
 
 export interface SectionHead {
@@ -25,6 +27,7 @@ export interface Section {
   effective_sla_hours?: number;
   section_head?: SectionHead | null;
   technicians?: string[];
+  technician_count?: number;
   is_active?: boolean;
 }
 

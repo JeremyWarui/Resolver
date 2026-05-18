@@ -1,18 +1,35 @@
 import { FacilityChart } from "./FacilityChart";
 import TechniciansWorkload from "./TechniciansWorkload";
+import type { TicketAnalytics } from "@/types/analytics.types";
 
-const FacilityAndWorkload = () => {
-  // const [facilityTimeframe, setFacilityTimeframe] = useState("week")
-  
+type TimePeriod = "day" | "week" | "month";
+
+interface FacilityAndWorkloadProps {
+  facilityAnalyticsData: TicketAnalytics | null;
+  facilityLoading: boolean;
+  facilityTimeframe: TimePeriod;
+  setFacilityTimeframe: (timeframe: TimePeriod) => void;
+}
+
+const FacilityAndWorkload = ({
+  facilityAnalyticsData,
+  facilityLoading,
+  facilityTimeframe,
+  setFacilityTimeframe,
+}: FacilityAndWorkloadProps) => {
   return (
     <div className="grid grid-cols-2 gap-2 mb-2">
       {/* Facility Distribution */}
-      <FacilityChart />
+      <FacilityChart
+        analyticsData={facilityAnalyticsData}
+        loading={facilityLoading}
+        timePeriod={facilityTimeframe}
+        setTimePeriod={setFacilityTimeframe}
+      />
       {/* Technician Workload */}
       <TechniciansWorkload />
       {/* Recent Tickets */}
 
-      
     </div>
   );
 };
