@@ -137,7 +137,7 @@ export const facilitiesService = {
     return response.data;
   },
   getCampusFacilities: async (campusId: number): Promise<Facility[]> => {
-    const response = await apiClient.get<Facility[]>(`/campuses/${campusId}/facilities/`);
+    const response = await apiClient.get<Facility[]>(`/facilities/`, { params: { campus: campusId } });
     const data = response.data;
     return Array.isArray(data) ? data : (data as any).results || [];
   },

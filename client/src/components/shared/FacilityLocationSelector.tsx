@@ -1,19 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFacilities } from '@/hooks/useFacilities';
-import { useFacilityFloors } from '@/hooks/useFacilityFloors';
-import { useFacilityRooms } from '@/hooks/useFacilityRooms';
 import type { LocationSelection } from '@/types';
 
-const OTHER_VALUE = '__other__';
+type LocationType = 'building' | 'office_block' | 'residential' | '';
 
 interface FacilityLocationSelectorProps {
   campusId: number;
@@ -28,261 +20,141 @@ export function FacilityLocationSelector({
   onChange,
   disabled = false,
 }: FacilityLocationSelectorProps) {
-  const { data: facilities, isLoading: facilitiesLoading } =
-    useFacilities(campusId);
+  const { data: facilities, isLoading: facilitiesLoading } = useFacilities(campusId);
 
-  const selectedFacilityId = value?.facility ?? null;
-  const selectedFloorId = value?.floor ?? null;
-  const selectedRoomId = value?.room ?? null;
+  const [locationType, setLocationType] = useState<LocationType>('');
+  const [roomNo, setRoomNo] = useState('');
+  const [floor, setFloor] = useState('');
+  const [office, setOffice] = useState('');
+  const [officeNo, setOfficeNo] = useState('');
+  const [houseNo, setHouseNo] = useState('');
+  const [tenantName, setTenantName] = useState('');
 
-  const { data: floors, isLoading: floorsLoading } =
-    useFacilityFloors(selectedFacilityId);
-  const { data: rooms, isLoading: roomsLoading } =
-    useFacilityRooms(selectedFloorId);
-
-  const [showLocationDetail, setShowLocationDetail] = useState(false);
-
-  const selectedFacility = facilities.find((f) => f.id === selectedFacilityId);
-  const selectedFloor = floors.find((f) => f.id === selectedFloorId);
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
-
-  // Determine if the facility has floors
-  const facilityHasFloors =
-    selectedFacility != null &&
-    (selectedFacility.floors_count == null ||
-      selectedFacility.floors_count > 0);
-
-  // Show the location detail input if any level is "other" or the selected
-  // facility has no floors so the user can describe the location directly.
+  // Build location_detail string from sub-fields and push to parent
   useEffect(() => {
-    const facilityOther =
-      value?.facility === null && value?.location_detail !== '';
-    const floorIsOther =
-      selectedFloorId === null &&
-      selectedFacilityId !== null &&
-      facilityHasFloors;
-    const roomIsOther = selectedRoomId === null && selectedFloorId !== null;
-    const noFloorsSelected = selectedFacilityId !== null && !facilityHasFloors;
-    setShowLocationDetail(
-      facilityOther || floorIsOther || roomIsOther || noFloorsSelected
-    );
-  }, [
-    value,
-    selectedFacilityId,
-    selectedFloorId,
-    selectedRoomId,
-    facilityHasFloors,
-  ]);
-
-  // Build breadcrumb string
-  const breadcrumbParts: string[] = [];
-  if (selectedFacility) breadcrumbParts.push(selectedFacility.name);
-  else if (selectedFacilityId === null && value?.location_detail)
-    breadcrumbParts.push('Other');
-  if (selectedFloor) breadcrumbParts.push(selectedFloor.name);
-  else if (
-    selectedFloorId === null &&
-    selectedFacilityId !== null &&
-    facilityHasFloors
-  )
-    breadcrumbParts.push('Other');
-  if (selectedRoom) breadcrumbParts.push(selectedRoom.name);
-  else if (selectedRoomId === null && selectedFloorId !== null)
-    breadcrumbParts.push('Other');
-  const breadcrumb = breadcrumbParts.join(' → ');
-
-  function handleFacilityChange(val: string) {
-    if (val === OTHER_VALUE) {
-      onChange({
-        facility: null,
-        floor: null,
-        room: null,
-        location_detail: value?.location_detail ?? '',
-      });
-      setShowLocationDetail(true);
-    } else {
-      const id = Number(val);
-      onChange({ facility: id, floor: null, room: null, location_detail: '' });
-      setShowLocationDetail(false);
+    let detail = '';
+    if (locationType === 'building') {
+      if (roomNo) detail = `Room ${roomNo}`;
+    } else if (locationType === 'office_block') {
+      const parts = [floor && `Floor ${floor}`, office && `Office ${office}`, officeNo && `No. ${officeNo}`].filter(Boolean);
+      detail = parts.join(', ');
+    } else if (locationType === 'residential') {
+      const parts = [houseNo && `House No. ${houseNo}`, tenantName && `Tenant: ${tenantName}`].filter(Boolean);
+      detail = parts.join(', ');
     }
-  }
-
-  function handleFloorChange(val: string) {
-    if (val === OTHER_VALUE) {
-      onChange({
-        facility: selectedFacilityId,
-        floor: null,
-        room: null,
-        location_detail: value?.location_detail ?? '',
-      });
-      setShowLocationDetail(true);
-    } else {
-      const id = Number(val);
-      onChange({
-        facility: selectedFacilityId,
-        floor: id,
-        room: null,
-        location_detail: '',
-      });
-      setShowLocationDetail(false);
-    }
-  }
-
-  function handleRoomChange(val: string) {
-    if (val === OTHER_VALUE) {
-      onChange({
-        facility: selectedFacilityId,
-        floor: selectedFloorId,
-        room: null,
-        location_detail: value?.location_detail ?? '',
-      });
-      setShowLocationDetail(true);
-    } else {
-      const id = Number(val);
-      onChange({
-        facility: selectedFacilityId,
-        floor: selectedFloorId,
-        room: id,
-        location_detail: '',
-      });
-      setShowLocationDetail(false);
-    }
-  }
-
-  function handleLocationDetailChange(detail: string) {
     onChange({
       facility: value?.facility ?? null,
-      floor: value?.floor ?? null,
-      room: value?.room ?? null,
+      floor: null,
+      room: null,
       location_detail: detail,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationType, roomNo, floor, office, officeNo, houseNo, tenantName]);
+
+  function handleFacilityChange(val: string) {
+    onChange({
+      facility: val === '__none__' ? null : Number(val),
+      floor: null,
+      room: null,
+      location_detail: value?.location_detail ?? '',
     });
   }
 
-  // Derive Select value strings (undefined = nothing selected yet)
-  const facilitySelectValue =
-    selectedFacilityId != null
-      ? String(selectedFacilityId)
-      : value && value.facility === null && value.location_detail !== undefined
-        ? OTHER_VALUE
-        : undefined;
+  function handleTypeChange(val: string) {
+    setLocationType(val as LocationType);
+    setRoomNo(''); setFloor(''); setOffice(''); setOfficeNo('');
+    setHouseNo(''); setTenantName('');
+  }
 
-  const floorSelectValue =
-    selectedFloorId != null
-      ? String(selectedFloorId)
-      : selectedFacilityId !== null &&
-          value &&
-          value.floor === null &&
-          value.location_detail !== undefined
-        ? OTHER_VALUE
-        : undefined;
-
-  const roomSelectValue =
-    selectedRoomId != null
-      ? String(selectedRoomId)
-      : selectedFloorId !== null &&
-          value &&
-          value.room === null &&
-          value.location_detail !== undefined
-        ? OTHER_VALUE
-        : undefined;
+  const facilitySelectValue = value?.facility != null ? String(value.facility) : '__none__';
 
   return (
-    <div className='space-y-3'>
-      {/* Facility */}
-      <div className='space-y-1'>
-        <Label>Facility</Label>
+    <div className="space-y-3">
+      {/* Facility dropdown */}
+      <div className="space-y-1">
+        <Label>Facility <span className="text-xs text-muted-foreground">(building / location)</span></Label>
         <Select
           value={facilitySelectValue}
           onValueChange={handleFacilityChange}
           disabled={disabled || facilitiesLoading}
         >
           <SelectTrigger>
-            <SelectValue
-              placeholder={
-                facilitiesLoading ? 'Loading...' : 'Select a facility'
-              }
-            />
+            <SelectValue placeholder={facilitiesLoading ? 'Loading...' : 'Select facility'} />
           </SelectTrigger>
           <SelectContent>
-            {facilities.map((facility) => (
-              <SelectItem key={facility.id} value={String(facility.id)}>
-                {facility.name}
-              </SelectItem>
+            <SelectItem value="__none__">Not specified</SelectItem>
+            {facilities.map(f => (
+              <SelectItem key={f.id} value={String(f.id)}>{f.name}</SelectItem>
             ))}
-            <SelectItem value={OTHER_VALUE}>Other / Not Listed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Floor — only shown if facility selected and has floors */}
-      {selectedFacilityId !== null && facilityHasFloors && (
-        <div className='space-y-1'>
-          <Label>Floor</Label>
-          <Select
-            value={floorSelectValue}
-            onValueChange={handleFloorChange}
-            disabled={disabled || floorsLoading || selectedFacilityId === null}
-          >
-            <SelectTrigger>
-              <SelectValue
-                placeholder={floorsLoading ? 'Loading...' : 'Select a floor'}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {floors.map((floor) => (
-                <SelectItem key={floor.id} value={String(floor.id)}>
-                  {floor.name}
-                </SelectItem>
-              ))}
-              <SelectItem value={OTHER_VALUE}>Other / Not Listed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* Location type */}
+      <div className="space-y-1">
+        <Label>Location Type</Label>
+        <Select value={locationType} onValueChange={handleTypeChange} disabled={disabled}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select location type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="building">Building</SelectItem>
+            <SelectItem value="office_block">Office Block</SelectItem>
+            <SelectItem value="residential">Residential</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* Room — only shown if floor selected */}
-      {selectedFloorId !== null && (
-        <div className='space-y-1'>
-          <Label>Room</Label>
-          <Select
-            value={roomSelectValue}
-            onValueChange={handleRoomChange}
-            disabled={disabled || roomsLoading || selectedFloorId === null}
-          >
-            <SelectTrigger>
-              <SelectValue
-                placeholder={roomsLoading ? 'Loading...' : 'Select a room'}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {rooms.map((room) => (
-                <SelectItem key={room.id} value={String(room.id)}>
-                  {room.name}
-                  {room.code ? ` (${room.code})` : ''}
-                </SelectItem>
-              ))}
-              <SelectItem value={OTHER_VALUE}>Other / Not Listed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Location detail — shown when "Other / Not Listed" chosen at any level */}
-      {showLocationDetail && (
-        <div className='space-y-1'>
-          <Label>Location Detail</Label>
+      {/* Building → Room No */}
+      {locationType === 'building' && (
+        <div className="space-y-1">
+          <Label>Room Number</Label>
           <Input
-            placeholder='Describe the specific location'
-            value={value?.location_detail ?? ''}
-            onChange={(e) => handleLocationDetailChange(e.target.value)}
+            value={roomNo}
+            onChange={e => setRoomNo(e.target.value)}
+            placeholder="e.g. 204, Lab A"
             disabled={disabled}
           />
         </div>
       )}
 
-      {/* Breadcrumb */}
-      {breadcrumb && (
-        <p className='text-sm text-muted-foreground'>{breadcrumb}</p>
+      {/* Office Block → Floor / Office / Office No */}
+      {locationType === 'office_block' && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1">
+            <Label>Floor</Label>
+            <Input value={floor} onChange={e => setFloor(e.target.value)} placeholder="e.g. 3rd" disabled={disabled} />
+          </div>
+          <div className="space-y-1">
+            <Label>Office</Label>
+            <Input value={office} onChange={e => setOffice(e.target.value)} placeholder="e.g. Finance" disabled={disabled} />
+          </div>
+          <div className="space-y-1">
+            <Label>Office No.</Label>
+            <Input value={officeNo} onChange={e => setOfficeNo(e.target.value)} placeholder="e.g. 301" disabled={disabled} />
+          </div>
+        </div>
+      )}
+
+      {/* Residential → House No / Tenant Name */}
+      {locationType === 'residential' && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label>House No.</Label>
+            <Input value={houseNo} onChange={e => setHouseNo(e.target.value)} placeholder="e.g. A-12" disabled={disabled} />
+          </div>
+          <div className="space-y-1">
+            <Label>Tenant Name</Label>
+            <Input value={tenantName} onChange={e => setTenantName(e.target.value)} placeholder="Optional" disabled={disabled} />
+          </div>
+        </div>
+      )}
+
+      {/* Summary */}
+      {value?.location_detail && (
+        <p className="text-xs text-muted-foreground bg-muted/40 rounded px-2 py-1">
+          📍 {value.location_detail}
+        </p>
       )}
     </div>
   );

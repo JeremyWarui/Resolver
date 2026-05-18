@@ -29,6 +29,8 @@ interface TicketCreationWizardProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  /** Pre-fill department + category and jump to step 3 (service item selection) */
+  quickStart?: { department: Department; category: ServiceCategory }
 }
 
 type Step = 1 | 2 | 3 | 4 | 5
@@ -104,12 +106,13 @@ export function TicketCreationWizard({
   isOpen,
   onOpenChange,
   onSuccess,
+  quickStart,
 }: TicketCreationWizardProps) {
   const { userData } = useCurrentUser()
 
-  const [step, setStep] = useState<Step>(1)
-  const [department, setDepartment] = useState<Department | null>(null)
-  const [category, setCategory] = useState<ServiceCategory | null>(null)
+  const [step, setStep] = useState<Step>(quickStart ? 3 : 1)
+  const [department, setDepartment] = useState<Department | null>(quickStart?.department ?? null)
+  const [category, setCategory] = useState<ServiceCategory | null>(quickStart?.category ?? null)
   const [item, setItem] = useState<ServiceItem | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -180,9 +183,9 @@ export function TicketCreationWizard({
   }
 
   function resetWizard() {
-    setStep(1)
-    setDepartment(null)
-    setCategory(null)
+    setStep(quickStart ? 3 : 1)
+    setDepartment(quickStart?.department ?? null)
+    setCategory(quickStart?.category ?? null)
     setItem(null)
     setTitle('')
     setDescription('')
@@ -438,10 +441,12 @@ export function TicketCreationWizard({
                       <dd className="whitespace-pre-wrap">{description}</dd>
                     </div>
                   )}
-                  {location.location_detail && (
+                  {(location.facility || location.location_detail) && (
                     <div className="flex gap-2">
                       <dt className="text-muted-foreground w-28 shrink-0">Location</dt>
-                      <dd>{location.location_detail}</dd>
+                      <dd className="text-sm">
+                        {location.location_detail || 'Not specified'}
+                      </dd>
                     </div>
                   )}
                   {Object.keys(formData).length > 0 && (
