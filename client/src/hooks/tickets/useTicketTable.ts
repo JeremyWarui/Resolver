@@ -311,25 +311,18 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   }, [skipInitialFetch, ticketsLoading, fetchedTickets, fetchedTotalTickets, onDataFetched]);
 
   // Get shared reference data from context (no API calls - already cached at layout level)
-  // Will throw error if not wrapped in SharedDataProvider - that's intentional
-  let sharedDataContext;
-  try {
-    sharedDataContext = useSharedData();
-  } catch {
-    // If external data is provided, allow hook to work without SharedDataProvider
-    sharedDataContext = undefined;
-  }
+  // Hook will throw if not wrapped in SharedDataProvider when external data is not provided
+  const sharedDataContext = useSharedData();
 
   // Use external data if provided, otherwise fall back to shared context
-  const sections = externalSections ?? sharedDataContext?.sections ?? [];
-  const allTechniciansData = externalTechnicians ?? sharedDataContext?.technicians ?? [];
-  const allFacilitiesData = externalFacilities ?? sharedDataContext?.facilities ?? [];
-  const allUsersData = externalUsers ?? sharedDataContext?.users ?? [];
+  const sections = externalSections ?? sharedDataContext.sections ?? [];
+  const allTechniciansData = externalTechnicians ?? sharedDataContext.technicians ?? [];
+  const allFacilitiesData = externalFacilities ?? sharedDataContext.facilities ?? [];
+  const allUsersData = externalUsers ?? sharedDataContext.users ?? [];
 
-  const sectionsLoading = externalSections ? false : sharedDataContext?.sectionsLoading ?? false;
-  const techniciansLoading = externalTechnicians ? false : sharedDataContext?.techniciansLoading ?? false;
-  const facilitiesLoading = externalFacilities ? false : sharedDataContext?.facilitiesLoading ?? false;
-  const usersLoading = externalUsers ? false : sharedDataContext?.usersLoading ?? false;
+  const techniciansLoading = externalTechnicians ? false : sharedDataContext.techniciansLoading ?? false;
+  const facilitiesLoading = externalFacilities ? false : sharedDataContext.facilitiesLoading ?? false;
+  const usersLoading = externalUsers ? false : sharedDataContext.usersLoading ?? false;
 
   // Remove independent users fetching - now comes from SharedDataContext
   // const {

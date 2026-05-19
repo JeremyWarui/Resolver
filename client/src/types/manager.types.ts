@@ -15,4 +15,5 @@ export interface ManagerTicketsSummary {
  */
 export interface ManagerDashboard extends ManagerAnalytics {
   tickets_summary: ManagerTicketsSummary;
+  [key: string]: unknown;
 }

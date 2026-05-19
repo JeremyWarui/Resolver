@@ -4,6 +4,7 @@ export interface Facility {
   type?: 'building' | 'ict' | 'laundry' | 'kitchen' | 'residential' | null;
   status?: string;
   location?: string | null;
+  campus?: number;
   floors_count?: number;
 }
 

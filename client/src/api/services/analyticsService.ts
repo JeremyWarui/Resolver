@@ -28,8 +28,7 @@ const analyticsService = {
     const raw = response.data;
 
     // Backend returns system_overview with fields: total, open, closed, new_24h, new_7d, new_30d,
-    // resolution_rate_pct, avg_resolution_hours, etc.
-    // Frontend expects: total_tickets, open_tickets, resolved_tickets, new_tickets_24h, etc.
+    // resolution_rate_pct, avg_resolution_hours, sla_24h_pct, pending, pending_approval, escalated
     const overview = raw.system_overview || {};
     const overdueRaw = raw.overdue_tickets;
 
@@ -40,14 +39,18 @@ const analyticsService = {
 
     return {
       system_overview: {
-        total_tickets: overview.total ?? 0,
-        open_tickets: overview.open ?? 0,
-        resolved_tickets: overview.closed ?? 0,
-        resolution_rate: overview.resolution_rate_pct ?? 0,
-        new_tickets_24h: overview.new_24h ?? 0,
-        tickets_past_week: overview.new_7d ?? 0,
-        tickets_past_month: overview.new_30d ?? 0,
-        avg_resolution_time_hours: overview.avg_resolution_hours ?? null,
+        total: overview.total ?? 0,
+        open: overview.open ?? 0,
+        closed: overview.closed ?? 0,
+        pending: overview.pending ?? 0,
+        pending_approval: overview.pending_approval ?? 0,
+        escalated: overview.escalated ?? 0,
+        new_24h: overview.new_24h ?? 0,
+        new_7d: overview.new_7d ?? 0,
+        new_30d: overview.new_30d ?? 0,
+        resolution_rate_pct: overview.resolution_rate_pct ?? 0,
+        avg_resolution_hours: overview.avg_resolution_hours ?? null,
+        sla_24h_pct: overview.sla_24h_pct ?? 0,
       },
       overdue_tickets: overdueTickets,
     };

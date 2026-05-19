@@ -10,6 +10,9 @@ export const TICKET_STATUSES = {
   ASSIGNED: 'assigned',
   IN_PROGRESS: 'in_progress',
   PENDING: 'pending',
+  PENDING_APPROVAL: 'pending_approval',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
   RESOLVED: 'resolved',
   CLOSED: 'closed',
 } as const;

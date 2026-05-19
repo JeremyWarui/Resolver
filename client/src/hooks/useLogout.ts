@@ -25,9 +25,7 @@ export const useLogout = () => {
     try {
       await logout();
       toast.success('Logged out successfully');
-      // Add a small delay to show the loading spinner
-      await new Promise(resolve => setTimeout(resolve, 500));
-      window.location.href = '/auth';
+      window.location.href = '/login';
     } catch (error) {
       setIsLoading(false);
       toast.error('Failed to logout');

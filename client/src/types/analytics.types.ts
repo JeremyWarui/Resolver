@@ -54,10 +54,14 @@ export interface TechnicianPerformance {
   username: string;
   email: string;
   full_name: string;
+  technician?: { id: number; name: string; username: string };
   total_tickets: number;
+  total_assigned?: number;
   resolved_tickets: number;
+  resolved?: number;
   pending_tickets: number;
   overdue_tickets: number;
+  open?: number;
   avg_rating: number;
   avg_resolution_time: number;
   resolution_percentage: number;
@@ -84,8 +88,11 @@ export interface TechnicianAnalyticsParams {
 
 export interface SystemOverview {
   total: number;
+  total_tickets?: number;
   open: number;
+  open_tickets?: number;
   closed: number;
+  resolved_tickets?: number;
   pending: number;
   pending_approval: number;
   escalated: number;
@@ -232,11 +239,15 @@ export interface ManagerCampusStat {
   campus_department_id: number;
   head_of_department: { id: number; name: string; username: string } | null;
   total: number;
+  total_tickets?: number;
   open: number;
+  open_tickets?: number;
   closed: number;
   escalated: number;
+  escalated_tickets?: number;
   avg_resolution_hours: number | null;
   sla_24h_pct: number;
+  sla_compliance?: number;
 }
 
 export interface ManagerSectionStat {
@@ -245,14 +256,18 @@ export interface ManagerSectionStat {
     name: string;
     code: string;
     section_type: string;
+    campus?: { code: string; name: string };
   };
-  campus: { code: string; name: string };
+  campus?: { code: string; name: string };
   head_of_section: { id: number; username: string; name: string } | null;
   technician_count: number;
   total: number;
+  total_tickets?: number;
   open: number;
+  open_tickets?: number;
   closed: number;
   escalated: number;
+  escalated_tickets?: number;
   avg_resolution_hours: number | null;
   sla_24h_pct: number;
 }
@@ -266,12 +281,16 @@ export interface ManagerTechnicianStat {
 
 export interface ManagerOverview {
   total: number;
+  total_tickets?: number;
   open: number;
+  open_tickets?: number;
   closed: number;
   pending: number;
   escalated: number;
+  escalated_tickets?: number;
   avg_resolution_hours: number | null;
   sla_24h_pct: number;
+  sla_compliance?: number;
 }
 
 export interface ManagerAnalytics {

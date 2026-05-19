@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { FormDialog } from '@/components/Common/FormDialog';
 import { useSharedData } from '@/contexts/SharedDataContext';
-import sectionsService from '@/api/services/sectionsService';
+import { sectionsService } from '@/api/services/organizationsService';
 import { createSectionSchema, type CreateSectionFormValues } from '@/utils/entityValidation';
 
 interface SectionFormProps {
@@ -26,12 +25,11 @@ const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: Sectio
     defaultValues: { name: '', description: '' },
   });
 
-  // Prefill when editing
   useEffect(() => {
     if (section) {
       form.reset({ name: section.name || '', description: section.description || '' });
     }
-  }, [section]);
+  }, [section, form]);
 
   const onSubmit = async (values: CreateSectionFormValues) => {
     setIsSubmitting(true);
@@ -40,17 +38,19 @@ const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: Sectio
         const res = await sectionsService.updateSection(section.id, values);
         if (res) {
           toast.success('Section updated');
-          refetchSections(); // Update shared context cache
+          refetchSections();
           onSuccess?.();
+          onOpenChange(false);
         } else {
           toast.error('Failed to update section');
         }
       } else {
         await sectionsService.createSection(values);
         toast.success('Section created');
-        refetchSections(); // Update shared context cache
+        refetchSections();
         form.reset();
         onSuccess?.();
+        onOpenChange(false);
       }
     } catch (err) {
       console.error(err);
@@ -75,43 +75,37 @@ const SectionForm = ({ isOpen, onOpenChange, onSuccess, section = null }: Sectio
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[520px]'>
-        <DialogHeader>
-          <DialogTitle>{section ? 'Edit Section' : 'New Section'}</DialogTitle>
-          <DialogDescription>{section ? 'Update the section.' : 'Create a new maintenance section.'}</DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title={section ? 'Edit Section' : 'New Section'}
+      description={section ? 'Update the section.' : 'Create a new maintenance section.'}
+      form={form}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
+      submitLabel={section ? 'Save Changes' : 'Create Section'}
+      size="md"
+    >
+      <FormField control={form.control} name="name" render={({ field }) => (
+        <FormItem>
+          <FormLabel>Name</FormLabel>
+          <FormControl>
+            <Input {...field} placeholder="Section name (e.g., Electrical)" />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )} />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6 px-2 py-4'>
-            <FormField control={form.control} name='name' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder='Section name (e.g., Electrical)' />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <FormField control={form.control} name='description' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder='Short description (optional)' />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <DialogFooter>
-              <Button type='button' variant='outline' onClick={() => { onOpenChange(false); form.reset(); }} disabled={isSubmitting}>Cancel</Button>
-              <Button type='submit' className='bg-blue-600 hover:bg-blue-700' disabled={isSubmitting}>{isSubmitting ? (section ? 'Saving...' : 'Creating...') : (section ? 'Save Changes' : 'Create Section')}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+      <FormField control={form.control} name="description" render={({ field }) => (
+        <FormItem>
+          <FormLabel>Description</FormLabel>
+          <FormControl>
+            <Input {...field} placeholder="Short description (optional)" />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )} />
+    </FormDialog>
   );
 };
 

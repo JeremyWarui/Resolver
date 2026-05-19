@@ -1,36 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
 import analyticsService from '@/api/services/analyticsService';
+import { useRoleAnalytics } from './useRoleAnalytics';
 import type { SectionHeadAnalytics, RoleAnalyticsParams } from '@/types';
 
-interface UseSectionHeadAnalyticsResult {
-  data: SectionHeadAnalytics | null;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
-}
-
-export const useSectionHeadAnalytics = (params?: RoleAnalyticsParams, skip = false): UseSectionHeadAnalyticsResult => {
-  const [data, setData] = useState<SectionHeadAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = useCallback(async () => {
-    if (skip) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await analyticsService.getSectionHeadAnalytics(params);
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch analytics'));
-    } finally {
-      setLoading(false);
-    }
-  }, [params?.days, skip]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  return { data, loading, error, refetch: fetchData };
-};
+export const useSectionHeadAnalytics = (params?: RoleAnalyticsParams, skip = false) =>
+  useRoleAnalytics<SectionHeadAnalytics>(analyticsService.getSectionHeadAnalytics, params, skip);
 
 export default useSectionHeadAnalytics;

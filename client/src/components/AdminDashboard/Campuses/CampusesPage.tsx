@@ -1,19 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   type ColumnDef, type ColumnFiltersState, type SortingState, type VisibilityState,
-  flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel,
+  getCoreRowModel, getFilteredRowModel, getPaginationRowModel,
   getSortedRowModel, useReactTable,
 } from '@tanstack/react-table';
-import { ChevronDown, SlidersHorizontal, ChevronLeft, ChevronRight, Plus, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { campusesService } from '@/api/services/organizationsService';
+import { useSharedData } from '@/contexts/SharedDataContext';
+import { AdminResourceTable } from '@/components/Common/AdminResourceTable';
+import { useSortableColumn } from '@/hooks/useSortableColumn';
+import { handleDRFError } from '@/utils/handleDRFError';
 import type { Campus } from '@/types/organisationStructure';
 
 function CampusForm({ campus, onSuccess, onClose }: {
@@ -38,8 +39,8 @@ function CampusForm({ campus, onSuccess, onClose }: {
         toast.success('Campus created');
       }
       onSuccess();
-    } catch {
-      toast.error('Failed to save campus');
+    } catch (error) {
+      handleDRFError(error, { fallbackMessage: 'Failed to save campus' });
     } finally {
       setSaving(false);
     }
@@ -70,8 +71,7 @@ function CampusForm({ campus, onSuccess, onClose }: {
 }
 
 const CampusesPage = () => {
-  const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { campuses, campusesLoading, refetchCampuses } = useSharedData();
   const [searchValue, setSearchValue] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -81,19 +81,7 @@ const CampusesPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Campus | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const campusRes = await campusesService.getCampuses();
-      setCampuses(campusRes);
-    } catch {
-      toast.error('Failed to load campuses');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
+  const nameHeader = useSortableColumn('Name');
 
   const data = useMemo(() => campuses.map(c => ({
     ...c,
@@ -104,14 +92,7 @@ const CampusesPage = () => {
     { accessorKey: 'id', header: 'ID', cell: ({ row }) => <div>{row.getValue('id')}</div> },
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <div className="flex items-center space-x-1">
-          <span>Name</span>
-          <Button variant="ghost" onClick={() => column.toggleSorting()} className="p-0 h-4 w-4">
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-        </div>
-      ),
+      header: nameHeader,
       cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
     },
     { accessorKey: 'code', header: 'Code', cell: ({ row }) => <div>{row.getValue('code')}</div> },
@@ -136,8 +117,10 @@ const CampusesPage = () => {
                 try {
                   await campusesService.deleteCampus(campus.id);
                   toast.success('Campus deleted');
-                  fetchData();
-                } catch { toast.error('Failed to delete campus'); }
+                  refetchCampuses();
+                } catch (error) {
+                  handleDRFError(error, { fallbackMessage: 'Failed to delete campus' });
+                }
               }}
             >
               <Trash2 className="h-4 w-4" />
@@ -162,94 +145,21 @@ const CampusesPage = () => {
   });
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-      <Card className="w-full pt-7">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center">
-            <MapPin className="h-6 w-6 mr-2" />
-            Campuses
-          </CardTitle>
-          <Button size="sm" className="bg-[#0078d4] hover:bg-[#106ebe] flex items-center gap-1" onClick={() => { setEditing(null); setIsFormOpen(true); }}>
-            <Plus className="h-4 w-4" />
-            Add Campus
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center py-4">
-            <Input
-              placeholder="Search by name, code or org..."
-              value={searchValue}
-              onChange={e => { setSearchValue(e.target.value); table.getColumn('searchField')?.setFilterValue(e.target.value.toLowerCase()); }}
-              className="max-w-sm"
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Columns
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {table.getAllColumns().filter(c => c.id !== 'actions' && c.id !== 'searchField').map(col => (
-                  <DropdownMenuCheckboxItem key={col.id} className="capitalize" checked={col.getIsVisible()} onCheckedChange={v => col.toggleVisibility(!!v)}>
-                    {col.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="rounded-sm border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map(hg => (
-                  <TableRow key={hg.id}>
-                    {hg.headers.map(h => (
-                      <TableHead key={h.id}>{h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}</TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">Loading...</TableCell></TableRow>
-                ) : table.getRowModel().rows.length ? (
-                  table.getRowModel().rows.map(row => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map(cell => (
-                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">No campuses found.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-muted-foreground">{campuses.length} campus(es)</div>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">Rows per page</p>
-                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPageIndex(0); }} className="h-8 w-[70px] rounded border px-2">
-                  {[5, 10, 15, 20].map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                <ChevronLeft className="h-4 w-4 mr-1" />Previous
-              </Button>
-              <span className="text-sm font-medium">Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}</span>
-              <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                Next<ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <>
+      <AdminResourceTable
+        icon={MapPin}
+        title="Campuses"
+        addLabel="Add Campus"
+        onAdd={() => { setEditing(null); setIsFormOpen(true); }}
+        table={table}
+        loading={campusesLoading}
+        emptyMessage="No campuses found."
+        itemCount={campuses.length}
+        searchValue={searchValue}
+        onSearchChange={(value) => { setSearchValue(value); table.getColumn('searchField')?.setFilterValue(value.toLowerCase()); }}
+        pageSize={pageSize}
+        onPageSizeChange={(size) => { setPageSize(size); setPageIndex(0); }}
+      />
 
       <Dialog open={isFormOpen} onOpenChange={open => { setIsFormOpen(open); if (!open) setEditing(null); }}>
         <DialogContent className="sm:max-w-md">
@@ -258,12 +168,12 @@ const CampusesPage = () => {
           </DialogHeader>
           <CampusForm
             campus={editing}
-            onSuccess={() => { setIsFormOpen(false); setEditing(null); fetchData(); }}
+            onSuccess={() => { setIsFormOpen(false); setEditing(null); refetchCampuses(); }}
             onClose={() => { setIsFormOpen(false); setEditing(null); }}
           />
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 

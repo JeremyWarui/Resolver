@@ -5,8 +5,8 @@ import { useSharedData } from "@/contexts/SharedDataContext";
 import { createTicketTableFilters } from "@/components/Common/DataTable/utils/TicketTableFilters";
 import { createTicketTableColumns } from "@/components/Common/DataTable/utils/TicketTableColumns";
 import { createTicketColumnVisibility } from "@/components/Common/DataTable/utils/TicketColumnVisibility";
-import type { QuickFilterType } from "./QuickFilterButtons";
-import QuickFilterButtons from "./QuickFilterButtons";
+import type { AdminQuickFilterType } from "@/components/Common/QuickFilterButtons";
+import { QuickFilterButtons } from "@/components/Common/QuickFilterButtons";
 
 // Import DataTable component
 import DataTable from "@/components/Common/DataTable/DataTable";
@@ -84,7 +84,8 @@ function AllTicketsTable() {
     <>
       {/* Quick Filter Buttons — uses hook's statusFilter */}
       <QuickFilterButtons
-        activeFilter={(table.statusFilter === 'all' ? 'all' : table.statusFilter) as QuickFilterType}
+        role="admin"
+        activeFilter={(table.statusFilter === 'all' ? 'all' : table.statusFilter) as AdminQuickFilterType}
         onFilterChange={(filter) => {
           if (filter === 'overdue') {
             // Overdue is a special filter combining status + age

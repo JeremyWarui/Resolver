@@ -1,9 +1,9 @@
 import { useState, Suspense, lazy } from "react";
-import SideBar, { Section } from "../Common/Sidebar";
-import Header from "../Common/Header";
-import FullScreenLoading from "../Common/FullScreenLoading";
+import ComingSoonSection from "../Common/ComingSoonSection";
+import { RoleLayout } from "../Common/RoleLayout";
 import { AdminDashboardProvider, useAdminDashboard } from "@/contexts/AdminDashboardContext";
 import { SharedDataProvider } from "@/contexts/SharedDataContext";
+import { useCurrentUser } from "@/contexts/UserDataContext";
 
 const MainContent = lazy(() => import("./Dashboard/DashboardLayout"));
 const TicketsPage = lazy(() => import("./TicketsPage/TicketsPage"));
@@ -23,24 +23,7 @@ const PageLoading = () => (
   </div>
 );
 
-function ComingSoonSection({ section }: { section: string }) {
-  return (
-    <div className="flex items-center justify-center h-full p-6">
-      <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-sm">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">{section} Coming Soon</h2>
-        <p className="text-gray-600 mb-6">
-          We're currently working on this feature. It will be available in a future update.
-        </p>
-        <div className="w-full bg-gray-200 h-2 rounded-full mb-4">
-          <div className="bg-[#0078d4] h-2 rounded-full w-3/4"></div>
-        </div>
-        <p className="text-sm text-gray-500">Development in progress: 75% complete</p>
-      </div>
-    </div>
-  );
-}
-
-const headerTitles: Record<Section["id"], string> = {
+const headerTitles: Record<string, string> = {
   dashboard: "Dashboard",
   tickets: "Tickets",
   reports: "Reports",
@@ -56,40 +39,34 @@ const headerTitles: Record<Section["id"], string> = {
 };
 
 function AdminLayoutContent() {
-  const [activeSection, setActiveSection] = useState<Section["id"]>("dashboard");
+  const [activeSection, setActiveSection] = useState<string>("dashboard");
+  const { userData } = useCurrentUser();
   const { loading } = useAdminDashboard();
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {loading && <FullScreenLoading message="Loading dashboard..." />}
-
-      <SideBar activeSection={activeSection} onSectionChange={setActiveSection} />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header
-          title={headerTitles[activeSection]}
-          searchPlaceholder="Search..."
-          currentUser={null}
-          onSearchChange={() => {}}
-        />
-        <main className="flex-1 overflow-y-auto">
-          <Suspense fallback={<PageLoading />}>
-            {activeSection === "dashboard" && <MainContent />}
-            {activeSection === "tickets" && <TicketsPage />}
-            {activeSection === "reports" && <ReportsPage />}
-            {activeSection === "analytics" && <OrganisationAnalyticsPage />}
-            {activeSection === "technicians" && <TechniciansPage />}
-            {activeSection === "sections" && <SectionsPage />}
-            {activeSection === "facilities" && <FacilitiesPage />}
-            {activeSection === "campuses" && <CampusesPage />}
-            {activeSection === "departments" && <DepartmentsPage />}
-          </Suspense>
-          {activeSection === "schedule" && <ComingSoonSection section="Schedule" />}
-          {activeSection === "inventory" && <CataloguePage />}
-          {activeSection === "settings" && <ComingSoonSection section="Settings" />}
-        </main>
-      </div>
-    </div>
+    <RoleLayout
+      activeSection={activeSection}
+      onSectionChange={setActiveSection}
+      role={userData?.role || 'admin'}
+      title={headerTitles[activeSection]}
+      currentUser={userData}
+      loading={loading}
+    >
+      <Suspense fallback={<PageLoading />}>
+        {activeSection === "dashboard" && <MainContent />}
+        {activeSection === "tickets" && <TicketsPage />}
+        {activeSection === "reports" && <ReportsPage />}
+        {activeSection === "analytics" && <OrganisationAnalyticsPage />}
+        {activeSection === "technicians" && <TechniciansPage />}
+        {activeSection === "sections" && <SectionsPage />}
+        {activeSection === "facilities" && <FacilitiesPage />}
+        {activeSection === "campuses" && <CampusesPage />}
+        {activeSection === "departments" && <DepartmentsPage />}
+      </Suspense>
+      {activeSection === "schedule" && <ComingSoonSection section="Schedule" />}
+      {activeSection === "inventory" && <CataloguePage />}
+      {activeSection === "settings" && <ComingSoonSection section="Settings" />}
+    </RoleLayout>
   );
 }
 

@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, X } from 'lucide-react';
+import { FormDialog } from '@/components/Common/FormDialog';
 import useCreateUser from '@/hooks/users/useCreateUser';
 import { useSharedData } from '@/contexts/SharedDataContext';
 import { useDepartments } from '@/hooks/useDepartments';
@@ -171,6 +171,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
         if (res) {
           toast.success('Technician updated');
           onSuccess?.();
+          onOpenChange(false);
         } else {
           toast.error('Failed to update technician');
         }
@@ -188,6 +189,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
         toast.success('Technician created');
         form.reset();
         onSuccess?.();
+        onOpenChange(false);
       }
     } catch (err) {
       console.error(err);
@@ -217,189 +219,181 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-150'>
-        <DialogHeader>
-          <DialogTitle>New Technician</DialogTitle>
-          <DialogDescription>Create a new technician account.</DialogDescription>
-        </DialogHeader>
+    <FormDialog
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title={technician ? 'Edit Technician' : 'New Technician'}
+      description={technician ? 'Update technician details.' : 'Create a new technician account.'}
+      form={form}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
+      submitLabel={technician ? 'Save Changes' : 'Create Technician'}
+      size="lg"
+    >
+      <FormField control={form.control} name='first_name' render={({ field }) => (
+        <FormItem>
+          <FormLabel>First name</FormLabel>
+          <FormControl>
+            <Input {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )} />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6 px-2 py-4'>
-            <FormField control={form.control} name='first_name' render={({ field }) => (
-              <FormItem>
-                <FormLabel>First name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+      <FormField control={form.control} name='last_name' render={({ field }) => (
+        <FormItem>
+          <FormLabel>Last name</FormLabel>
+          <FormControl>
+            <Input {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )} />
 
-            <FormField control={form.control} name='last_name' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+      <FormField control={form.control} name='email' render={({ field }) => (
+        <FormItem>
+          <FormLabel>Email</FormLabel>
+          <FormControl>
+            <Input {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )} />
 
-            <FormField control={form.control} name='email' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+      <FormField control={form.control} name='password' render={({ field }) => (
+        <FormItem>
+          <FormLabel>Password</FormLabel>
+          <FormControl>
+            <Input {...field} type='password' />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )} />
 
-            <FormField control={form.control} name='password' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input {...field} type='password' />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+      <FormItem>
+        <FormLabel>Campus</FormLabel>
+        <Select
+          value={campusFilter}
+          onValueChange={val => {
+            setCampusFilter(val);
+            setDepartmentFilter('__all__');
+            setDepartmentSections([]);
+            form.setValue('primary_department_id', null);
+            form.setValue('sections', []);
+            setSectionInputs([0]);
+            const validIds = sections
+              .filter(s => val === '__all__' || String(s.campus?.id) === val)
+              .map(s => s.id);
+            const current = form.getValues('sections') || [];
+            const kept = current.filter(id => validIds.includes(id));
+            if (kept.length > 0) {
+              form.setValue('sections', kept);
+              setSectionInputs(kept.length > 0 ? kept : [0]);
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder='All campuses' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='__all__'>All campuses</SelectItem>
+            {campuses.map(c => (
+              <SelectItem key={c.id} value={String(c.id)}>
+                {c.name} ({c.code})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormItem>
 
-            {/* Campus filter — narrows the section list below */}
-            <FormItem>
-              <FormLabel>Campus</FormLabel>
-              <Select
-                value={campusFilter}
-                onValueChange={val => {
-                  setCampusFilter(val);
-                  setDepartmentFilter('__all__');
-                  setDepartmentSections([]);
-                  form.setValue('primary_department_id', null);
-                  form.setValue('sections', []);
-                  setSectionInputs([0]);
-                  // Clear any section selections that no longer belong to this campus
-                  const validIds = sections
-                    .filter(s => val === '__all__' || String(s.campus?.id) === val)
-                    .map(s => s.id);
-                  const current = form.getValues('sections') || [];
-                  const kept = current.filter(id => validIds.includes(id));
-                  if (kept.length > 0) {
-                    form.setValue('sections', kept);
-                    setSectionInputs(kept.length > 0 ? kept : [0]);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='All campuses' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='__all__'>All campuses</SelectItem>
-                  {campuses.map(c => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name} ({c.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormItem>
+      <FormField control={form.control} name='primary_department_id' render={({ field }) => (
+        <FormItem>
+          <FormLabel>Department</FormLabel>
+          <Select
+            value={field.value != null ? String(field.value) : '__none__'}
+            onValueChange={(value) => {
+              const next = value === '__none__' ? null : Number(value);
+              field.onChange(next);
+              setDepartmentFilter(value === '__none__' ? '__all__' : value);
+              setSectionInputs([0]);
+              form.setValue('sections', []);
+            }}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder='Select department' />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value='__none__'>No department</SelectItem>
+              {departmentOptions.map((department) => (
+                <SelectItem key={department.id} value={String(department.id)}>
+                  {department.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FormMessage />
+        </FormItem>
+      )} />
 
-            <FormField control={form.control} name='primary_department_id' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Department</FormLabel>
+      <FormField control={form.control} name='sections' render={({ field }) => (
+        <FormItem>
+          <FormLabel>Sections</FormLabel>
+          <div className='space-y-2'>
+            {departmentFilter === '__all__' ? (
+              <p className='text-sm text-muted-foreground'>Select a department first to see its sections.</p>
+            ) : loadingDepartmentSections ? (
+              <p className='text-sm text-muted-foreground'>Loading sections...</p>
+            ) : departmentSections.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>No sections found for this department.</p>
+            ) : null}
+            {sectionInputs.map((_, index) => (
+              <div key={index} className='flex items-center gap-2'>
                 <Select
-                  value={field.value != null ? String(field.value) : '__none__'}
-                  onValueChange={(value) => {
-                    const next = value === '__none__' ? null : Number(value);
-                    field.onChange(next);
-                    setDepartmentFilter(value === '__none__' ? '__all__' : value);
-                    setSectionInputs([0]);
-                    form.setValue('sections', []);
-                  }}
+                  value={field.value?.[index]?.toString() || ''}
+                  onValueChange={(value) => handleSectionChange(index, value)}
+                  disabled={departmentFilter === '__all__' || loadingDepartmentSections || departmentSections.length === 0}
                 >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select department' />
-                    </SelectTrigger>
-                  </FormControl>
+                  <SelectTrigger className='flex-1'>
+                    <SelectValue placeholder='Select a section' />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='__none__'>No department</SelectItem>
-                    {departmentOptions.map((department) => (
-                      <SelectItem key={department.id} value={String(department.id)}>
-                        {department.name}
+                    {departmentSections.map((section) => (
+                      <SelectItem key={section.id} value={section.id.toString()}>
+                        {section.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <FormField control={form.control} name='sections' render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sections</FormLabel>
-                <div className='space-y-2'>
-                  {departmentFilter === '__all__' ? (
-                    <p className='text-sm text-muted-foreground'>Select a department first to see its sections.</p>
-                  ) : loadingDepartmentSections ? (
-                    <p className='text-sm text-muted-foreground'>Loading sections...</p>
-                  ) : departmentSections.length === 0 ? (
-                    <p className='text-sm text-muted-foreground'>No sections found for this department.</p>
-                  ) : null}
-                  {sectionInputs.map((_, index) => (
-                    <div key={index} className='flex items-center gap-2'>
-                      <Select
-                        value={field.value?.[index]?.toString() || ''}
-                        onValueChange={(value) => handleSectionChange(index, value)}
-                        disabled={departmentFilter === '__all__' || loadingDepartmentSections || departmentSections.length === 0}
-                      >
-                        <SelectTrigger className='flex-1'>
-                          <SelectValue placeholder='Select a section' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departmentSections.map((section) => (
-                            <SelectItem key={section.id} value={section.id.toString()}>
-                              {section.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {sectionInputs.length > 1 && (
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='sm'
-                          onClick={() => removeSectionInput(index)}
-                          className='px-2'
-                        >
-                          <X className='h-4 w-4' />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                {sectionInputs.length > 1 && (
                   <Button
                     type='button'
                     variant='outline'
                     size='sm'
-                    onClick={addSectionInput}
-                    className='w-full'
+                    onClick={() => removeSectionInput(index)}
+                    className='px-2'
                   >
-                    <Plus className='h-4 w-4 mr-2' />
-                    Add Section
+                    <X className='h-4 w-4' />
                   </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <DialogFooter>
-              <Button type='button' variant='outline' onClick={() => { onOpenChange(false); form.reset(); }} disabled={isSubmitting}>Cancel</Button>
-              <Button type='submit' className='bg-blue-600 hover:bg-blue-700' disabled={isSubmitting}>{isSubmitting ? 'Creating...' : 'Create Technician'}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                )}
+              </div>
+            ))}
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={addSectionInput}
+              className='w-full'
+            >
+              <Plus className='h-4 w-4 mr-2' />
+              Add Section
+            </Button>
+          </div>
+          <FormMessage />
+        </FormItem>
+      )} />
+    </FormDialog>
   );
 };
 

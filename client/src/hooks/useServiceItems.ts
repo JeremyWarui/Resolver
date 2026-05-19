@@ -14,8 +14,9 @@ export function useServiceItems(categoryId: number | null) {
     }
     try {
       setIsLoading(true)
-      const res = await getServiceItemsByCategory(categoryId)
-      setData(res.data.results || res.data)
+      const response = await getServiceItemsByCategory(categoryId)
+      const items = Array.isArray(response.data) ? response.data : (response.data as any)?.results || []
+      setData(items)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load service items')
     } finally {

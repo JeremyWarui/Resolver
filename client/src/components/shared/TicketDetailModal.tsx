@@ -25,6 +25,7 @@ import ticketsService from '@/api/services/ticketsService';
 import usersService from '@/api/services/usersService';
 import { formatDate } from '@/utils/date';
 import { formatSectionDisplay } from '@/utils/formatSection';
+import { STATUS_LABELS } from '@/constants/tickets';
 import type { Ticket, User } from '@/types';
 
 interface TicketDetailModalProps {
@@ -33,18 +34,6 @@ interface TicketDetailModalProps {
   onOpenChange: (open: boolean) => void;
   onTicketUpdate?: (ticket: Ticket) => void;
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Open',
-  assigned: 'Assigned',
-  in_progress: 'In Progress',
-  pending: 'Pending',
-  pending_approval: 'Pending Approval',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  resolved: 'Resolved',
-  closed: 'Closed',
-};
 
 const STATUS_BADGE: Record<string, string> = {
   open: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -548,7 +537,7 @@ export function TicketDetailModal({
                           </SelectTrigger>
                           <SelectContent>
                             {nextStatuses.map(s => (
-                              <SelectItem key={s} value={s}>{STATUS_LABELS[s] ?? s}</SelectItem>
+                              <SelectItem key={s} value={s}>{STATUS_LABELS[s as Ticket['status']] ?? s}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

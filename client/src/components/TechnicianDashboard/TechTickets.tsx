@@ -7,9 +7,9 @@ import { createTicketColumnVisibility } from '@/components/Common/DataTable/util
 import DataTable from '@/components/Common/DataTable/DataTable';
 import { TechTableHeader } from '../Common/DataTable/utils/TableHeaders';
 import { TicketDetailModal } from '@/components/shared/TicketDetailModal';
-import type { TechQuickFilterType } from './QuickFilterButtons';
+import type { TechQuickFilterType } from '@/components/Common/QuickFilterButtons';
+import { QuickFilterButtons } from '@/components/Common/QuickFilterButtons';
 import TechnicianStatsCards from './TechnicianStatsCards';
-import TechQuickFilterButtons from './QuickFilterButtons';
 import type { Section } from '@/types';
 
 type TechTicketsProps = {
@@ -29,7 +29,7 @@ function TechTickets({ currentTechnicianId }: TechTicketsProps) {
     campus: { code: s.campus, name: s.campus } as any,
     department: { code: s.department, name: s.department } as any,
     section_type_name: s.section_type_name,
-  }));
+  } as unknown as Section));
 
   // Lazy-fetch only when filter changes
   const table = useTicketTable({
@@ -48,7 +48,7 @@ function TechTickets({ currentTechnicianId }: TechTicketsProps) {
     return {
       all: table.totalTickets,
       assigned: tickets.filter(t => t.status === 'open' || t.status === 'assigned').length,
-      in_progress: tickets.filter(t => t.status === 'in_progress' || t.status === 'escalated').length,
+      in_progress: tickets.filter(t => t.status === 'in_progress').length,
       pending: tickets.filter(t => t.status === 'pending').length,
       resolved: tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length,
     };
@@ -84,7 +84,8 @@ function TechTickets({ currentTechnicianId }: TechTicketsProps) {
         onCardClick={(filter) => handleFilterChange(filter)}
       />
 
-      <TechQuickFilterButtons
+      <QuickFilterButtons
+        role="technician"
         activeFilter={statusFilter as TechQuickFilterType}
         onFilterChange={handleFilterChange}
         counts={filterCounts}

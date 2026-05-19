@@ -6,7 +6,6 @@ export const AuthPage: React.FC = () => {
   const handleAuthSuccess = () => {
     // Handle successful authentication
     // Redirect user based on their role or to a default page
-    console.log('Authentication successful!');
   };
 
   return (

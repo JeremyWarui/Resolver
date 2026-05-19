@@ -32,10 +32,10 @@ const HODTechnicians = () => {
               {technicians.map(t => (
                 <div key={t.id} className="py-3 flex items-center gap-3 px-1">
                   <div className="h-8 w-8 rounded-full bg-[#e5f2fc] flex items-center justify-center text-xs font-semibold text-[#0078d4] shrink-0">
-                    {t.name.charAt(0).toUpperCase()}
+                    {(t.name ?? t.username).charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{t.name}</p>
+                    <p className="text-sm font-medium text-gray-800">{t.name ?? t.username}</p>
                     <p className="text-xs text-gray-500">@{t.username}</p>
                   </div>
                 </div>

@@ -170,6 +170,9 @@ const organizationsService = {
   campusDepartments: campusDepartmentsService,
   sections: sectionsService,
   facilities: facilitiesService,
+  // Shortcuts for commonly used methods
+  getSectionTypes: sectionsService.getSectionTypes,
+  getDepartments: departmentsService.getDepartments,
 };
 
 export type { Campus, Department, Section, SectionType, CampusDepartment };

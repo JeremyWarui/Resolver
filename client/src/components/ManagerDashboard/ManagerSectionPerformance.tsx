@@ -59,7 +59,7 @@ const ManagerSectionPerformance = ({ sections, loading }: ManagerSectionPerforma
                   <p className="text-sm font-medium text-gray-800">{section.section.name}</p>
                 </div>
                 <p className="text-xs text-gray-500">
-                  {section.campus.name || 'No campus'} · {section.section.code}
+                  {section.campus?.name || 'No campus'} · {section.section.code}
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-2">

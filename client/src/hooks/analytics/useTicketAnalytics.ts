@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import analyticsService from '@/api/services/analyticsService';
 import type { TicketAnalytics, TicketAnalyticsParams } from '@/types';
 
@@ -59,7 +59,7 @@ export const useTicketAnalytics = (params?: TicketAnalyticsParams): UseTicketAna
     };
   }, [paramsKey]); // Only depend on stringified params
 
-  const refetch = useMemo(() => async () => {
+  const refetch = useCallback(async () => {
     setLoading(true);
     setError(null);
 

@@ -6,13 +6,12 @@ import {
   CalendarDays, Receipt, FolderOpen, FileText, Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import UserStatsCards from '@/components/Common/UserStatsCards';
 import { TicketCreationWizard } from '@/components/shared/TicketCreationWizard';
 import { useCurrentUser } from '@/contexts/UserDataContext';
 import { useUserDashboard } from '@/contexts/UserDashboardContext';
-import apiClient from '@/api/client';
+import { ticketsService, organizationsService } from '@/api/services';
 import type { Ticket, Department } from '@/types';
 import type { ServiceCategory } from '@/types/catalogue';
 
@@ -56,13 +55,6 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'Payroll Services':       <Receipt className="h-5 w-5" />,
   'Registry Services':      <FolderOpen className="h-5 w-5" />,
   'HR Services':            <FileText className="h-5 w-5" />,
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  'ICT Support': 'bg-blue-50 text-blue-600 border-blue-100',
-  'Networks':    'bg-indigo-50 text-indigo-600 border-indigo-100',
-  'Maintenance': 'bg-orange-50 text-orange-600 border-orange-100',
-  'HR Operations':'bg-green-50 text-green-600 border-green-100',
 };
 
 // ── Priority order within each department (first 4 shown, rest in "more") ────
@@ -117,10 +109,11 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
       try {
         // Fetch recent tickets — backend scopes to current user automatically.
         // Filter by status client-side since the API doesn't support multi-value status.
-        const res = await apiClient.get('/tickets/', {
-          params: { page_size: 20, ordering: '-updated_at' },
+        const res = await ticketsService.getTickets({
+          page_size: 20,
+          ordering: '-updated_at',
         });
-        const all: Ticket[] = res.data.results ?? res.data ?? [];
+        const all: Ticket[] = res.results ?? [];
         const ACTIVE = new Set(['open', 'assigned', 'in_progress', 'pending']);
         const RESOLVED = new Set(['resolved', 'closed']);
         setActiveTickets(all.filter(t => ACTIVE.has(t.status)).slice(0, 5));
@@ -139,11 +132,11 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
       try {
         const campusId = userData?.primary_campus_id;
         const [stRes, deptRes] = await Promise.all([
-          apiClient.get('/service-catalogue/section-types/'),
-          apiClient.get('/departments/', { params: campusId ? { campus: campusId } : undefined }),
+          organizationsService.getSectionTypes(),
+          organizationsService.getDepartments(campusId ? { campus: campusId } : undefined),
         ]);
-        setSectionTypes(stRes.data ?? []);
-        const deptData = deptRes.data;
+        setSectionTypes(stRes ?? []);
+        const deptData = deptRes;
         setDepartments(Array.isArray(deptData) ? deptData : deptData.results ?? []);
       } catch { /* silent */ }
       finally { setCatsLoading(false); }
@@ -157,7 +150,7 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
       const deptId = st.department_id;
       if (!map[deptId]) map[deptId] = [];
       for (const cat of st.service_categories) {
-        if (cat.is_active && cat.service_items.length > 0) {
+        if (cat.is_active && (cat.service_items ?? []).length > 0) {
           map[deptId].push({ category: cat, sectionType: st });
         }
       }
@@ -302,7 +295,7 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
                           <span className="opacity-80 [&>svg]:h-6 [&>svg]:w-6">{icon}</span>
                           <span className="text-xs font-semibold leading-tight">{shortName}</span>
                           <span className="text-[11px] opacity-50">
-                            {category.service_items.length} option{category.service_items.length !== 1 ? 's' : ''}
+                            {(category.service_items ?? []).length} option{(category.service_items ?? []).length !== 1 ? 's' : ''}
                           </span>
                         </button>
                       );

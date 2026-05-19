@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import facilitiesService from '@/api/services/facilitiesService';
+import { facilitiesService } from '@/api/services/organizationsService';
 import type { Facility } from '@/types';
 
 interface UseManageFacilitiesResult {
-  createFacility: (data: { name: string; type?: string; status?: string; location?: string }) => Promise<Facility>;
+  createFacility: (data: { name: string; campus: number; type?: string }) => Promise<Facility>;
   updateFacility: (id: number, data: Partial<Facility>) => Promise<Facility>;
   deleteFacility: (id: number) => Promise<void>;
   loading: boolean;
@@ -14,7 +14,7 @@ export const useManageFacilities = (): UseManageFacilitiesResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const createFacility = async (data: { name: string; type?: string; status?: string; location?: string }) => {
+  const createFacility = async (data: { name: string; campus: number; type?: string }) => {
     setLoading(true);
     setError(null);
     try {

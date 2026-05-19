@@ -19,12 +19,12 @@ export interface SectionType {
   id: number
   name: string
   code: string
-  department_type: number
-  department_type_name: string
-  description: string
-  default_sla_hours: number
-  staff_label: 'Technician' | 'Officer' | string
-  is_active: boolean
+  department_type?: number
+  department_type_name?: string
+  description?: string
+  default_sla_hours?: number
+  staff_label?: 'Technician' | 'Officer' | string
+  is_active?: boolean
 }
 
 export interface Department {
@@ -42,17 +42,19 @@ export interface Department {
 export interface Section {
   id: number
   section_type: SectionType | null
-  section_type_detail: SectionType | null
-  department: number
-  department_name: string
-  campus_name: string | null
+  section_type_detail?: SectionType | null
+  department: number | { id: number; name: string; code: string }
+  department_name?: string
+  campus?: { id: number; name: string; code: string } | null
+  campus_name?: string | null
   head_of_section: number | null
   name: string
   code: string | null
-  description: string
-  sla_hours: number | null
-  effective_sla_hours: number
-  is_active: boolean
+  description?: string
+  sla_hours?: number | null
+  effective_sla_hours?: number
+  technician_count?: number
+  is_active?: boolean
 }
 
 export interface CampusDepartment {

@@ -153,10 +153,10 @@ const ManagerAnalytics = () => {
                         </td>
                         <td className="px-3 py-2.5 text-right">{c.total_tickets}</td>
                         <td className="px-3 py-2.5 text-right">{c.open_tickets}</td>
-                        <td className="px-3 py-2.5 text-right">{c.escalated_tickets}</td>
+                        <td className="px-3 py-2.5 text-right">{c.escalated_tickets ?? 0}</td>
                         <td className="px-3 py-2.5 text-right">
-                          <span className={c.sla_compliance >= 80 ? 'text-green-600' : c.sla_compliance >= 60 ? 'text-yellow-600' : 'text-red-600'}>
-                            {c.sla_compliance}%
+                          <span className={(c.sla_compliance ?? 0) >= 80 ? 'text-green-600' : (c.sla_compliance ?? 0) >= 60 ? 'text-yellow-600' : 'text-red-600'}>
+                            {c.sla_compliance ?? 0}%
                           </span>
                         </td>
                       </tr>
@@ -213,10 +213,10 @@ const ManagerAnalytics = () => {
                 <div key={s.section.id} className="flex items-center gap-3 rounded-md border bg-white px-3 py-2.5">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{s.section.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{s.section.campus || 'No campus'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{typeof s.section.campus === 'string' ? s.section.campus : s.section.campus?.name || 'No campus'}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {s.escalated_tickets > 0 && (
+                    {(s.escalated_tickets ?? 0) > 0 && (
                       <Badge variant="destructive" className="text-xs">{s.escalated_tickets} escalated</Badge>
                     )}
                     <Badge variant="secondary" className="text-xs">{s.open_tickets} open</Badge>

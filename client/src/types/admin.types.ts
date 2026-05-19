@@ -1,3 +1,4 @@
+import type { SystemOverview, OverdueTicket } from './analytics.types';
 
 /**
  * Admin user info returned by admin dashboard endpoint
@@ -24,8 +25,8 @@ export interface OrgSummary {
  * Analytics data in admin dashboard (system overview + overdue tickets)
  */
 export interface AdminAnalyticsData {
-  system_overview: any;
-  overdue_tickets: any[];
+  system_overview: SystemOverview;
+  overdue_tickets: OverdueTicket[];
 }
 
 /**
@@ -40,4 +41,5 @@ export interface AdminDashboard {
   admin: AdminInfo;
   analytics: AdminAnalyticsData;
   org_summary: OrgSummary;
+  [key: string]: unknown;
 }

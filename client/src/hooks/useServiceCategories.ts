@@ -14,8 +14,9 @@ export function useServiceCategories(departmentId: number | null) {
     }
     try {
       setIsLoading(true)
-      const res = await getCategoriesByDepartment(departmentId)
-      setData(res.data.results || res.data)
+      const response = await getCategoriesByDepartment(departmentId)
+      const categories = Array.isArray(response.data) ? response.data : (response.data as any)?.results || []
+      setData(categories)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load categories')
     } finally {

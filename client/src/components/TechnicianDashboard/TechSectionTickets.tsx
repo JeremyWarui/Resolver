@@ -23,7 +23,7 @@ const TechSectionTickets = ({ currentTechnicianId }: { currentTechnicianId?: num
     campus: { code: s.campus, name: s.campus } as any,
     department: { code: s.department, name: s.department } as any,
     section_type_name: s.section_type_name,
-  }));
+  } as unknown as Section));
 
   // Callback to cache fetched section tickets
   const handleDataFetched = useCallback((tickets: Ticket[]) => {

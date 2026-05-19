@@ -3,6 +3,7 @@ export interface Technician {
   username: string;
   first_name: string;
   last_name: string;
+  name?: string; // Computed: first_name + last_name
   email: string;
   role: 'technician';
   sections: number[]; // Array of section IDs

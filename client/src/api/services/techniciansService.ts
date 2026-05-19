@@ -15,18 +15,6 @@ const techniciansService = {
     const response = await apiClient.get('/technicians/', { params: filters });
     return response.data;
   },
-
-  // Get single technician by ID
-  getTechnicianById: async (id: number): Promise<Technician> => {
-    const response = await apiClient.get(`/users/${id}/`);
-    return response.data;
-  },
-
-  // Update technician
-  updateTechnician: async (id: number, data: Partial<Technician>): Promise<Technician> => {
-    const response = await apiClient.patch(`/users/${id}/`, data);
-    return response.data;
-  },
 };
 
 export default techniciansService;

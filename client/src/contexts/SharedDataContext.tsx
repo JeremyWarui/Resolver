@@ -4,8 +4,11 @@ import useFacilities from '@/hooks/facilities/useFacilities';
 import { useAdminAnalytics } from '@/hooks/analytics';
 import { useUsers } from '@/hooks/users';
 import useTechnicians from '@/hooks/technicians/useTechnicians';
+import useCampuses from '@/hooks/campuses/useCampuses';
+import useDepartments from '@/hooks/departments/useDepartments';
 import { useCurrentUser } from '@/contexts/UserDataContext';
 import type { Section, Facility, Technician, User } from '@/types';
+import type { Campus, Department } from '@/types/organisationStructure';
 import type { AdminDashboardAnalytics } from '@/types/analytics.types';
 
 /**
@@ -32,6 +35,8 @@ interface SharedDataContextType {
   facilities: Facility[];
   technicians: Technician[];
   users: User[];
+  campuses: Campus[];
+  departments: Department[];
   adminAnalytics: AdminDashboardAnalytics | null;
   currentUser: User | null;
 
@@ -40,6 +45,8 @@ interface SharedDataContextType {
   facilitiesLoading: boolean;
   techniciansLoading: boolean;
   usersLoading: boolean;
+  campusesLoading: boolean;
+  departmentsLoading: boolean;
   analyticsLoading: boolean;
   userLoading: boolean;
 
@@ -51,6 +58,8 @@ interface SharedDataContextType {
   refetchFacilities: () => void;
   refetchTechnicians: () => void;
   refetchUsers: () => void;
+  refetchCampuses: () => void;
+  refetchDepartments: () => void;
   refetchAnalytics: () => void;
   refetchUser: () => void;
   refetchAll: () => void;
@@ -114,6 +123,19 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     refetch: refetchAnalytics,
   } = useAdminAnalytics(skipAnalytics);
 
+  // Fetch campuses and departments (admin only)
+  const {
+    campuses: campusesData,
+    loading: campusesLoading,
+    refetch: refetchCampuses,
+  } = useCampuses();
+
+  const {
+    departments: departmentsData,
+    loading: departmentsLoading,
+    refetch: refetchDepartments,
+  } = useDepartments();
+
   // Role-aware data exposure: only provide data based on role
   // - admin/manager/hod/head_of_section: full access
   // - technician: sections only
@@ -121,6 +143,8 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
   const sections = needsFullOrgData || needsSectionsOnly ? sectionsData : [];
   const facilities = needsFullOrgData ? facilitiesData : [];
   const users = needsFullOrgData ? usersData : [];
+  const campuses = needsFullOrgData ? campusesData : [];
+  const departments = needsFullOrgData ? departmentsData : [];
   const adminAnalytics = userRole && ['admin', 'manager'].includes(userRole) ? adminAnalyticsData : null;
 
   // Only count loading for data that's actually being used
@@ -129,16 +153,20 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
   const relevantUsersLoading = needsFullOrgData ? usersLoading : false;
   const relevantAnalyticsLoading = userRole && ['admin', 'manager'].includes(userRole) ? analyticsLoading : false;
   const relevantTechniciansLoading = needsFullOrgData ? techniciansLoading : false;
+  const relevantCampusesLoading = needsFullOrgData ? campusesLoading : false;
+  const relevantDepartmentsLoading = needsFullOrgData ? departmentsLoading : false;
 
-  const isLoading = userLoading || relevantSectionsLoading || relevantFacilitiesLoading || relevantUsersLoading || relevantAnalyticsLoading;
+  const isLoading = userLoading || relevantSectionsLoading || relevantFacilitiesLoading || relevantUsersLoading || relevantAnalyticsLoading || relevantCampusesLoading || relevantDepartmentsLoading;
 
   // Refetch all data (useful after bulk operations)
   const refetchAll = useCallback(() => {
     if (needsFullOrgData || needsSectionsOnly) refetchSections();
     if (needsFullOrgData) refetchFacilities();
     if (needsFullOrgData) refetchUsers();
+    if (needsFullOrgData) refetchCampuses();
+    if (needsFullOrgData) refetchDepartments();
     if (userRole && ['admin', 'manager'].includes(userRole)) refetchAnalytics();
-  }, [needsFullOrgData, needsSectionsOnly, userRole, refetchSections, refetchFacilities, refetchUsers, refetchAnalytics]);
+  }, [needsFullOrgData, needsSectionsOnly, userRole, refetchSections, refetchFacilities, refetchUsers, refetchCampuses, refetchDepartments, refetchAnalytics]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const value: SharedDataContextType = useMemo(() => ({
@@ -146,12 +174,16 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     facilities,
     technicians,
     users,
+    campuses,
+    departments,
     adminAnalytics,
     currentUser,
     sectionsLoading: relevantSectionsLoading,
     facilitiesLoading: relevantFacilitiesLoading,
     techniciansLoading: relevantTechniciansLoading,
     usersLoading: relevantUsersLoading,
+    campusesLoading: relevantCampusesLoading,
+    departmentsLoading: relevantDepartmentsLoading,
     analyticsLoading: relevantAnalyticsLoading,
     userLoading,
     isLoading,
@@ -159,6 +191,8 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     refetchFacilities,
     refetchTechnicians,
     refetchUsers,
+    refetchCampuses,
+    refetchDepartments,
     refetchAnalytics,
     refetchUser: () => {}, // User refetch handled elsewhere
     refetchAll,
@@ -167,12 +201,16 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     facilities,
     technicians,
     users,
+    campuses,
+    departments,
     adminAnalytics,
     currentUser,
     relevantSectionsLoading,
     relevantFacilitiesLoading,
     relevantTechniciansLoading,
     relevantUsersLoading,
+    relevantCampusesLoading,
+    relevantDepartmentsLoading,
     relevantAnalyticsLoading,
     userLoading,
     isLoading,
@@ -180,6 +218,8 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
     refetchFacilities,
     refetchTechnicians,
     refetchUsers,
+    refetchCampuses,
+    refetchDepartments,
     refetchAnalytics,
     refetchAll,
   ]);

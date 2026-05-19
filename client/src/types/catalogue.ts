@@ -19,6 +19,7 @@ export interface ServiceCategory {
   icon: string
   order: number
   is_active: boolean
+  service_items?: ServiceItem[]
 }
 
 export interface ServiceItem {

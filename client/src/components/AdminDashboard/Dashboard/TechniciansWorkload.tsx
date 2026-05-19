@@ -56,12 +56,12 @@ const TechniciansWorkload = () => {
               </TableHeader>
               <TableBody>
                 {technicians.map((tech) => (
-                  <TableRow key={tech.technician.id}>
+                  <TableRow key={tech.id}>
                     <TableCell className="font-medium text-sm">
-                      {tech.technician.name}
+                      {tech.full_name || tech.username}
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">
-                      {tech.technician.email || tech.technician.username}
+                      {tech.email || tech.username}
                     </TableCell>
                     <TableCell className="text-center text-sm text-[#0078d4] font-medium">
                       {tech.total_assigned}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useReducer, useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Clock, AlertCircle, Tag, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,83 @@ const DEPT_NAMES: Record<string, string> = {
   ADM: 'Administration',
   HR: 'Human Resources',
 };
+
+interface CataloguePageState {
+  sectionTypes: SectionType[];
+  loading: boolean;
+  refetching: boolean;
+  deleting: boolean;
+  activeDept: string;
+  activeTypeId: number | null;
+  catFormOpen: boolean;
+  editingCat: ServiceCategory | null;
+  itemFormOpen: boolean;
+  editingItem: ServiceItem | null;
+  defaultCatId: number | undefined;
+  deleteTarget: { type: 'category' | 'item'; id: number; name: string } | null;
+}
+
+type CataloguePageAction =
+  | { type: 'SET_SECTION_TYPES'; payload: SectionType[] }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_REFETCHING'; payload: boolean }
+  | { type: 'SET_DELETING'; payload: boolean }
+  | { type: 'SET_ACTIVE_DEPT'; payload: string }
+  | { type: 'SET_ACTIVE_TYPE_ID'; payload: number | null }
+  | { type: 'OPEN_CAT_FORM'; payload?: ServiceCategory | null }
+  | { type: 'CLOSE_CAT_FORM' }
+  | { type: 'OPEN_ITEM_FORM'; payload?: { defaultCatId?: number; editingItem?: ServiceItem | null } }
+  | { type: 'CLOSE_ITEM_FORM' }
+  | { type: 'SET_DEFAULT_CAT_ID'; payload: number | undefined }
+  | { type: 'SET_DELETE_TARGET'; payload: { type: 'category' | 'item'; id: number; name: string } | null };
+
+const initialState: CataloguePageState = {
+  sectionTypes: [],
+  loading: true,
+  refetching: false,
+  deleting: false,
+  activeDept: '',
+  activeTypeId: null,
+  catFormOpen: false,
+  editingCat: null,
+  itemFormOpen: false,
+  editingItem: null,
+  defaultCatId: undefined,
+  deleteTarget: null,
+};
+
+function catalogueReducer(state: CataloguePageState, action: CataloguePageAction): CataloguePageState {
+  switch (action.type) {
+    case 'SET_SECTION_TYPES':
+      return { ...state, sectionTypes: action.payload };
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
+    case 'SET_REFETCHING':
+      return { ...state, refetching: action.payload };
+    case 'SET_DELETING':
+      return { ...state, deleting: action.payload };
+    case 'SET_ACTIVE_DEPT':
+      return { ...state, activeDept: action.payload };
+    case 'SET_ACTIVE_TYPE_ID':
+      return { ...state, activeTypeId: action.payload };
+    case 'OPEN_CAT_FORM':
+      return { ...state, catFormOpen: true, editingCat: action.payload ?? null };
+    case 'CLOSE_CAT_FORM':
+      return { ...state, catFormOpen: false, editingCat: null };
+    case 'OPEN_ITEM_FORM': {
+      const { defaultCatId, editingItem } = action.payload ?? {};
+      return { ...state, itemFormOpen: true, defaultCatId, editingItem: editingItem ?? null };
+    }
+    case 'CLOSE_ITEM_FORM':
+      return { ...state, itemFormOpen: false, editingItem: null, defaultCatId: undefined };
+    case 'SET_DEFAULT_CAT_ID':
+      return { ...state, defaultCatId: action.payload };
+    case 'SET_DELETE_TARGET':
+      return { ...state, deleteTarget: action.payload };
+    default:
+      return state;
+  }
+}
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -255,34 +332,27 @@ function ItemForm({ open, onOpenChange, categories, editing, defaultCategoryId, 
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function CataloguePage() {
-  const [sectionTypes, setSectionTypes] = useState<SectionType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refetching, setRefetching] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [activeDept, setActiveDept] = useState<string>('');
-  const [activeTypeId, setActiveTypeId] = useState<number | null>(null);
-
-  const [catFormOpen, setCatFormOpen] = useState(false);
-  const [editingCat, setEditingCat] = useState<ServiceCategory | null>(null);
-  const [itemFormOpen, setItemFormOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ServiceItem | null>(null);
-  const [defaultCatId, setDefaultCatId] = useState<number | undefined>();
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'item'; id: number; name: string } | null>(null);
+  const [state, dispatch] = useReducer(catalogueReducer, initialState);
+  const { sectionTypes, loading, refetching, deleting, activeDept, activeTypeId, catFormOpen, editingCat, itemFormOpen, editingItem, defaultCatId, deleteTarget } = state;
 
   const fetchData = useCallback(async (isInitial = false) => {
-    if (isInitial) setLoading(true); else setRefetching(true);
+    if (isInitial) dispatch({ type: 'SET_LOADING', payload: true });
+    else dispatch({ type: 'SET_REFETCHING', payload: true });
     try {
       const res = await import('@/api/client').then(m => m.default.get('/service-catalogue/section-types/'));
       const data: SectionType[] = res.data;
-      setSectionTypes(data);
+      dispatch({ type: 'SET_SECTION_TYPES', payload: data });
       if (data.length > 0) {
         const firstDept = data[0].department_code;
-        setActiveDept(prev => prev || firstDept);
-        setActiveTypeId(prev => prev ?? data[0].id);
+        if (!activeDept) dispatch({ type: 'SET_ACTIVE_DEPT', payload: firstDept });
+        if (!activeTypeId) dispatch({ type: 'SET_ACTIVE_TYPE_ID', payload: data[0].id });
       }
     } catch { toast.error('Failed to load catalogue'); }
-    finally { setLoading(false); setRefetching(false); }
-  }, []);
+    finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'SET_REFETCHING', payload: false });
+    }
+  }, [activeDept, activeTypeId]);
 
   useEffect(() => { fetchData(true); }, []);
 
@@ -294,16 +364,16 @@ export default function CataloguePage() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    setDeleting(true);
+    dispatch({ type: 'SET_DELETING', payload: true });
     try {
       deleteTarget.type === 'category'
         ? await catalogueService.deleteCategory(deleteTarget.id)
         : await catalogueService.deleteServiceItem(deleteTarget.id);
       toast.success(`${deleteTarget.type === 'category' ? 'Category' : 'Item'} deleted`);
-      setDeleteTarget(null);
+      dispatch({ type: 'SET_DELETE_TARGET', payload: null });
       fetchData();
     } catch { toast.error('Failed to delete'); }
-    finally { setDeleting(false); }
+    finally { dispatch({ type: 'SET_DELETING', payload: false }); }
   };
 
   if (loading) {
@@ -370,7 +440,7 @@ export default function CataloguePage() {
             <p className="text-xs text-gray-500">Manage service categories and items per department</p>
           </div>
           <Button
-            onClick={() => { setEditingCat(null); setCatFormOpen(true); }}
+            onClick={() => dispatch({ type: 'OPEN_CAT_FORM' })}
             className="bg-[#0078d4] hover:bg-[#106ebe] gap-2"
             size="sm"
           >
@@ -384,9 +454,9 @@ export default function CataloguePage() {
             <button
               key={code}
               onClick={() => {
-                setActiveDept(code);
+                dispatch({ type: 'SET_ACTIVE_DEPT', payload: code });
                 const first = sectionTypes.find(st => st.department_code === code);
-                if (first) setActiveTypeId(first.id);
+                if (first) dispatch({ type: 'SET_ACTIVE_TYPE_ID', payload: first.id });
               }}
               className={`px-4 py-2 text-sm font-medium rounded-t-md border-b-2 transition-colors ${
                 activeDept === code
@@ -407,7 +477,7 @@ export default function CataloguePage() {
             {typesInDept.map(st => (
               <button
                 key={st.id}
-                onClick={() => setActiveTypeId(st.id)}
+                onClick={() => dispatch({ type: 'SET_ACTIVE_TYPE_ID', payload: st.id })}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                   activeTypeId === st.id
                     ? 'bg-[#0078d4] text-white border-[#0078d4]'
@@ -434,7 +504,7 @@ export default function CataloguePage() {
             <Tag className="h-8 w-8 text-gray-200 mx-auto mb-3" />
             <p className="text-gray-500 text-sm font-medium">No categories yet</p>
             <p className="text-gray-400 text-xs mt-1 mb-4">Add a category to start building the service catalogue</p>
-            <Button size="sm" onClick={() => { setEditingCat(null); setCatFormOpen(true); }} className="bg-[#0078d4] hover:bg-[#106ebe]">
+            <Button size="sm" onClick={() => dispatch({ type: 'OPEN_CAT_FORM' })} className="bg-[#0078d4] hover:bg-[#106ebe]">
               <Plus className="h-4 w-4 mr-1" /> Add Category
             </Button>
           </div>
@@ -450,24 +520,24 @@ export default function CataloguePage() {
                       <span className="text-sm font-semibold text-gray-800">{cat.name}</span>
                       {cat.description && <span className="text-xs text-gray-500 ml-2">— {cat.description}</span>}
                     </div>
-                    <Badge variant="outline" className="text-xs">{cat.service_items.length} item{cat.service_items.length !== 1 ? 's' : ''}</Badge>
+                    <Badge variant="outline" className="text-xs">{(cat.service_items ?? []).length} item{(cat.service_items ?? []).length !== 1 ? 's' : ''}</Badge>
                     {!cat.is_active && <Badge variant="outline" className="text-xs text-gray-400">Inactive</Badge>}
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => { setDefaultCatId(cat.id); setEditingItem(null); setItemFormOpen(true); }} className="h-8 gap-1 text-xs text-[#0078d4]">
+                    <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'OPEN_ITEM_FORM', payload: { defaultCatId: cat.id } })} className="h-8 gap-1 text-xs text-[#0078d4]">
                       <Plus className="h-3 w-3" /> Add Item
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingCat(cat); setCatFormOpen(true); }} className="h-8 w-8 p-0">
+                    <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'OPEN_CAT_FORM', payload: cat })} className="h-8 w-8 p-0">
                       <Pencil className="h-3.5 w-3.5 text-gray-400" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ type: 'category', id: cat.id, name: cat.name })} className="h-8 w-8 p-0">
+                    <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'SET_DELETE_TARGET', payload: { type: 'category', id: cat.id, name: cat.name } })} className="h-8 w-8 p-0">
                       <Trash2 className="h-3.5 w-3.5 text-red-400" />
                     </Button>
                   </div>
                 </div>
 
                 {/* Service items table */}
-                {cat.service_items.length === 0 ? (
+                {(cat.service_items ?? []).length === 0 ? (
                   <div className="px-5 py-4 text-xs text-gray-400 italic">No items yet</div>
                 ) : (
                   <table className="w-full text-sm">
@@ -481,7 +551,7 @@ export default function CataloguePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {cat.service_items.map(item => (
+                      {(cat.service_items ?? []).map(item => (
                         <tr key={item.id} className="hover:bg-gray-50">
                           <td className="px-5 py-3">
                             <p className="font-medium text-gray-800">{item.name}</p>
@@ -506,10 +576,10 @@ export default function CataloguePage() {
                           </td>
                           <td className="px-3 py-3">
                             <div className="flex gap-1 justify-end">
-                              <Button variant="ghost" size="sm" onClick={() => { setEditingItem(item); setItemFormOpen(true); }} className="h-7 w-7 p-0">
+                              <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'OPEN_ITEM_FORM', payload: { editingItem: item } })} className="h-7 w-7 p-0">
                                 <Pencil className="h-3.5 w-3.5 text-gray-400" />
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget({ type: 'item', id: item.id, name: item.name })} className="h-7 w-7 p-0">
+                              <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'SET_DELETE_TARGET', payload: { type: 'item', id: item.id, name: item.name } })} className="h-7 w-7 p-0">
                                 <Trash2 className="h-3.5 w-3.5 text-red-400" />
                               </Button>
                             </div>
@@ -536,10 +606,10 @@ export default function CataloguePage() {
       )}
 
       {/* Forms */}
-      <CategoryForm open={catFormOpen} onOpenChange={setCatFormOpen} sectionTypes={sectionTypes} editing={editingCat} defaultSectionTypeId={activeTypeId ?? undefined} onSaved={fetchData} />
-      <ItemForm open={itemFormOpen} onOpenChange={setItemFormOpen} categories={allCategories} editing={editingItem} defaultCategoryId={defaultCatId} onSaved={fetchData} />
+      <CategoryForm open={catFormOpen} onOpenChange={(open) => { if (open) dispatch({ type: 'OPEN_CAT_FORM', payload: editingCat }); else dispatch({ type: 'CLOSE_CAT_FORM' }); }} sectionTypes={sectionTypes} editing={editingCat} defaultSectionTypeId={activeTypeId ?? undefined} onSaved={fetchData} />
+      <ItemForm open={itemFormOpen} onOpenChange={(open) => { if (open) dispatch({ type: 'OPEN_ITEM_FORM', payload: { defaultCatId, editingItem } }); else dispatch({ type: 'CLOSE_ITEM_FORM' }); }} categories={allCategories} editing={editingItem} defaultCategoryId={defaultCatId} onSaved={fetchData} />
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => dispatch({ type: 'SET_DELETE_TARGET', payload: null })}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deleteTarget?.type === 'category' ? 'Category' : 'Service Item'}?</AlertDialogTitle>

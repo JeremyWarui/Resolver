@@ -84,6 +84,9 @@ export interface Ticket {
   // Scheduling
   due_date?: string | null;
 
+  // Available technicians (only for roles that can assign)
+  available_technicians?: Array<{ id: number; username: string; full_name: string }>;
+
   // Nested data (detail view only)
   comments?: Comment[];
   feedback?: Feedback;

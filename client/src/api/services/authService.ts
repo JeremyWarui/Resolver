@@ -4,12 +4,6 @@ import { AUTH_CONFIG } from '../config';
 // Types for authentication
 import type { UserRole } from '@/types';
 
-export interface AuthMethodResponse {
-  auth_method: 'password' | 'magic_link';
-  user_role: UserRole;
-  user_id: number;
-}
-
 export interface LoginResponse {
   token: string;
   user_id: number;
@@ -27,14 +21,6 @@ export interface LoginCredentials {
   remember_me?: boolean;
 }
 
-export interface MagicLinkRequest {
-  email: string;
-}
-
-export interface MagicLinkLogin {
-  remember_me?: boolean;
-}
-
 export interface RegisterPayload {
   username: string;
   email: string;
@@ -44,13 +30,6 @@ export interface RegisterPayload {
 }
 
 const authService = {
-  // COMMENTED OUT FOR TESTING - Magic Link functionality disabled
-  // Check authentication method by email
-  // checkAuthMethod: async (email: string): Promise<AuthMethodResponse> => {
-  //   const response = await apiClient.post('/auth/check-method/', { email });
-  //   return response.data;
-  // },
-
   // Password login (for staff roles)
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     const response = await apiClient.post('/auth/login/', credentials);
@@ -75,9 +54,9 @@ const authService = {
 
   // Register new user
   register: async (payload: RegisterPayload): Promise<LoginResponse> => {
-    const response = await apiClient.post('/auth/register/', payload);
-    const data = response.data;
-    
+    const response = apiClient.post('/auth/register/', payload);
+    const data = (await response).data;
+
     // Auto-login after successful registration
     if (data.token) {
       localStorage.setItem(AUTH_CONFIG.tokenKey, data.token);
@@ -91,41 +70,9 @@ const authService = {
         sections: data.sections || []
       }));
     }
-    
+
     return data;
   },
-
-  // COMMENTED OUT FOR TESTING - Magic Link functionality disabled
-  // Request magic link (for regular users)
-  // requestMagicLink: async (email: string): Promise<{ message: string }> => {
-  //   const response = await apiClient.post('/auth/magic-link/request/', { email });
-  //   return response.data;
-  // },
-
-  // COMMENTED OUT FOR TESTING - Magic Link functionality disabled
-  // Login via magic link token
-  // magicLinkLogin: async (token: string, rememberMe: boolean = false): Promise<LoginResponse> => {
-  //   const response = await apiClient.post(`/auth/magic-link/${token}/`, { 
-  //     remember_me: rememberMe 
-  //   });
-  //   const data = response.data;
-  //   
-  //   // Store tokens in localStorage
-  //   if (data.token) {
-  //     localStorage.setItem(AUTH_CONFIG.tokenKey, data.token);
-  //     localStorage.setItem('user', JSON.stringify({
-  //       id: data.user_id,
-  //       username: data.username,
-  //       email: data.email,
-  //       role: data.role,
-  //       first_name: data.first_name,
-  //       last_name: data.last_name,
-  //       sections: data.sections || []
-  //     }));
-  //   }
-  //   
-  //   return data;
-  // },
 
   // Logout
   logout: async (): Promise<void> => {

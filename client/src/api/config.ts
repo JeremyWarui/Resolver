@@ -9,16 +9,6 @@ const API_URL_PROD = import.meta.env.VITE_API_URL_PROD || 'https://django-resolv
 // Select API URL based on Vite mode
 const getApiUrl = () => {
   const isDevelopment = MODE === 'development';
-  
-  // Log environment for debugging
-  if (isDevelopment) {
-    console.log('🔧 Vite Environment: DEVELOPMENT');
-    console.log('📡 API URL:', API_URL_DEV);
-  } else {
-    console.log('🚀 Vite Environment: PRODUCTION');
-    console.log('📡 API URL:', API_URL_PROD);
-  }
-  
   return isDevelopment ? API_URL_DEV : API_URL_PROD;
 };
 
