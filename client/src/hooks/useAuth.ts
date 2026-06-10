@@ -1,32 +1,26 @@
-import { useState, useEffect } from 'react';
-import { authService } from '@/api/services';
-import type { LoginResponse, LoginCredentials, RegisterPayload } from '@/api/services/authService';
+import { useState } from 'react';
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  getCurrentUser,
+  isAuthenticated as checkAuthenticated,
+  hasRole,
+  getUserRole,
+} from '@/lib/api/auth';
+import type { LoginResponse, LoginCredentials, RegisterPayload } from '@/lib/api/auth';
 import type { User } from '@/types';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Initialize auth state
-  useEffect(() => {
-    const initializeAuth = () => {
-      const currentUser = authService.getCurrentUser();
-      const isAuth = authService.isAuthenticated();
-      
-      setUser(currentUser);
-      setIsAuthenticated(isAuth);
-      setIsLoading(false);
-    };
-
-    initializeAuth();
-  }, []);
+  const [user, setUser] = useState<User | null>(() => getCurrentUser() as User | null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => checkAuthenticated());
 
   const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
     setIsLoading(true);
     try {
-      const response = await authService.login(credentials);
-      setUser(authService.getCurrentUser());
+      const response = await apiLogin(credentials);
+      setUser(getCurrentUser() as User | null);
       setIsAuthenticated(true);
       return response;
     } finally {
@@ -37,8 +31,8 @@ export const useAuth = () => {
   const register = async (payload: RegisterPayload): Promise<LoginResponse> => {
     setIsLoading(true);
     try {
-      const response = await authService.register(payload);
-      setUser(authService.getCurrentUser());
+      const response = await apiRegister(payload);
+      setUser(getCurrentUser() as User | null);
       setIsAuthenticated(true);
       return response;
     } finally {
@@ -49,7 +43,7 @@ export const useAuth = () => {
   const logout = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await authService.logout();
+      await apiLogout();
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -64,7 +58,7 @@ export const useAuth = () => {
     login,
     register,
     logout,
-    hasRole: authService.hasRole,
-    getUserRole: authService.getUserRole,
+    hasRole,
+    getUserRole,
   };
 };

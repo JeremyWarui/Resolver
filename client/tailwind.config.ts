@@ -51,12 +51,13 @@ const config: Config = {
         ring: 'oklch(var(--ring))',
 
         // Optional: Custom tokens for charts and sidebar
+        // Chart colors use direct FluentUI hex values for consistency and predictability
         chart: {
-          1: 'oklch(var(--chart-1))',
-          2: 'oklch(var(--chart-2))',
-          3: 'oklch(var(--chart-3))',
-          4: 'oklch(var(--chart-4))',
-          5: 'oklch(var(--chart-5))',
+          1: 'var(--chart-1)',  // Blue
+          2: 'var(--chart-2)',  // Green
+          3: 'var(--chart-3)',  // Orange
+          4: 'var(--chart-4)',  // Red
+          5: 'var(--chart-5)',  // Purple
         },
         sidebar: {
           DEFAULT: 'oklch(var(--sidebar))',
@@ -67,6 +68,32 @@ const config: Config = {
           'accent-foreground': 'oklch(var(--sidebar-accent-foreground))',
           border: 'oklch(var(--sidebar-border))',
           ring: 'oklch(var(--sidebar-ring))',
+        },
+
+        // Semantic status tokens — use bg-status-open, text-status-resolved, etc.
+        status: {
+          open:      'oklch(var(--status-open))',
+          assigned:  'oklch(var(--status-assigned))',
+          progress:  'oklch(var(--status-progress))',
+          pending:   'oklch(var(--status-pending))',
+          resolved:  'oklch(var(--status-resolved))',
+          escalated: 'oklch(var(--status-escalated))',
+          closed:    'oklch(var(--status-closed))',
+        },
+
+        // Semantic priority tokens — use bg-priority-high, text-priority-low, etc.
+        priority: {
+          critical: 'oklch(var(--priority-critical))',
+          high:     'oklch(var(--priority-high))',
+          medium:   'oklch(var(--priority-medium))',
+          low:      'oklch(var(--priority-low))',
+        },
+
+        // SLA state tokens — use bg-sla-ok, text-sla-breach, etc.
+        sla: {
+          ok:      'oklch(var(--sla-ok))',
+          warning: 'oklch(var(--sla-warning))',
+          breach:  'oklch(var(--sla-breach))',
         },
       },
       borderRadius: {

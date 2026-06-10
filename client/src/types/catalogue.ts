@@ -19,6 +19,7 @@ export interface ServiceCategory {
   icon: string
   order: number
   is_active: boolean
+  location_details: boolean
   service_items?: ServiceItem[]
 }
 
@@ -28,13 +29,11 @@ export interface ServiceItem {
   category_name: string
   name: string
   description: string
-  default_priority: 'low' | 'medium' | 'high' | 'critical'
-  sla_hours: number | null
-  requires_approval: boolean
-  form_schema: FormSchemaField[]
+  default_priority?: { id: number; name: string; rank: number; response_minutes: number; resolution_minutes: number } | null
   is_active: boolean
   order: number
   request_count: number
+  section_type_code?: string | null
 }
 
 export type RequestData = Record<string, string | string[] | number | null>

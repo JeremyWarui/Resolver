@@ -1,7 +1,7 @@
 export type UserRole =
   | 'user'
   | 'technician'
-  | 'head_of_section'
+  | 'hos'
   | 'hod'
   | 'manager'
   | 'admin';
@@ -21,9 +21,6 @@ export interface User {
   primary_department_id: number | null;
   primary_department_display: string | null;
   primary_department_name?: string | null;
-  can_assign_tickets: boolean;
-  can_escalate_tickets: boolean;
-  can_view_analytics: boolean;
 }
 
 export interface CreateUserPayload {
@@ -34,6 +31,37 @@ export interface CreateUserPayload {
   role?: UserRole;
   sections?: number[];
   primary_department_id?: number | null;
+}
+
+export interface RoleAssignment {
+  id: number;
+  role: UserRole;
+  is_primary: boolean;
+  campus_id: number | null;
+  campus_name: string | null;
+  department_id: number | null;
+  department_name: string | null;
+  section_id: number | null;
+  section_name: string | null;
+  assigned_by_username: string | null;
+  assigned_at: string;
+}
+
+export type BackendRoleAssignment = RoleAssignment;
+
+export interface CreateRoleAssignmentPayload {
+  role: UserRole;
+  is_primary?: boolean;
+  campus_id?: number | null;
+  department_id?: number | null;
+  section_id?: number | null;
+}
+
+export interface UpdateRoleAssignmentPayload {
+  is_primary?: boolean;
+  campus_id?: number | null;
+  department_id?: number | null;
+  section_id?: number | null;
 }
 
 export interface UsersResponse {
@@ -52,9 +80,6 @@ export interface UserAnalytics {
   open: number;
   closed: number;
   pending: number;
-  pending_approval: number;
-  escalated: number;
-  rejected: number;
   avg_resolution_hours: number;
 }
 

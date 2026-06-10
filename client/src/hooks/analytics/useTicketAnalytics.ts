@@ -1,85 +1,102 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import analyticsService from '@/api/services/analyticsService';
-import type { TicketAnalytics, TicketAnalyticsParams } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import {
+  getFlow,
+  getResolutionTimes,
+  getQuality,
+  getSLACompliance,
+  getPerformanceTechnicians,
+  getPerformanceSections,
+  getPerformanceCampusDepts,
+} from '@/lib/api/analytics';
+import type {
+  FlowResponse,
+  ResolutionTimesResponse,
+  QualityResponse,
+  SLAComplianceResponse,
+  PerformanceTechniciansResponse,
+  PerformanceSectionsResponse,
+  PerformanceCampusDeptsResponse,
+  AnalyticsParams,
+} from '@/types';
 
-interface UseTicketAnalyticsResult {
-  data: TicketAnalytics | null;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
+export function useTicketAnalytics(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<FlowResponse>({
+    queryKey: ['analytics', 'flow', params],
+    queryFn: () => getFlow(params),
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
 }
 
-/**
- * Hook to fetch ticket analytics data
- * Used for general ticket statistics, trends, and distributions
- * 
- * @param params - Optional query parameters for filtering
- * @returns Ticket analytics data with loading and error states
- */
-export const useTicketAnalytics = (params?: TicketAnalyticsParams): UseTicketAnalyticsResult => {
-  const [data, setData] = useState<TicketAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  
-  // Stringify params to use as stable dependency
-  const paramsKey = useMemo(() => JSON.stringify(params || {}), [params]);
+export function useFlow(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<FlowResponse>({
+    queryKey: ['analytics', 'flow', params],
+    queryFn: () => getFlow(params),
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+export function useResolutionTimes(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<ResolutionTimesResponse>({
+    queryKey: ['analytics', 'resolution-times', params],
+    queryFn: () => getResolutionTimes(params),
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
-      try {
-        // Parse params from key to ensure we're using the memoized value
-        const parsedParams = JSON.parse(paramsKey);
-        const result = await analyticsService.getTicketAnalytics(
-          Object.keys(parsedParams).length > 0 ? parsedParams : undefined
-        );
-        if (isMounted) {
-          setData(result);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to fetch ticket analytics'));
-          console.error('Error fetching ticket analytics:', err);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
+export function useQuality(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<QualityResponse>({
+    queryKey: ['analytics', 'quality', params],
+    queryFn: () => getQuality(params),
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
-    fetchData();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [paramsKey]); // Only depend on stringified params
+export function useSLACompliance(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<SLAComplianceResponse>({
+    queryKey: ['analytics', 'sla-compliance', params],
+    queryFn: () => getSLACompliance(params),
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
-  const refetch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+export function usePerformanceTechnicians(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<PerformanceTechniciansResponse>({
+    queryKey: ['analytics', 'performance', 'technicians', params],
+    queryFn: () => getPerformanceTechnicians(params),
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
-    try {
-      const result = await analyticsService.getTicketAnalytics(params);
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch ticket analytics'));
-      console.error('Error fetching ticket analytics:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [params]);
+export function usePerformanceSections(
+  params?: AnalyticsParams,
+  options?: { enabled?: boolean },
+) {
+  const { data, isLoading, error, refetch } = useQuery<PerformanceSectionsResponse>({
+    queryKey: ['analytics', 'performance', 'sections', params],
+    queryFn: () => getPerformanceSections(params),
+    staleTime: 2 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
-  return {
-    data,
-    loading,
-    error,
-    refetch,
-  };
-};
+export function usePerformanceCampusDepts(
+  params?: AnalyticsParams,
+  options?: { enabled?: boolean },
+) {
+  const { data, isLoading, error, refetch } = useQuery<PerformanceCampusDeptsResponse>({
+    queryKey: ['analytics', 'performance', 'campus-departments', params],
+    queryFn: () => getPerformanceCampusDepts(params),
+    staleTime: 2 * 60 * 1000,
+    enabled: options?.enabled ?? true,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
 export default useTicketAnalytics;

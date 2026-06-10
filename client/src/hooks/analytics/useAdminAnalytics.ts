@@ -1,8 +1,14 @@
-import analyticsService from '@/api/services/analyticsService';
-import { useRoleAnalytics } from './useRoleAnalytics';
-import type { AdminDashboardAnalytics } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { getOverview } from '@/lib/api/analytics';
+import type { OverviewResponse, AnalyticsParams } from '@/types';
 
-export const useAdminAnalytics = (skip = false) =>
-  useRoleAnalytics<AdminDashboardAnalytics>(analyticsService.getAdminDashboardAnalytics, undefined, skip);
+export function useAdminAnalytics(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<OverviewResponse>({
+    queryKey: ['analytics', 'overview', params],
+    queryFn: () => getOverview(params) as Promise<OverviewResponse>,
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
 export default useAdminAnalytics;

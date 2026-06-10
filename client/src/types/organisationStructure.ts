@@ -22,7 +22,6 @@ export interface SectionType {
   department_type?: number
   department_type_name?: string
   description?: string
-  default_sla_hours?: number
   staff_label?: 'Technician' | 'Officer' | string
   is_active?: boolean
 }
@@ -51,8 +50,6 @@ export interface Section {
   name: string
   code: string | null
   description?: string
-  sla_hours?: number | null
-  effective_sla_hours?: number
   technician_count?: number
   is_active?: boolean
 }

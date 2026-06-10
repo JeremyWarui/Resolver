@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { departmentsService } from '@/api/services/organizationsService'
+import { departmentsService } from '@/lib/api/organizations'
 import type { Department } from '@/types'
 
 export function useDepartments(campusId?: number) {
@@ -21,6 +21,7 @@ export function useDepartments(campusId?: number) {
     }
   }, [campusId])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- standard async data-fetch pattern; setIsLoading inside fetch() is not a derived-state synchronous call
   useEffect(() => { fetch() }, [fetch])
 
   return { data, isLoading, error, refetch: fetch }

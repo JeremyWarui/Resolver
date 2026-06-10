@@ -1,10 +1,14 @@
+export type FacilityTypeValue = 'office_block' | 'building' | 'equipment' | 'residential' | 'grounds';
+
 export interface Facility {
   id: number;
   name: string;
-  type?: 'building' | 'ict' | 'laundry' | 'kitchen' | 'residential' | null;
+  facility_code?: string;
+  type?: FacilityTypeValue | null;
   status?: string;
   location?: string | null;
   campus?: number;
+  campus_name?: string | null;
   floors_count?: number;
 }
 
@@ -26,10 +30,14 @@ export interface FacilityRoom {
 }
 
 export interface LocationSelection {
-  facility: number | null;
-  floor: number | null;
-  room: number | null;
-  location_detail: string;
+  facilityId: number | null;
+  facilityName: string;
+  floor: string;
+  room: string;
+  area: string;
+  isResidential: boolean;
+  tenantName: string;
+  unitNumber: string;
 }
 
 export interface FacilitiesResponse {

@@ -2,8 +2,8 @@ import type React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export function useSortableColumn(label: string): React.FC<{ column: any }> {
-  return ({ column }: any) => (
+export function useSortableColumn(label: string): React.FC<{ column: { toggleSorting: () => void } }> {
+  return ({ column }: { column: { toggleSorting: () => void } }) => (
     <div className="flex items-center space-x-1">
       <span>{label}</span>
       <Button

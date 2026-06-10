@@ -1,6 +1,8 @@
 // Central export file for all types
+export type { TicketStatus } from '../constants/tickets';
 export * from './ticket.types';
 export * from './user.types';
+export * from './shared.types';
 export * from './facility.types';
 export * from './technician.types';
 export type { NestedRef, SectionHead } from './section.types';

@@ -5,18 +5,17 @@
 import { z } from 'zod';
 
 /**
- * Validation schema for creating a new ticket
+ * Validation schema for creating a new ticket.
+ * Only service_item_id + description (+optional location) — routing/priority resolved server-side (R6/R7).
  */
 export const createTicketSchema = z.object({
-  title: z.string().min(5, {
-    message: 'Title must be at least 5 characters.',
-  }),
-  description: z.string().min(10, {
-    message: 'Description must be at least 10 characters.',
-  }),
-  section_id: z.string().min(1, {
-    message: 'Please select a section.',
-  }),
+  service_item_id: z.number().min(1, 'Please select a service.'),
+  description: z.string().min(3, 'Description must be at least 3 characters.'),
+  location: z.object({
+    facility_type_id: z.number(),
+    facility_id: z.number().optional(),
+    values: z.record(z.string(), z.unknown()),
+  }).optional(),
 });
 
 /**

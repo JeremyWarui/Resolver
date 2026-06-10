@@ -1,47 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
-import { sectionsService } from '@/api/services/organizationsService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { sectionsService } from '@/lib/api/organizations';
 import type { Section } from '@/types';
 
-interface UseSectionsResult {
-  sections: Section[];
-  totalSections: number;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
-}
+export const SECTIONS_KEY = ['sections'] as const;
 
-export const useSections = (): UseSectionsResult => {
-  const [sections, setSections] = useState<Section[]>([]);
-  const [totalSections, setTotalSections] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const useSections = () => {
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useQuery<Section[]>({
+    queryKey: SECTIONS_KEY,
+    queryFn: () => sectionsService.getSections(),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await sectionsService.getSections();
-      setSections(data);
-      setTotalSections(data.length);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch sections'));
-      console.error('Error fetching sections:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const refetch = () => queryClient.invalidateQueries({ queryKey: SECTIONS_KEY });
 
   return {
-    sections,
-    totalSections,
-    loading,
-    error,
-    refetch: fetchData,
+    sections: data ?? [],
+    totalSections: data?.length ?? 0,
+    loading: isLoading,
+    error: error as Error | null,
+    refetch,
   };
 };
 

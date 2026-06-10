@@ -1,5 +1,5 @@
 import { toast } from 'sonner';
-import type { FieldValues, UseFormSetError } from 'react-hook-form';
+import type { FieldValues, UseFormSetError, Path } from 'react-hook-form';
 
 interface HandleDRFErrorOptions<T extends FieldValues> {
   setError?: UseFormSetError<T>;
@@ -38,7 +38,7 @@ export function handleDRFError<T extends FieldValues>(
       } else if (setError) {
         // Field errors set on form if setError provided
         try {
-          setError(key as any, { type: 'server', message });
+          setError(key as Path<T>, { type: 'server', message });
           foundField = true;
         } catch {
           // Silently ignore if field doesn't exist in form

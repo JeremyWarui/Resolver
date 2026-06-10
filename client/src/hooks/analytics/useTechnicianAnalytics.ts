@@ -1,8 +1,14 @@
-import analyticsService from '@/api/services/analyticsService';
-import { useRoleAnalytics } from './useRoleAnalytics';
-import type { TechnicianAnalytics, TechnicianAnalyticsParams } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { getOverview } from '@/lib/api/analytics';
+import type { TechnicianOverviewResponse, AnalyticsParams } from '@/types';
 
-export const useTechnicianAnalytics = (params?: TechnicianAnalyticsParams, skip = false) =>
-  useRoleAnalytics<TechnicianAnalytics>(analyticsService.getTechnicianAnalytics, params, skip);
+export function useTechnicianAnalytics(params?: AnalyticsParams) {
+  const { data, isLoading, error, refetch } = useQuery<TechnicianOverviewResponse>({
+    queryKey: ['analytics', 'overview', 'technician', params],
+    queryFn: () => getOverview(params) as Promise<TechnicianOverviewResponse>,
+    staleTime: 2 * 60 * 1000,
+  });
+  return { data: data ?? null, loading: isLoading, error, refetch };
+}
 
 export default useTechnicianAnalytics;

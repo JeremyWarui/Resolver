@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import usersService from '@/api/services/usersService';
+import usersService from '@/lib/api/users';
 import type { CreateUserPayload, User } from '@/types';
 
 interface UseCreateUserResult {

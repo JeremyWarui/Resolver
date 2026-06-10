@@ -3,10 +3,15 @@ import { z } from 'zod';
 export const createSectionSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   description: z.string().max(200).optional(),
+  code: z.string().optional(),
+  campus_department: z.coerce.number({ error: 'Campus/Department is required' }),
+  section_type: z.coerce.number({ error: 'Section type is required' }),
 });
 
 export const createFacilitySchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  facility_code: z.string().optional(),
+  campus: z.coerce.number({ error: 'Campus is required' }),
   type: z.string().optional(),
   status: z.string().optional(),
   location: z.string().optional(),

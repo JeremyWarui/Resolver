@@ -1,4 +1,5 @@
-import type { SystemOverview, OverdueTicket } from './analytics.types';
+interface SystemOverview { [key: string]: unknown; }
+interface OverdueTicket { id: number; ticket_no: string; [key: string]: unknown; }
 
 /**
  * Admin user info returned by admin dashboard endpoint

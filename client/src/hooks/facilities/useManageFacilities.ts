@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { facilitiesService } from '@/api/services/organizationsService';
+import { facilitiesService } from '@/lib/api/organizations';
 import type { Facility } from '@/types';
 
 interface UseManageFacilitiesResult {

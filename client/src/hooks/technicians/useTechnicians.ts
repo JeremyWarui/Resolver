@@ -1,39 +1,41 @@
-import { useState, useEffect, useCallback } from 'react';
-import techniciansService, { type TechnicianFilters } from '@/api/services/techniciansService';
 import type { Technician } from '@/types';
 
-interface UseTechniciansResult {
-  technicians: Technician[];
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
+export interface TechnicianFilters {
+  campus_department_id?: number;
+  section_ids?: string;
+  section_id?: number;
+  campus_id?: number;
 }
 
-export const useTechnicians = (filters?: TechnicianFilters): UseTechniciansResult => {
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const TECHNICIANS_KEY = ['technicians'] as const;
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setTechnicians([]); // clear stale data immediately so previous results don't flash
-    try {
-      const data = await techniciansService.getTechnicians(filters);
-      setTechnicians(data);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch technicians'));
-    } finally {
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters?.campus_department_id, filters?.section_ids, filters?.section_id, filters?.campus_id]);
+/**
+ * ⚠️ DEPRECATED: useTechnicians hook
+ * 
+ * The /technicians/ endpoint does not exist on the backend.
+ * Per CLAUDE.md §28 Reconciliation, user management endpoints have been removed.
+ * 
+ * This hook now returns an empty array. Components should:
+ * - Use /sections/{id}/technicians/ for section-scoped technician lists
+ * - Query role-assignments with role="technician" for global technician data (admin only)
+ * - Use useSectionTechnicians(sectionId) for assignment pools
+ * 
+ * @deprecated
+ */
+export const useTechnicians = (_filters?: TechnicianFilters) => {
+  console.warn(
+    'useTechnicians hook is deprecated. The /technicians/ endpoint does not exist. ' +
+    'Use /sections/{id}/technicians/ for section-scoped lists, or ' +
+    'useSectionTechnicians(sectionId) for assignment pools. ' +
+    'See CLAUDE.md §28 for details.'
+  );
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  return { technicians, loading, error, refetch: fetchData };
+  return {
+    technicians: [] as Technician[],
+    loading: false,
+    error: null,
+    refetch: () => {},
+  };
 };
 
 export default useTechnicians;

@@ -1,36 +1,23 @@
-import { useEffect, useState } from 'react';
-import { campusesService } from '@/api/services';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { campusesService } from '@/lib/api';
 import type { Campus } from '@/types/organisationStructure';
 
+export const CAMPUSES_KEY = ['campuses'] as const;
+
 export const useCampuses = () => {
-  const [campuses, setCampuses] = useState<Campus[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useQuery<Campus[]>({
+    queryKey: CAMPUSES_KEY,
+    queryFn: () => campusesService.getCampuses(),
+    staleTime: 10 * 60 * 1000,
+  });
 
-  const fetchCampuses = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await campusesService.getCampuses();
-      setCampuses(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch campuses');
-      setCampuses([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCampuses();
-  }, []);
-
-  const refetch = () => fetchCampuses();
+  const refetch = () => queryClient.invalidateQueries({ queryKey: CAMPUSES_KEY });
 
   return {
-    campuses,
-    loading,
-    error,
+    campuses: data ?? [],
+    loading: isLoading,
+    error: error instanceof Error ? error.message : null,
     refetch,
   };
 };

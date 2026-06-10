@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import ticketsService from '@/api/services/ticketsService';
+import ticketsService from '@/lib/api/tickets';
 import type { UpdateTicketPayload, Ticket } from '@/types';
 
 interface UseUpdateTicketResult {

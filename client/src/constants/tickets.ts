@@ -4,15 +4,12 @@
 
 import type { Ticket } from '@/types';
 
-// Ticket status definitions
+// Ticket status definitions — canonical 6 values only (SoT §4.1)
 export const TICKET_STATUSES = {
   OPEN: 'open',
   ASSIGNED: 'assigned',
   IN_PROGRESS: 'in_progress',
   PENDING: 'pending',
-  PENDING_APPROVAL: 'pending_approval',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
   RESOLVED: 'resolved',
   CLOSED: 'closed',
 } as const;
@@ -25,9 +22,6 @@ export const STATUS_LABELS: Record<Ticket['status'], string> = {
   assigned: 'Assigned',
   in_progress: 'In Progress',
   pending: 'Pending',
-  pending_approval: 'Pending Approval',
-  approved: 'Approved',
-  rejected: 'Rejected',
   resolved: 'Resolved',
   closed: 'Closed',
 };
@@ -38,9 +32,6 @@ export const ALL_TICKET_STATUSES: Ticket['status'][] = [
   'assigned',
   'in_progress',
   'pending',
-  'pending_approval',
-  'approved',
-  'rejected',
   'resolved',
   'closed',
 ];
@@ -59,3 +50,15 @@ export const ACTIVE_STATUSES: Ticket['status'][] = [
   'in_progress',
   'pending',
 ];
+
+// Backend PENDING_REASON_CHOICES — must match Django model exactly
+export const PENDING_REASON_CHOICES = [
+  { value: 'material_shortage',    label: 'Material shortage' },
+  { value: 'awaiting_procurement', label: 'Awaiting procurement' },
+  { value: 'awaiting_approval',    label: 'Awaiting approval' },
+  { value: 'vendor_dependency',    label: 'Vendor dependency' },
+  { value: 'access_issue',         label: 'Access issue' },
+  { value: 'other',                label: 'Other' },
+] as const;
+
+export type PendingReason = typeof PENDING_REASON_CHOICES[number]['value'];

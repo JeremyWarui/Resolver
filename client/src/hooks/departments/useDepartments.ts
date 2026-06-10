@@ -1,36 +1,23 @@
-import { useEffect, useState } from 'react';
-import { departmentsService } from '@/api/services';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { departmentsService } from '@/lib/api';
 import type { Department } from '@/types/organisationStructure';
 
+export const DEPARTMENTS_KEY = ['departments'] as const;
+
 export const useDepartments = () => {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useQuery<Department[]>({
+    queryKey: DEPARTMENTS_KEY,
+    queryFn: () => departmentsService.getDepartments(),
+    staleTime: 10 * 60 * 1000,
+  });
 
-  const fetchDepartments = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await departmentsService.getDepartments();
-      setDepartments(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch departments');
-      setDepartments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  const refetch = () => fetchDepartments();
+  const refetch = () => queryClient.invalidateQueries({ queryKey: DEPARTMENTS_KEY });
 
   return {
-    departments,
-    loading,
-    error,
+    departments: data ?? [],
+    loading: isLoading,
+    error: error instanceof Error ? error.message : null,
     refetch,
   };
 };
