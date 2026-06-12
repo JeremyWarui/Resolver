@@ -1,170 +1,135 @@
-# Resolver - Maintenance Ticketing System
+# Resolver — Multi-Campus Service Desk Frontend
 
-A modern, enterprise-grade maintenance ticketing system with role-based dashboards, real-time analytics, and comprehensive reporting.
+React frontend for the Kenya School of Government service desk system. Role-scoped dashboards, real-time analytics, Excel report generation, and a full ticket lifecycle UI.
 
-**React 18** • **TypeScript** • **Django REST** • **shadcn/ui** • **Tailwind CSS**
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://reactjs.org/)
-
-> **🚀 Quick Start:** `npm install` → `npm run dev` → http://localhost:5173  
-> **📖 Full Documentation:** See [`docs/`](client/docs/) folder for architecture, API reference, and deployment guides
+**Stack:** React 18 · TypeScript · Vite · shadcn/ui · Tailwind CSS · Recharts · TanStack Table · React Query
 
 ---
 
-## ✨ Key Features
+## Quick Start
 
-- 🎭 **Multi-Role Dashboards** - Admin, Technician, and User interfaces with role-based access
-- 🎫 **Complete Ticket Lifecycle** - Create, assign, track, and resolve with real-time status updates
-- 📊 **Real-Time Analytics** - Performance metrics, trends, and multi-persona reporting
-- ⚡ **Instant Filtering** - Client-side Quick Filters (66x faster with backend optimizations)
-- 📈 **Advanced Reports** - Excel exports with custom date ranges for data analysis
-- 💬 **Collaboration Tools** - Comments, feedback, and user satisfaction ratings
-- 🏢 **Organization Management** - Facilities, sections, and comprehensive user administration
-
-## 🛠️ Tech Stack
-
-**Frontend:** React 18, TypeScript 5, Vite  
-**UI:** shadcn/ui, Radix UI, Tailwind CSS 4  
-**Data:** TanStack Table v8, React Hook Form, Zod  
-**Backend:** Django REST Framework, Neon PostgreSQL, JWT Auth
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js 18+
-- Running Django backend (see backend repository)
-
-### Setup
 ```bash
-# Clone and install
-git clone <repository-url>
-cd Resolver/client
+git clone https://github.com/JeremyWarui/Resolver && cd Resolver/client
 npm install
-
-# Configure environment
-echo "VITE_API_URL=http://localhost:8000/api" > .env
-
-# Start development server
-npm run dev
 ```
 
-Visit http://localhost:5173
-
-## 🔧 Environment Variables
-
-Create a `.env` file in the project root:
+Create a `.env` file in `client/`:
 
 ```env
-# Local Development
 VITE_API_URL=http://localhost:8000/api
-
-# Production
-# VITE_API_URL=https://your-backend.onrender.com/api
 ```
-
-## 📜 Available Scripts
 
 ```bash
-npm run dev       # Start dev server with HMR
-npm run build     # TypeScript check + production build
-npm run preview   # Preview production build
-npm run lint      # Run ESLint checks
+npm run dev       # http://localhost:5173
 ```
 
-## 📁 Project Structure
-
-```
-src/
-├── api/              # Backend integration (services, client, interceptors)
-├── components/       # React components by role (Admin/Tech/User/Common)
-├── hooks/            # Domain-specific custom hooks
-├── types/            # TypeScript type definitions
-├── utils/            # Helper functions and utilities
-└── constants/        # Application constants
-```
-
-## 🏗️ Architecture Highlights
-
-- **Section-Based Navigation**: State-driven UI switching (not React Router nested routes)
-- **DataTable System**: Reusable table infrastructure with filters, sorting, and pagination
-- **Custom Hooks**: Domain-organized hooks for all API operations
-- **Type Safety**: TypeScript types matching Django serializers exactly
-- **Client-Side Filtering**: Fetch once, filter instantly with zero API calls
-
-## 📚 Documentation
-
-Comprehensive documentation available in [`docs/`](client/docs/):
-
-- **[Architecture Guide](client/docs/ARCHITECTURE.md)** - System architecture and design patterns
-- **[REST API Reference](client/client/docs/REST_API_REFERENCE.md)** - Backend endpoints and payloads
-- **[Vercel Deployment](client/docs/VERCEL_DEPLOYMENT.md)** - Production deployment guide
-- **[Backend Alignment](client/docs/BACKEND_ALIGNMENT_REPORT.md)** - API issues and workarounds
-- **[Reports Design](client/docs/REPORTS_PAGE_DESIGN.md)** - Analytics system specifications
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-```bash
-# Push to GitHub, then:
-# 1. Import to Vercel
-# 2. Set VITE_API_URL environment variable
-# 3. Deploy (automatic on push)
-```
-
-See [client/docs/VERCEL_DEPLOYMENT.md](client/docs/VERCEL_DEPLOYMENT.md) for complete guide.
-
-## 🔑 Demo Accounts
-
-```
-Admin:       admin_user
-Technician:  tech_alex
-User:        jane_user
-```
-*Contact backend administrator for passwords*
-
-## 🐛 Quick Troubleshooting
-
-**CORS Errors?** Add frontend URL to Django's `CORS_ALLOWED_ORIGINS`  
-**Auth Issues?** Clear localStorage and re-login  
-**Build Errors?** Run `npm install` and check TypeScript errors  
-**API Connection?** Verify `VITE_API_URL` matches running backend
-
-For detailed troubleshooting, see [client/docs/ARCHITECTURE.md](client/docs/ARCHITECTURE.md)
-
-## ⚠️ Development Conventions
-
-**DO:**
-- Use `@/` path alias for all imports
-- Use DataTable component for all tables
-- Create domain hooks for API calls
-- Use client-side Quick Filters
-- Match types to Django serializers
-
-**DON'T:**
-- Add nested routes inside layouts
-- Recreate table markup manually
-- Call services directly from components
-- Trigger API calls on filter clicks
-
-See [`.github/copilot-instructions.md`](.github/copilot-instructions.md) for comprehensive guidelines.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Follow existing patterns and conventions
-4. Test locally: `npm run dev` and `npm run build`
-5. Submit pull request with clear description
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🙏 Acknowledgments
-
-Built with [shadcn/ui](https://ui.shadcn.com/), [TanStack Table](https://tanstack.com/table), [Recharts](https://recharts.org/), and [Tailwind CSS](https://tailwindcss.com/)
+Requires the Django backend running locally. See [django_resolver](https://github.com/JeremyWarui/django_resolver).
 
 ---
 
-**Questions or Issues?** Check the [`docs/`](client/docs/) folder or open an issue on GitHub.
+## Available Scripts
+
+```bash
+npm run dev       # dev server with HMR
+npm run build     # TypeScript check + production build
+npm run preview   # preview production build
+npm run lint      # ESLint
+```
+
+---
+
+## Project Structure
+
+```
+client/src/
+├── features/
+│   ├── admin/          — Admin dashboard, tickets, analytics, reports, facilities, sections, audit log
+│   ├── manager/        — Manager dashboard, analytics, reports
+│   ├── hod/            — HOD dashboard, sections, technicians
+│   ├── hos/            — HOS dashboard, technicians, assignment modal
+│   ├── technician/     — Technician dashboard, tickets, reports
+│   ├── user/           — Requester dashboard, my tickets, ticket creation
+│   └── shared/         — RoleDashboardView, RoleAnalyticsView, RoleReportsPage, RoleTicketsPage
+├── components/
+│   ├── ui/             — shadcn/ui primitives
+│   ├── shared/data/    — MetricCard, KPICard, DistributionCharts, ServiceHealthCards,
+│   │                     StatCards stack, DataTable, InsightsPanel
+│   ├── shared/ticket/  — TicketCreationWizard, TicketDetailModal, StatusBadge, etc.
+│   ├── shared/forms/   — FilterPanel, TechnicianPicker, FacilityType forms
+│   └── layout/         — MainLayout, RoleLayout, AppSidebar, RoleSwitcher
+├── hooks/
+│   ├── dashboard/      — useAdminDashboard, useManagerDashboard, useTechnicianDashboard, etc.
+│   ├── analytics/      — useAnalytics, usePerformanceTechnicians, usePerformanceSections
+│   ├── tickets/        — useTicketFilterOptions, useTicketDetail, useTicketFilters
+│   └── catalog/        — useCatalog
+├── lib/api/            — typed API clients per domain (tickets, analytics, reports, auth, …)
+├── types/              — shared TypeScript interfaces
+└── App.tsx
+```
+
+---
+
+## Roles & Dashboards
+
+Each role gets a dedicated layout and dashboard. Scope is derived server-side from the JWT; frontend role checks are UI convenience only.
+
+| Role | Dashboard | Analytics | Reports | Tickets |
+|------|-----------|-----------|---------|---------|
+| Admin | Org-wide overview, facilities, audit log | Full org analytics | All 5 report types | All tickets |
+| Manager | Dept overview, campus breakdown | Dept analytics | Lifecycle, tech perf, facilities | Dept tickets |
+| HOD | Campus-dept overview, sections | Campus-dept analytics | Same as manager | Campus-dept tickets |
+| HOS | Section overview, technician workload | Section analytics | Same as manager | Section tickets |
+| Technician | Personal + section context | Own performance | Own performance report | Assigned tickets |
+| Requester | My tickets overview | — | — | Own tickets |
+
+Staff users can toggle between their role workspace and the Requester view via the sidebar context switcher.
+
+---
+
+## Key Patterns
+
+**StatCards (dashboards only):** 5-card overview strip on every role homepage (Total / Open / Resolved / Pending / Escalated). Read-only. Never wired to table filters.
+
+**KPI cards (analytics/reports only):** `KPICardGrid` → `KPICard` with trend %. Used on deep-dive analytics pages.
+
+**Filter dropdowns:** Sections / Technicians / Users come from `GET /api/v1/tickets/filter-options/` — scoped by JWT, populated via `useTicketFilterOptions()`.
+
+**Shared role views:** `RoleDashboardView`, `RoleAnalyticsView`, `RoleReportsPage` in `src/features/shared/` are parametrized by `role` prop. Admin and Manager are thin wrappers around these; scope variation is StatCards + endpoint `group_by`.
+
+**Report generation:** `GenerateReports.tsx` reads `useAuth().user.role` to show only relevant report types. Excel files streamed from `/api/v1/reports/generate/`.
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Django backend base URL (e.g. `http://localhost:8000/api`) |
+
+---
+
+## Deployment
+
+### Vercel
+
+1. Push to GitHub
+2. Import project to Vercel, set root to `client/`
+3. Set `VITE_API_URL` environment variable to production backend URL
+4. Deploy — automatic on push
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Filter dropdowns empty | Hard-refresh (Ctrl+Shift+R) — React Query staleTime is 5 min |
+| CORS errors | Add frontend URL to Django `CORS_ALLOWED_ORIGINS` |
+| Auth loop | Clear `localStorage` and re-login |
+| Build errors | Run `npm install`, check `npm run build` TypeScript output |
+
+---
+
+## License
+
+MIT
