@@ -74,16 +74,16 @@ function dayLabel(iso: string): string {
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-function initials(actor: { full_name: string; username: string }): string {
-  const name = actor.full_name.trim() || actor.username;
+function initials(actor: { full_name?: string | null; username: string }): string {
+  const name = (actor.full_name ?? '').trim() || actor.username || '?';
   const parts = name.split(' ');
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return name.slice(0, 2).toUpperCase();
 }
 
-function displayName(actor?: { full_name: string; username: string }): string {
+function displayName(actor?: { full_name?: string | null; username: string }): string {
   if (!actor) return 'System';
-  return actor.full_name.trim() || actor.username;
+  return (actor.full_name ?? '').trim() || actor.username;
 }
 
 function levelLabel(level: string): string {
@@ -143,7 +143,7 @@ function SubDescription({ event }: { event: TimelineEvent }): React.ReactElement
   if (event_type === 'escalated') {
     const from = data?.from as string | undefined;
     const to   = data?.to   as string | undefined;
-    const levelUser = data?.level_user as { full_name?: string; username?: string } | undefined;
+    const levelUser = data?.level_user as { full_name?: string | null; username?: string } | undefined;
     return (
       <span className="text-xs text-muted-foreground">
         {from && to ? `${levelLabel(from)} → ${levelLabel(to)}` : ''}
@@ -176,7 +176,7 @@ function SubDescription({ event }: { event: TimelineEvent }): React.ReactElement
 
 // ── ActorBadge ────────────────────────────────────────────────────────────────
 
-function ActorBadge({ actor }: { actor?: { id: number; username: string; full_name: string } }) {
+function ActorBadge({ actor }: { actor?: { id: number; username: string; full_name?: string | null } }) {
   if (!actor) {
     return <span className="text-xs text-muted-foreground">System</span>;
   }

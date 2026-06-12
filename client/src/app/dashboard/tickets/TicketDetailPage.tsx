@@ -69,6 +69,7 @@ function TicketDetailSkeleton() {
   return (
     <>
       <DialogHeader className="px-6 py-4 border-b shrink-0">
+        <DialogTitle className="sr-only">Loading ticket</DialogTitle>
         <div className="flex items-center gap-3 pr-8">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -98,6 +99,7 @@ function TicketDetailSkeleton() {
 function TicketNotFound({ onClose }: { onClose: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
+      <DialogTitle className="sr-only">Ticket not found</DialogTitle>
       <AlertCircle className="h-12 w-12 text-muted-foreground" />
       <div>
         <p className="text-base font-semibold">Ticket not found</p>
