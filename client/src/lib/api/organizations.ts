@@ -69,7 +69,7 @@ export const departmentsService = {
   createDepartment: async (payload: {
     name: string;
     code: string;
-    campus: number;
+    manager_user_id?: number | null;
   }): Promise<Department> => {
     const { data } = await apiClient.post<Department>('/departments/', payload);
     return data;
