@@ -225,24 +225,6 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
               <div className="px-6 py-3 border-b bg-muted/30 shrink-0 flex items-center justify-between gap-2">
                 {/* Secondary actions — left */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  {showAssign && (
-                    <Button size="sm" variant="outline" onClick={() => setActiveModal('assign')}>
-                      <UserCheck className="h-3.5 w-3.5 mr-1.5" />
-                      Assign
-                    </Button>
-                  )}
-                  {showReassign && (
-                    <Button size="sm" variant="outline" onClick={() => setActiveModal('assign')}>
-                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-                      Reassign
-                    </Button>
-                  )}
-                  {showConfirmResolved && (
-                    <Button size="sm" variant="outline" onClick={() => setActiveModal('rate')}>
-                      <Star className="h-3.5 w-3.5 mr-1.5" />
-                      Rate &amp; close
-                    </Button>
-                  )}
                   {showReopen && (
                     <Button size="sm" variant="outline" onClick={() => setActiveModal('reopen')}>
                       <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
@@ -253,6 +235,18 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
 
                 {/* Primary actions — right, with background colors */}
                 <div className="flex items-center gap-2 shrink-0">
+                  {showAssign && (
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setActiveModal('assign')}>
+                      <UserCheck className="h-3.5 w-3.5 mr-1.5" />
+                      Assign
+                    </Button>
+                  )}
+                  {showReassign && (
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setActiveModal('assign')}>
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      Reassign
+                    </Button>
+                  )}
                   {showStatusUpdate && (
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setActiveModal('status')}>
                       <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
@@ -263,6 +257,12 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
                     <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" onClick={() => setActiveModal('escalate')}>
                       <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
                       Escalate
+                    </Button>
+                  )}
+                  {showConfirmResolved && (
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setActiveModal('rate')}>
+                      <Star className="h-3.5 w-3.5 mr-1.5" />
+                      Rate &amp; close
                     </Button>
                   )}
                 </div>

@@ -9,13 +9,14 @@ import type { Technician } from '@/types';
  */
 export function useSectionTechnicians(sectionId: number | null | undefined) {
   return useQuery<Technician[]>({
-    queryKey: ['sections', sectionId, 'technicians'],
+    queryKey: ['sections', sectionId, 'assignable-technicians'],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/sections/${sectionId}/technicians/`);
+      const { data } = await apiClient.get(`/sections/${sectionId}/assignable-technicians/`);
       return Array.isArray(data) ? data : (data.results ?? []);
     },
     enabled: sectionId != null && sectionId > 0,
     staleTime: 2 * 60 * 1000,
+    retry: 1,
   });
 }
 

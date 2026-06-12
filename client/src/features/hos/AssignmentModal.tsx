@@ -1,8 +1,3 @@
-// AssignmentModal — assign or reassign a ticket to a technician.
-// Loads the section's technician pool via GET /sections/{id}/technicians/.
-// Shows workload bar when activeTicketCounts is available.
-// Calls PATCH /tickets/:id/ with assigned_to_id.
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -13,10 +8,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TechnicianPicker } from '@/components/shared/forms/TechnicianPicker';
 import { assignTicket } from '@/lib/api/tickets';
 import { useTicketInvalidate } from '@/hooks/tickets/useTicketDetail';
 import { useSectionTechnicians } from '@/hooks/technicians/useSectionTechnicians';
@@ -42,8 +35,7 @@ export function AssignmentModal({
   const [submitting, setSubmitting] = useState(false);
   const invalidate = useTicketInvalidate();
 
-  // Load only technicians from this ticket's section pool (R8 — section-scoped assignment)
-  const { data: technicians = [], isLoading: loadingTechs } = useSectionTechnicians(
+  const { data: technicians = [], isLoading: loadingTechs, error: techError } = useSectionTechnicians(
     open ? ticket.section.id : null,
   );
 
@@ -58,11 +50,9 @@ export function AssignmentModal({
     setSubmitting(true);
     try {
       const updated = await assignTicket(ticket.id, selectedTechId);
-      const techName = technicians.find((t) => t.id === selectedTechId);
-      const displayName = techName
-        ? (techName.first_name && techName.last_name
-          ? `${techName.first_name} ${techName.last_name}`
-          : techName.username)
+      const tech = technicians.find((t) => t.id === selectedTechId);
+      const displayName = tech
+        ? (tech.first_name && tech.last_name ? `${tech.first_name} ${tech.last_name}` : tech.username)
         : `technician ${selectedTechId}`;
       toast.success(
         mode === 'reassign'
@@ -85,56 +75,110 @@ export function AssignmentModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[520px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <div className="flex items-center justify-between pr-8">
+            <DialogTitle>{title}</DialogTitle>
+            <span className="text-sm text-muted-foreground font-mono">
+              #{ticket.ticket_no}
+            </span>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          {/* Current assignee (for reassign mode) */}
+        <div className="space-y-5 py-2">
+          {/* Current assignee (reassign mode) */}
           {currentAssignee && (
-            <div className="text-sm text-muted-foreground">
-              Currently assigned to{' '}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Currently assigned to:</span>
               <span className="font-medium text-foreground">
-                {currentAssignee.name || currentAssignee.username}
+                {currentAssignee.full_name || currentAssignee.name || currentAssignee.username}
               </span>
             </div>
           )}
 
-          {/* Technician picker */}
-          <div className="space-y-1.5">
-            <Label>
-              {mode === 'reassign' ? 'New technician' : 'Technician'}{' '}
-              <span className="text-destructive">*</span>
-            </Label>
+          {/* Technician radio cards */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                {mode === 'reassign' ? 'New technician' : 'Technician'}{' '}
+                <span className="text-destructive">*</span>
+              </span>
+              <div className="flex-1 border-t border-border" />
+            </div>
+
             {loadingTechs ? (
-              <Skeleton className="h-10 w-full rounded-md" />
-            ) : (
-              <TechnicianPicker
-                value={selectedTechId}
-                onValueChange={(v) => setSelectedTechId(v)}
-                technicians={technicians}
-                includeUnassigned={false}
-                placeholder={
-                  technicians.length === 0
-                    ? 'No technicians available for this section'
-                    : 'Select a technician'
-                }
-              />
-            )}
-            {!loadingTechs && technicians.length === 0 && (
-              <p className="text-xs text-muted-foreground italic">
-                No assignable technicians found for section "{ticket.section.name}".
+              <div className="space-y-2">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : techError ? (
+              <p className="text-sm text-destructive py-2">
+                Failed to load technicians (section {ticket.section.id}).{' '}
+                {(techError as { message?: string }).message ?? 'Network error'}
               </p>
+            ) : technicians.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic py-2">
+                No technicians assigned to section {ticket.section.id}.
+              </p>
+            ) : (
+              technicians.map((tech) => {
+                const isSelected = selectedTechId === tech.id;
+                const fullName = tech.first_name && tech.last_name
+                  ? `${tech.first_name} ${tech.last_name}`
+                  : null;
+                return (
+                  <button
+                    key={tech.id}
+                    type="button"
+                    onClick={() => setSelectedTechId(tech.id)}
+                    disabled={submitting}
+                    className={[
+                      'w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors',
+                      isSelected
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border bg-background hover:bg-muted/50',
+                    ].join(' ')}
+                  >
+                    <span
+                      className={[
+                        'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                        isSelected
+                          ? 'border-primary bg-primary'
+                          : 'border-muted-foreground bg-transparent',
+                      ].join(' ')}
+                    >
+                      {isSelected && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+                      )}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground leading-snug">
+                        {fullName ?? tech.username}
+                      </p>
+                      {fullName && (
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          @{tech.username}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
 
           {/* Optional note */}
-          <div className="space-y-1.5">
-            <Label>
-              Note
-              <span className="ml-1 text-xs text-muted-foreground">(optional)</span>
-            </Label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                Note
+              </span>
+              <span className="text-xs font-medium text-primary uppercase tracking-wide">
+                Optional
+              </span>
+              <div className="flex-1 border-t border-border" />
+            </div>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
