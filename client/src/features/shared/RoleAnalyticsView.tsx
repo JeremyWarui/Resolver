@@ -84,7 +84,7 @@ function SectionSkeleton() {
 }
 
 export function RoleAnalyticsView({ role }: RoleAnalyticsViewProps) {
-  const { StatCards, title, subtitle } = ROLE_CONFIG[role];
+  const { StatCards, subtitle } = ROLE_CONFIG[role];
 
   const [params, setParams] = useState<AnalyticsParams>({ days: 30 });
   const [granularity, setGranularity] = useState<Granularity>('day');
@@ -213,8 +213,7 @@ export function RoleAnalyticsView({ role }: RoleAnalyticsViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           <GranularitySelector value={granularity} onChange={setGranularity} />

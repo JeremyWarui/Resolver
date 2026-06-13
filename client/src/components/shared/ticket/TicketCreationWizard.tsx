@@ -1,11 +1,11 @@
 // TicketCreationWizard — 3-step modal for raising a service ticket.
-// Step 1: campus-filtered catalogue (category → item)
+// Step 1: department → service item (campus-filtered, department-grouped)
 // Step 2: description + conditional location (hardcoded per-type forms, D9)
 // Step 3: review + submit
 //
 // Submit payload: { service_item_id, description, location? } — routing/priority resolved server-side (R6/R7).
 // Location gate: category.location_details (§9.4).
-// quickStart: pass category or item to skip ahead.
+// quickStart: pass departmentCode to pre-select dept; add item to jump straight to step 2.
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,32 +30,30 @@ import {
 } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/authStore';
 import { createTicket } from '@/lib/api/tickets';
+import { getCurrentUser } from '@/lib/api/auth';
 import { useCatalog, useFacilityTypes, useFacilitiesForType } from '@/hooks/catalog/useCatalog';
 import type { CatalogCategory, CatalogItem } from '@/lib/api/catalogue';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-/** Minimal shape needed from a quickStart category — accepts both CatalogCategory and ServiceCategory. */
-interface QuickStartCategory {
-  id: number;
-  name: string;
-  location_details?: boolean;
-}
+interface Dept { id: number; name: string; code: string }
 
 export interface TicketCreationWizardProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  /** Pre-fill and skip ahead: category set → opens at item sub-step; item set → opens at step 2.
-   *  Accepts any object with id + name (compatible with both CatalogCategory and ServiceCategory). */
+  /** Pre-fill and skip ahead:
+   *  departmentCode set → opens at item sub-step filtered to that dept.
+   *  item set → opens at step 2 directly. */
   quickStart?: {
-    category?: QuickStartCategory;
+    departmentCode?: string;
+    category?: { id: number; name: string; location_details?: boolean };
     item?: { id: number; name: string; description?: string };
   };
 }
 
 type Step = 1 | 2 | 3;
-type SubStep = 'category' | 'item';
+type SubStep = 'department' | 'item';
 type FacilityTypeCode = 'office_block' | 'building' | 'equipment' | 'residential' | 'grounds';
 
 const FACILITY_TYPES: { code: FacilityTypeCode; label: string; Icon: LucideIcon; hasBuilding: boolean }[] = [
@@ -128,25 +126,28 @@ function ReviewRow({ label, children }: { label: string; children: React.ReactNo
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickStart }: TicketCreationWizardProps) {
-  const user = useAuthStore((s) => s.user);
-  const campusId = user?.primary_campus_id ?? null;
+  const storeUser = useAuthStore((s) => s.user);
+  // Fall back to localStorage if the store hasn't been re-hydrated yet after page reload
+  // (authStore only persists the token; user is re-hydrated async by useUserData).
+  const campusId = storeUser?.primary_campus_id ?? getCurrentUser()?.primary_campus_id ?? null;
   const queryClient = useQueryClient();
 
   // Wizard state
   const initStep: Step = quickStart?.item ? 2 : 1;
-  const initSub: SubStep = quickStart?.item ? 'item' : (quickStart?.category ? 'item' : 'category');
+  const initSub: SubStep = quickStart?.item ? 'item' : (quickStart?.departmentCode ? 'item' : 'department');
 
-  const [step, setStep]                   = useState<Step>(initStep);
-  const [subStep, setSubStep]             = useState<SubStep>(initSub);
-  const [category, setCategory]           = useState<CatalogCategory | null>(null);
-  const [item, setItem]                   = useState<CatalogItem | null>(null);
-  const [description, setDescription]     = useState('');
-  const [attachments, setAttachments]     = useState<File[]>([]);
+  const [step, setStep]                     = useState<Step>(initStep);
+  const [subStep, setSubStep]               = useState<SubStep>(initSub);
+  const [selectedDepartment, setSelectedDepartment] = useState<Dept | null>(null);
+  const [category, setCategory]             = useState<CatalogCategory | null>(null);
+  const [item, setItem]                     = useState<CatalogItem | null>(null);
+  const [description, setDescription]       = useState('');
+  const [attachments, setAttachments]       = useState<File[]>([]);
   const [facilityTypeCode, setFacilityTypeCode] = useState<FacilityTypeCode | null>(null);
-  const [facilityId, setFacilityId]       = useState<number | null>(null);
+  const [facilityId, setFacilityId]         = useState<number | null>(null);
   const [locationValues, setLocationValues] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting]       = useState(false);
-  const [submitted, setSubmitted]         = useState(false);
+  const [submitting, setSubmitting]         = useState(false);
+  const [submitted, setSubmitted]           = useState(false);
 
   // Data
   const { data: categories = [], isLoading: catsLoading } = useCatalog(campusId);
@@ -157,27 +158,61 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
     selectedFacilityDef?.hasBuilding ? facilityTypeCode : null,
   );
 
-  // Derive facility_type_id (integer DB id) from code
   const facilityTypeId = useMemo(
     () => (facilityTypeCode ? (facilityTypes.find((ft) => ft.code === facilityTypeCode)?.id ?? null) : null),
     [facilityTypeCode, facilityTypes],
   );
 
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-  const [prevQuickCatId, setPrevQuickCatId] = useState(quickStart?.category?.id);
-  const [prevQuickItemId, setPrevQuickItemId] = useState(quickStart?.item?.id);
-  const [prevCategories, setPrevCategories] = useState(categories);
+  // Unique departments available at this campus.
+  // ServiceCategorySerializer returns department as a derived { id, name, code } object — use it directly.
+  const departments = useMemo<Dept[]>(() => {
+    const seen = new Set<number>();
+    const depts: Dept[] = [];
+    for (const cat of categories) {
+      const dept = cat.department;
+      if (dept && !seen.has(dept.id)) {
+        seen.add(dept.id);
+        depts.push(dept);
+      }
+    }
+    return depts.sort((a, b) => a.name.localeCompare(b.name));
+  }, [categories]);
 
-  // Reset wizard state when dialog opens or quickStart changes (adjust during render)
-  if (prevIsOpen !== isOpen || prevQuickCatId !== quickStart?.category?.id || prevQuickItemId !== quickStart?.item?.id) {
+  // Categories filtered to the selected department
+  const filteredCategories = useMemo(
+    () => selectedDepartment
+      ? categories.filter(c => c.department?.id === selectedDepartment.id)
+      : categories,
+    [categories, selectedDepartment],
+  );
+
+  // ── State sync during render (adjust-during-render pattern) ──────────────────
+
+  const [prevIsOpen, setPrevIsOpen]         = useState(isOpen);
+  const [prevQuickItemId, setPrevQuickItemId] = useState(quickStart?.item?.id);
+  const [prevQuickDeptCode, setPrevQuickDeptCode] = useState(quickStart?.departmentCode);
+  const [prevCategories, setPrevCategories] = useState(categories);
+  const [prevDepts, setPrevDepts]           = useState(departments);
+
+  // Reset when dialog opens or quickStart changes
+  if (
+    prevIsOpen !== isOpen ||
+    prevQuickItemId !== quickStart?.item?.id ||
+    prevQuickDeptCode !== quickStart?.departmentCode
+  ) {
     setPrevIsOpen(isOpen);
-    setPrevQuickCatId(quickStart?.category?.id);
     setPrevQuickItemId(quickStart?.item?.id);
+    setPrevQuickDeptCode(quickStart?.departmentCode);
     if (isOpen) {
       setStep(quickStart?.item ? 2 : 1);
-      setSubStep(quickStart?.item ? 'item' : (quickStart?.category ? 'item' : 'category'));
+      setSubStep(quickStart?.item ? 'item' : (quickStart?.departmentCode ? 'item' : 'department'));
+      setSelectedDepartment(null); // resolved below once departments load
       setCategory(null);
-      setItem(null);
+      // Pre-fill from quickStart so the service banner is visible immediately.
+      // The catalog lookup below will still run to set category (needed for location_details).
+      setItem(quickStart?.item
+        ? { id: quickStart.item.id, name: quickStart.item.name, description: quickStart.item.description ?? '', is_active: true }
+        : null);
       setDescription('');
       setAttachments([]);
       setFacilityTypeCode(null);
@@ -187,33 +222,39 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
     }
   }
 
-  // Cache invalidation is a side-effect and must stay in an effect
+  // Invalidate catalog cache on open
   useEffect(() => {
     if (isOpen) queryClient.invalidateQueries({ queryKey: ['catalog'] });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, quickStart?.category?.id, quickStart?.item?.id]);
+  }, [isOpen, quickStart?.item?.id, quickStart?.departmentCode]);
 
-  // Resolve quickStart category/item from catalogue once loaded (adjust during render)
+  // Resolve quickStart item + category from catalogue once loaded.
+  // item is pre-filled from quickStart immediately; this block upgrades it with the
+  // authoritative catalog record and sets category (needed for location_details).
   if (isOpen && prevCategories !== categories && categories.length > 0) {
     setPrevCategories(categories);
-    if (quickStart?.category && !category) {
-      const found = categories.find((c) => c.id === quickStart.category!.id);
-      if (found) setCategory(found);
-    }
-    if (quickStart?.item && !item) {
+    if (quickStart?.item && !category) {
       for (const cat of categories) {
         const found = cat.items?.find((si) => si.id === quickStart.item!.id);
-        if (found) { setItem(found); break; }
+        if (found) { setItem(found); setCategory(cat); break; }
       }
     }
   }
 
-  const handleCatSelect = useCallback((cat: CatalogCategory) => {
-    if (cat.id !== category?.id) { setCategory(cat); setItem(null); }
-    setSubStep('item');
-  }, [category?.id]);
+  // Resolve quickStart departmentCode → selectedDepartment once departments list is ready
+  if (isOpen && prevDepts !== departments && departments.length > 0) {
+    setPrevDepts(departments);
+    if (quickStart?.departmentCode && !selectedDepartment) {
+      const found = departments.find(d => d.code === quickStart.departmentCode);
+      if (found) setSelectedDepartment(found);
+    }
+  }
 
-  const handleItemSelect = useCallback((si: CatalogItem) => { setItem(si); }, []);
+  // Select item + its parent category together
+  const handleItemAndCatSelect = useCallback((cat: CatalogCategory, si: CatalogItem) => {
+    if (cat.id !== category?.id) setCategory(cat);
+    setItem(si);
+  }, [category?.id]);
 
   // Location validation (per type, per SoT §9.4)
   const locationValid = useMemo(() => {
@@ -270,6 +311,8 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
     onOpenChange(open);
   }
 
+  const loading = catsLoading;
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -300,33 +343,38 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
             {/* ── Step 1: Service picker ── */}
             {!submitted && step === 1 && (
               <div className="space-y-3">
-                {subStep === 'item' && category && (
+
+                {/* Breadcrumb when viewing items */}
+                {subStep === 'item' && selectedDepartment && (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <button type="button" onClick={() => setSubStep('category')} className="text-primary hover:underline">
-                      {category.name}
+                    <button
+                      type="button"
+                      onClick={() => { setSubStep('department'); setSelectedDepartment(null); setItem(null); setCategory(null); }}
+                      className="text-primary hover:underline"
+                    >
+                      Departments
                     </button>
                     <span>/</span>
-                    <span className="font-medium text-foreground">Service</span>
+                    <span className="font-medium text-foreground">{selectedDepartment.name}</span>
                   </div>
                 )}
 
-                {subStep === 'category' && (
+                {/* Department selection */}
+                {subStep === 'department' && (
                   <>
-                    <p className="text-sm text-muted-foreground">What type of service do you need?</p>
-                    {catsLoading ? (
+                    <p className="text-sm text-muted-foreground">Which department are you requesting a service from?</p>
+                    {loading ? (
                       <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
-                    ) : categories.length === 0 ? (
+                    ) : departments.length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">No services available at your campus.</p>
                     ) : (
                       <div className="space-y-2">
-                        {categories.map((cat) => (
+                        {departments.map((dept) => (
                           <OptionCard
-                            key={cat.id}
-                            selected={cat.id === category?.id}
-                            onClick={() => handleCatSelect(cat)}
-                            title={cat.name}
-                            description={cat.description}
-                            badge={cat.section_type?.name ?? cat.section_type_name}
+                            key={dept.id}
+                            selected={false}
+                            onClick={() => { setSelectedDepartment(dept); setSubStep('item'); }}
+                            title={dept.name}
                           />
                         ))}
                       </div>
@@ -334,21 +382,33 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                   </>
                 )}
 
+                {/* Service item selection — grouped by category */}
                 {subStep === 'item' && (
                   <>
-                    <p className="text-sm text-muted-foreground">Select the specific service.</p>
-                    {!category?.items?.length ? (
-                      <p className="text-sm text-muted-foreground italic">No items in this category.</p>
+                    <p className="text-sm text-muted-foreground">Select the service you need.</p>
+                    {loading ? (
+                      <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
+                    ) : filteredCategories.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">No services available.</p>
                     ) : (
-                      <div className="space-y-2">
-                        {category.items.map((si) => (
-                          <OptionCard
-                            key={si.id}
-                            selected={si.id === item?.id}
-                            onClick={() => handleItemSelect(si)}
-                            title={si.name}
-                            description={si.description}
-                          />
+                      <div className="space-y-4">
+                        {filteredCategories.map((cat) => (
+                          <div key={cat.id}>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-0.5">
+                              {cat.name}
+                            </p>
+                            <div className="space-y-2">
+                              {(cat.items ?? []).map((si) => (
+                                <OptionCard
+                                  key={si.id}
+                                  selected={si.id === item?.id}
+                                  onClick={() => handleItemAndCatSelect(cat, si)}
+                                  title={si.name}
+                                  description={si.description}
+                                />
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -386,7 +446,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                   />
                 </div>
 
-                {/* Attachments */}
                 <div className="space-y-1.5">
                   <Label>Attachments <span className="text-xs text-muted-foreground">(optional)</span></Label>
                   <AttachmentUploader
@@ -414,7 +473,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                         Facility / Location
                       </p>
 
-                      {/* Facility type selector */}
                       <div className="grid grid-cols-5 gap-2">
                         {FACILITY_TYPES.map(({ code, label, Icon }) => (
                           <button
@@ -443,7 +501,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                       {facilityTypeCode && (
                         <div className="mt-3 border-t border-border/50 pt-3 space-y-3">
 
-                          {/* office_block — building + floor + room + area */}
                           {facilityTypeCode === 'office_block' && (
                             <>
                               <div className="space-y-1.5">
@@ -476,7 +533,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                             </>
                           )}
 
-                          {/* building — building + area + room */}
                           {facilityTypeCode === 'building' && (
                             <>
                               <div className="space-y-1.5">
@@ -503,7 +559,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                             </>
                           )}
 
-                          {/* equipment — asset_name + asset_id + description */}
                           {facilityTypeCode === 'equipment' && (
                             <>
                               <div className="grid grid-cols-2 gap-2">
@@ -523,7 +578,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                             </>
                           )}
 
-                          {/* residential — unit_number + tenant_name */}
                           {facilityTypeCode === 'residential' && (
                             <div className="grid grid-cols-2 gap-2">
                               <div className="space-y-1.5">
@@ -537,7 +591,6 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                             </div>
                           )}
 
-                          {/* grounds — zone + landmark */}
                           {facilityTypeCode === 'grounds' && (
                             <div className="grid grid-cols-2 gap-2">
                               <div className="space-y-1.5">
@@ -567,6 +620,7 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                   <div className="space-y-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Service</p>
                     <div className="border rounded-lg divide-y">
+                      {selectedDepartment && <ReviewRow label="Department">{selectedDepartment.name}</ReviewRow>}
                       {category && <ReviewRow label="Category">{category.name}</ReviewRow>}
                       {item && <ReviewRow label="Service">{item.name}</ReviewRow>}
                     </div>
@@ -587,15 +641,15 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                         {buildings.find((b) => b.id === facilityId)?.name ?? `Building #${facilityId}`}
                       </ReviewRow>
                     )}
-                    {locationValues.floor      && <ReviewRow label="Floor">{locationValues.floor}</ReviewRow>}
-                    {locationValues.room       && <ReviewRow label="Room">{locationValues.room}</ReviewRow>}
-                    {locationValues.area       && <ReviewRow label="Area">{locationValues.area}</ReviewRow>}
-                    {locationValues.asset_name && <ReviewRow label="Asset">{locationValues.asset_name}</ReviewRow>}
-                    {locationValues.asset_id   && <ReviewRow label="Asset ID">{locationValues.asset_id}</ReviewRow>}
+                    {locationValues.floor       && <ReviewRow label="Floor">{locationValues.floor}</ReviewRow>}
+                    {locationValues.room        && <ReviewRow label="Room">{locationValues.room}</ReviewRow>}
+                    {locationValues.area        && <ReviewRow label="Area">{locationValues.area}</ReviewRow>}
+                    {locationValues.asset_name  && <ReviewRow label="Asset">{locationValues.asset_name}</ReviewRow>}
+                    {locationValues.asset_id    && <ReviewRow label="Asset ID">{locationValues.asset_id}</ReviewRow>}
                     {locationValues.unit_number && <ReviewRow label="Unit">{locationValues.unit_number}</ReviewRow>}
                     {locationValues.tenant_name && <ReviewRow label="Tenant">{locationValues.tenant_name}</ReviewRow>}
-                    {locationValues.zone       && <ReviewRow label="Zone">{locationValues.zone}</ReviewRow>}
-                    {locationValues.landmark   && <ReviewRow label="Landmark">{locationValues.landmark}</ReviewRow>}
+                    {locationValues.zone        && <ReviewRow label="Zone">{locationValues.zone}</ReviewRow>}
+                    {locationValues.landmark    && <ReviewRow label="Landmark">{locationValues.landmark}</ReviewRow>}
                   </div>
                 </div>
 
@@ -624,7 +678,13 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                 size="sm"
                 onClick={() => {
                   if (step === 1) {
-                    if (subStep === 'item') { setSubStep('category'); return; }
+                    if (subStep === 'item') {
+                      setSubStep('department');
+                      setSelectedDepartment(null);
+                      setItem(null);
+                      setCategory(null);
+                      return;
+                    }
                     onOpenChange(false);
                   } else {
                     setStep((s) => (s - 1) as Step);
@@ -635,7 +695,7 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
                 className="gap-1"
               >
                 <ChevronLeft className="h-4 w-4" />
-                {step === 1 && subStep === 'category' ? 'Cancel' : 'Back'}
+                {step === 1 && subStep === 'department' ? 'Cancel' : 'Back'}
               </Button>
 
               {step < 3 ? (

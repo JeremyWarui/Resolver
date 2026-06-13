@@ -16,9 +16,10 @@ export interface CatalogCategory {
   description: string;
   location_details: boolean;
   default_priority: { id: number; name: string; rank: number };
-  section_type: { id: number; name: string };
-  /** Flattened alias — populated by the frontend from section_type.name when needed */
-  section_type_name?: string;
+  /** FK integer — the section type this category belongs to */
+  section_type: number;
+  /** Derived by backend from section_type.department — always present */
+  department: { id: number; name: string; code: string };
   items: CatalogItem[];
 }
 

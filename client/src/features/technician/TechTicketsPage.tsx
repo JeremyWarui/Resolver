@@ -15,7 +15,6 @@ const TechTicketsPage = ({ userData, onTicketSelect }: TechTicketsPageProps) => 
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
       <div className="flex justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-800">Assigned Tickets</h1>
           <p className="text-sm text-gray-600">
             Welcome back, {userData?.first_name || 'Technician'} 👋 Manage your assigned work
           </p>

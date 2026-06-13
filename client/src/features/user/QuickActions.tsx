@@ -9,9 +9,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api/client';
-import type { ServiceCategory, ServiceItem } from '@/types/catalogue';
 
-// ── Backend shape for /section-types/ ───────────────────────────────────────
+// ── Backend shape for /section-types/ ────────────────────────────────────────
+
+interface CatalogueSectionCategory {
+  id: number;
+  name: string;
+  section_type_name: string;
+  is_active: boolean;
+  location_details: boolean;
+  icon: string | null;
+  service_items: Array<{
+    id: number;
+    name: string;
+    description: string;
+    is_active: boolean;
+  }>;
+}
 
 interface CatalogueSectionType {
   id: number;
@@ -20,7 +34,7 @@ interface CatalogueSectionType {
   department_id: number;
   department_code: string;
   department_name: string;
-  service_categories: ServiceCategory[];
+  service_categories: CatalogueSectionCategory[];
 }
 
 // ── Color theme — keyed on department code / name ─────────────────────────────
@@ -30,7 +44,6 @@ interface CategoryTheme {
   lightBg: string;
   icon: React.ElementType;
 }
-
 
 function getDeptTheme(deptCode: string, deptName?: string): CategoryTheme {
   const key = `${deptCode} ${deptName ?? ''}`.toLowerCase();
@@ -49,33 +62,48 @@ function getDeptTheme(deptCode: string, deptName?: string): CategoryTheme {
   return { color: '#6B7280', lightBg: 'bg-gray-100 dark:bg-gray-800/50', icon: Layers };
 }
 
-function getCatTheme(cat: ServiceCategory): CategoryTheme {
-  const key = `${cat.section_type_name} ${cat.name} ${cat.icon ?? ''}`.toLowerCase();
-  if (/ict|tech|\bit\b|comput|digital|network|internet|erp|software/.test(key))
-    return { color: '#185FA5', lightBg: 'bg-blue-100 dark:bg-blue-950/50', icon: Laptop };
-  if (/maint|facilit|plumb|electr|clean|build|repair/.test(key))
-    return { color: '#854F0B', lightBg: 'bg-amber-100 dark:bg-amber-950/50', icon: Wrench };
-  if (/\bhr\b|human|payroll|staff|leave|welfare|registry/.test(key))
-    return { color: '#3B6D11', lightBg: 'bg-green-100 dark:bg-green-950/50', icon: Users };
-  if (/secur|access|guard|incident/.test(key))
-    return { color: '#A32D2D', lightBg: 'bg-red-100 dark:bg-red-950/50', icon: Shield };
-  if (/transport|travel|vehic|car|fleet/.test(key))
-    return { color: '#5F5E5A', lightBg: 'bg-stone-200 dark:bg-stone-700/50', icon: Truck };
-  if (/finance|financ|payment|account|invoic|reimburse/.test(key))
-    return { color: '#534AB7', lightBg: 'bg-violet-100 dark:bg-violet-950/50', icon: Receipt };
-  return { color: '#6B7280', lightBg: 'bg-gray-100 dark:bg-gray-800/50', icon: Layers };
+// ── Item icon — pick based on item/category name ──────────────────────────────
+
+function getItemIcon(itemName: string, catName: string): React.ElementType {
+  const key = `${itemName} ${catName}`.toLowerCase();
+  if (/plumb|water|pipe|drain/.test(key)) return Wrench;
+  if (/electr|power|light|wiring/.test(key)) return Wrench;
+  if (/carpent|mason|repair|build/.test(key)) return Wrench;
+  if (/vehicle|transport|travel|car|fleet|booking/.test(key)) return Truck;
+  if (/internet|network|wifi|phone|connect/.test(key)) return Laptop;
+  if (/erp|software|system|email/.test(key)) return Laptop;
+  if (/payroll|salary|loan|rent|deduct/.test(key)) return Receipt;
+  if (/file|registry|record/.test(key)) return Layers;
+  return Wrench;
 }
 
-
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface QuickActionItem {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface QuickActionCategory {
+  id: number;
+  name: string;
+  location_details: boolean;
+}
 
 interface QuickActionsProps {
   onServiceSelect: (ctx: {
     sectionTypeId: number;
     departmentCode: string;
-    category?: ServiceCategory;
-    item?: ServiceItem;
+    category?: QuickActionCategory;
+    item?: QuickActionItem;
   }) => void;
+}
+
+interface DeptEntry {
+  sectionTypeId: number;
+  category: QuickActionCategory;
+  item: QuickActionItem;
 }
 
 interface DeptGroup {
@@ -83,27 +111,25 @@ interface DeptGroup {
   departmentCode: string;
   departmentName: string;
   theme: CategoryTheme;
-  entries: Array<{ sectionTypeId: number; category: ServiceCategory }>;
+  entries: DeptEntry[];
 }
 
 // ── DepartmentBox ─────────────────────────────────────────────────────────────
+
+const VISIBLE_ITEM_LIMIT = 4;
 
 interface DepartmentBoxProps {
   group: DeptGroup;
   onServiceSelect: QuickActionsProps['onServiceSelect'];
 }
 
-
-const VISIBLE_CAT_LIMIT = 4;
-
 function DepartmentBox({ group, onServiceSelect }: DepartmentBoxProps) {
   const [expanded, setExpanded] = useState(false);
   const { theme, departmentName, departmentCode, entries } = group;
   const DeptIcon = theme.icon;
 
-  const visible = expanded ? entries : entries.slice(0, VISIBLE_CAT_LIMIT);
-  const hasMore = entries.length > VISIBLE_CAT_LIMIT;
-
+  const visible = expanded ? entries : entries.slice(0, VISIBLE_ITEM_LIMIT);
+  const hasMore = entries.length > VISIBLE_ITEM_LIMIT;
   const firstSectionTypeId = entries[0]?.sectionTypeId ?? 0;
 
   return (
@@ -127,23 +153,22 @@ function DepartmentBox({ group, onServiceSelect }: DepartmentBoxProps) {
 
       <Separator className="my-3" />
 
-      {/* Category square-tile grid */}
+      {/* Service item tile grid */}
       <div className="grid grid-cols-2 gap-2">
-        {visible.map(({ sectionTypeId, category: cat }) => {
-          const catTheme = getCatTheme(cat);
-          const CatIcon = catTheme.icon;
+        {visible.map(({ sectionTypeId, category, item }) => {
+          const ItemIcon = getItemIcon(item.name, category.name);
           return (
             <button
-              key={cat.id}
+              key={item.id}
               type="button"
-              onClick={() => onServiceSelect({ sectionTypeId, departmentCode, category: cat })}
-              className="aspect-square border border-border bg-background rounded-lg p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 hover:border-border/80 transition-all text-center group"
+              onClick={() => onServiceSelect({ sectionTypeId, departmentCode, category, item })}
+              className="aspect-square border border-border bg-background rounded-lg p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 hover:border-border/80 transition-all text-center"
             >
-              <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', catTheme.lightBg)}>
-                <CatIcon className="h-4 w-4" style={{ color: catTheme.color }} />
+              <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', theme.lightBg)}>
+                <ItemIcon className="h-4 w-4" style={{ color: theme.color }} />
               </div>
               <span className="text-[11px] font-medium text-card-foreground leading-snug w-full">
-                {cat.name}
+                {item.name}
               </span>
             </button>
           );
@@ -160,7 +185,7 @@ function DepartmentBox({ group, onServiceSelect }: DepartmentBoxProps) {
           {expanded ? (
             <><ChevronUp className="h-3 w-3" /> See Less</>
           ) : (
-            <><ChevronDown className="h-3 w-3" /> See {entries.length - VISIBLE_CAT_LIMIT} More</>
+            <><ChevronDown className="h-3 w-3" /> See {entries.length - VISIBLE_ITEM_LIMIT} More</>
           )}
         </button>
       )}
@@ -196,34 +221,36 @@ const QuickActions = ({ onServiceSelect }: QuickActionsProps) => {
     return () => { cancelled = true; };
   }, []);
 
-  // Group section types by department_id → one box per department
+  // Flatten: one entry per active service item, grouped by department
   const deptGroups = useMemo<DeptGroup[]>(() => {
     const groupMap = new Map<number, DeptGroup>();
 
     for (const st of sectionTypes) {
-      const activeCategories = (st.service_categories ?? []).filter(c => c.is_active);
-      if (activeCategories.length === 0) continue;
-
-      const entries = activeCategories.map(cat => ({ sectionTypeId: st.id, category: cat }));
-      const existing = groupMap.get(st.department_id);
-
-      if (existing) {
-        existing.entries.push(...entries);
-      } else {
-        groupMap.set(st.department_id, {
-          departmentId: st.department_id,
-          departmentCode: st.department_code,
-          departmentName: st.department_name || st.department_code,
-          theme: getDeptTheme(st.department_code, st.department_name),
-          entries,
-        });
+      for (const cat of (st.service_categories ?? []).filter(c => c.is_active)) {
+        for (const item of (cat.service_items ?? []).filter(i => i.is_active)) {
+          const entry: DeptEntry = {
+            sectionTypeId: st.id,
+            category: { id: cat.id, name: cat.name, location_details: cat.location_details },
+            item: { id: item.id, name: item.name, description: item.description },
+          };
+          const existing = groupMap.get(st.department_id);
+          if (existing) {
+            existing.entries.push(entry);
+          } else {
+            groupMap.set(st.department_id, {
+              departmentId: st.department_id,
+              departmentCode: st.department_code,
+              departmentName: st.department_name || st.department_code,
+              theme: getDeptTheme(st.department_code, st.department_name),
+              entries: [entry],
+            });
+          }
+        }
       }
     }
 
     return Array.from(groupMap.values());
   }, [sectionTypes]);
-
-  // ── Loading skeleton ────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -237,7 +264,7 @@ const QuickActions = ({ onServiceSelect }: QuickActionsProps) => {
               </div>
               <Skeleton className="h-px w-full" />
               <div className="grid grid-cols-2 gap-2">
-                {[1, 2, 3, 4].map(j => <Skeleton key={j} className="h-9 rounded-lg" />)}
+                {[1, 2, 3, 4].map(j => <Skeleton key={j} className="aspect-square rounded-lg" />)}
               </div>
             </div>
           ))}
@@ -245,8 +272,6 @@ const QuickActions = ({ onServiceSelect }: QuickActionsProps) => {
       </div>
     );
   }
-
-  // ── Error state ─────────────────────────────────────────────────────────────
 
   if (error) {
     return (
@@ -258,8 +283,6 @@ const QuickActions = ({ onServiceSelect }: QuickActionsProps) => {
     );
   }
 
-  // ── Empty state ─────────────────────────────────────────────────────────────
-
   if (deptGroups.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground gap-2">
@@ -269,8 +292,6 @@ const QuickActions = ({ onServiceSelect }: QuickActionsProps) => {
       </div>
     );
   }
-
-  // ── Main render ─────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-4">

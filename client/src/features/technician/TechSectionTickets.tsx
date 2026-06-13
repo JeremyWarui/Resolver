@@ -99,7 +99,6 @@ const TechSectionTickets = ({ currentTechnicianId, onTicketSelect }: { currentTe
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-800">Section Tickets</h1>
         <p className="text-sm text-gray-600">
           All tickets in your section — {unassignedCount} unassigned
         </p>

@@ -192,8 +192,7 @@ const TechReport = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">My Performance Report</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground">
             View your ticket statistics and download detailed performance reports
           </p>
         </div>

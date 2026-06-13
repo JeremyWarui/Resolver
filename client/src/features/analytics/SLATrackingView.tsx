@@ -142,7 +142,6 @@ export function SLATrackingView() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-xl font-semibold">SLA Tracking</h2>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2">

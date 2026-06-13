@@ -1,36 +1,36 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { UserStatsCards } from '@/components/shared/data/StatCards';
 import { TicketCreationWizard } from '@/components/shared/ticket/TicketCreationWizard';
 import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
-import QuickActions from './QuickActions';
+import QuickActions, { type QuickActionCategory, type QuickActionItem } from './QuickActions';
 import { RecentTicketsCard } from './RecentTicketsCard';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserDashboard } from '@/hooks/dashboard';
 import { useTickets } from '@/hooks/tickets';
-import organizationsService from '@/lib/api/organizations';
-import type { Department } from '@/types';
-import type { ServiceCategory, ServiceItem } from '@/types/catalogue';
 
 interface UserDashboardProps {
   onNavigate?: (section: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings') => void;
 }
 
+type QuickStart = {
+  departmentCode?: string;
+  category?: QuickActionCategory;
+  item?: QuickActionItem;
+} | undefined;
+
 const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
+  const queryClient = useQueryClient();
   const userData = useAuthStore((s) => s.user);
   const { loading: dashLoading, refetch } = useUserDashboard();
   const { tickets: recentTickets } = useTickets({ mine: 1, page_size: 5 });
 
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-
-  const [departments, setDepartments] = useState<Department[]>([]);
-
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [quickStart, setQuickStart] = useState<
-    { department: Department; category?: ServiceCategory; item?: ServiceItem } | undefined
-  >();
+  const [quickStart, setQuickStart] = useState<QuickStart>(undefined);
 
   const welcomeName = [userData?.first_name, userData?.last_name].filter(Boolean).join(' ') ||
     userData?.username ||
@@ -40,29 +40,17 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
     refetch();
   }, [refetch]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const campusId = userData?.primary_campus_id;
-        const deptRes = await organizationsService.getDepartments(
-          campusId ? { campus: campusId } : undefined,
-        );
-        setDepartments(Array.isArray(deptRes) ? deptRes : []);
-      } catch {
-        // silent — wizard opens at step 1 if dept lookup fails
-      }
-    })();
-  }, [userData?.primary_campus_id]);
-
-  function handleServiceSelect(ctx: { sectionTypeId: number; departmentCode: string; category?: ServiceCategory; item?: ServiceItem }) {
-    const dept = departments.find(d => d.code === ctx.departmentCode);
-    if (!dept) {
-      setQuickStart(undefined);
-    } else if (ctx.category) {
-      setQuickStart({ department: dept, category: ctx.category, item: ctx.item });
-    } else {
-      setQuickStart({ department: dept });
-    }
+  function handleServiceSelect(ctx: {
+    sectionTypeId: number;
+    departmentCode: string;
+    category?: QuickActionCategory;
+    item?: QuickActionItem;
+  }) {
+    setQuickStart({
+      departmentCode: ctx.departmentCode,
+      category: ctx.category,
+      item: ctx.item,
+    });
     setWizardOpen(true);
   }
 
@@ -81,10 +69,7 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
       {/* ── Section 1: Header + Greeting + KPI Stats ── */}
       <div className="px-6 py-4 border-b bg-background">
         <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-2xl font-semibold">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Welcome back, {welcomeName}</p>
-          </div>
+          <p className="text-sm text-muted-foreground">Welcome back, {welcomeName}</p>
           <Button
             size="sm"
             className="gap-1.5"
@@ -125,7 +110,10 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
       <TicketCreationWizard
         isOpen={wizardOpen}
         onOpenChange={handleWizardOpenChange}
-        onSuccess={() => refetch()}
+        onSuccess={() => {
+          refetch();
+          queryClient.invalidateQueries({ queryKey: ['tickets'] });
+        }}
         quickStart={quickStart}
       />
 

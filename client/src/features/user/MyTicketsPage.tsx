@@ -71,9 +71,7 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
     <div className="flex flex-col h-full bg-muted/30">
       {/* Page header */}
       <div className="px-6 py-4 border-b bg-background flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-2xl font-semibold">My Tickets</h1>
-        </div>
+        <div />
         <Button
           size="sm"
           className="gap-1.5"

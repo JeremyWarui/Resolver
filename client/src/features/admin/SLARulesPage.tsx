@@ -630,10 +630,6 @@ export default function SLARulesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Clock className="h-6 w-6 text-gray-500" />
-            SLA Rules
-          </h1>
           <p className="text-sm text-gray-600 mt-1">
             Set response and resolution targets per priority level. Click any value to edit inline.
           </p>

@@ -7,7 +7,6 @@ const HODTechnicians = () => {
   return (
     <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Technicians</h2>
         <p className="text-sm text-gray-600">
           {technicians.length} technician{technicians.length !== 1 ? 's' : ''}
         </p>

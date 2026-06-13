@@ -7,8 +7,10 @@ import { LoginForm } from "./app/auth/LoginForm";
 import { RegisterForm } from "./app/auth/RegisterForm";
 import { DashboardShell } from "./app/dashboard/DashboardShell";
 import { NotFoundPage } from "./app/errors/NotFoundPage";
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 // Lazy load main layout components for better code splitting
+const MobileShell = lazy(() => import("./features/technician/mobile/MobileShell").then(m => ({ default: m.MobileShell })));
 const AdminLayout = lazy(() => import("./features/admin/AdminLayout"));
 const UserLayout = lazy(() => import("./features/user/UserLayout"));
 const TechnicianLayout = lazy(() => import("./features/technician/TechnicianLayout"));
@@ -24,6 +26,9 @@ const RouteLoading = () => (
 );
 
 const App = () => {
+  // Register/update service worker automatically
+  useRegisterSW({ immediate: true });
+
   const handleAuthSuccess = () => {};
 
   return (
@@ -102,6 +107,16 @@ const App = () => {
               }
             />
           </Route>
+
+          {/* PWA mobile shell for technicians — standalone, no desktop sidebar */}
+          <Route
+            path="/tech/mobile"
+            element={
+              <ProtectedRoute requiredRoles={['technician']}>
+                <MobileShell />
+              </ProtectedRoute>
+            }
+          />
 
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<NotFoundPage />} />

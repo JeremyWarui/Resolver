@@ -43,13 +43,12 @@ interface Props {
 
 const RoleTicketsPage = ({ role, onTicketSelect }: Props) => {
   const StatCards = STAT_CARDS[role];
-  const { title, subtitle } = HEADER[role];
+  const { subtitle } = HEADER[role];
 
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
       <div className="flex justify-between mb-2">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
           <p className="text-sm text-gray-600">{subtitle}</p>
         </div>
         <div className="flex items-center space-x-2">

@@ -73,7 +73,7 @@ const HEADER_COPY: Record<DashboardRole, { title: string; subtitle: string }> = 
 
 const RoleDashboardView = ({ role }: RoleDashboardViewProps) => {
   const StatCards = STAT_CARDS[role];
-  const { title, subtitle } = HEADER_COPY[role];
+  const { subtitle } = HEADER_COPY[role];
 
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -190,9 +190,6 @@ const RoleDashboardView = ({ role }: RoleDashboardViewProps) => {
     <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
       <div className="flex justify-between mb-2">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">
-            {title}
-          </h2>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex items-center space-x-2">
