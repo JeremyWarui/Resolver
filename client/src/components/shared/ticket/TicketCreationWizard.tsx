@@ -241,16 +241,16 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
     if (!item) return;
     setSubmitting(true);
     try {
-      let locationPayload: { facility_type_id: number; facility_id?: number; values: Record<string, unknown> } | undefined;
+      let locationPayload: { facility_type: number; facility?: number; values: Record<string, unknown> } | undefined;
       if (category?.location_details && facilityTypeCode && facilityTypeId) {
         locationPayload = {
-          facility_type_id: facilityTypeId,
-          ...(facilityId ? { facility_id: facilityId } : {}),
+          facility_type: facilityTypeId,
+          ...(facilityId ? { facility: facilityId } : {}),
           values: { ...locationValues },
         };
       }
       const result = await createTicket({
-        service_item_id: item.id,
+        service_item: item.id,
         description: description.trim(),
         ...(locationPayload ? { location: locationPayload } : {}),
       });

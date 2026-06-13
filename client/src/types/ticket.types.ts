@@ -129,11 +129,11 @@ export interface CursorTicketsResponse {
 
 // Canonical create payload — server resolves section + priority (R6/R7)
 export interface CreateTicketPayload {
-  service_item_id: number;
+  service_item: number;
   description: string;
   location?: {
-    facility_type_id: number;
-    facility_id?: number;
+    facility_type: number;
+    facility?: number;
     values: Record<string, unknown>;
   };
 }
