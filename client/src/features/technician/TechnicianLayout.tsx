@@ -1,59 +1,32 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ComingSoonSection from '@/components/shared/ComingSoonSection';
-import { RoleLayout } from '@/components/layout/RoleLayout';
-import TechTicketsPage from './TechTicketsPage';
+import { RoleDashboardLayout } from '@/components/layout/RoleDashboardLayout';
+import { ROLE_NAV } from '@/config/roleNav';
 import TechSectionTickets from './TechSectionTickets';
+import TechTicketsPage from './TechTicketsPage';
 import TechnicianReportsPage from './TechnicianReportsPage';
-import { TicketDetailPage } from '@/app/dashboard/tickets/TicketDetailPage';
-import { useAuthStore } from '@/stores/authStore';
-import { useTechnicianDashboard } from '@/hooks/dashboard';
 
-const TechnicianLayoutContent = () => {
-  const [activeSection, setActiveSection] = useState<string>('dashboard');
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-  const userData = useAuthStore((s) => s.user);
-  const { loading: dashboardLoading } = useTechnicianDashboard();
+const TechnicianLayout = () => {
+  const navigate = useNavigate();
 
-  const headerTitle: Record<string, string> = {
-    dashboard: 'Section Tickets',
-    assignedTickets: 'Assigned Tickets',
-    report: 'Reports',
-    settings: 'Settings',
-  };
-  const displayTitle = selectedTicketId !== null ? 'Ticket Detail' : (headerTitle[activeSection] ?? 'Dashboard');
+  useEffect(() => {
+    if (window.innerWidth < 640) {
+      navigate('/tech/mobile', { replace: true });
+    }
+  }, [navigate]);
 
   return (
-    <RoleLayout
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      role={userData?.role || 'technician'}
-      title={displayTitle}
-      currentUser={userData}
-      loading={dashboardLoading}
-    >
-      <>
-        {activeSection === 'dashboard' && (
-          <TechSectionTickets
-            currentTechnicianId={userData?.id}
-            onTicketSelect={setSelectedTicketId}
-          />
-        )}
-        {activeSection === 'assignedTickets' && (
-          <TechTicketsPage userData={userData} onTicketSelect={setSelectedTicketId} />
-        )}
-        {activeSection === 'report' && <TechnicianReportsPage />}
-        {activeSection === 'settings' && <ComingSoonSection section='Settings' />}
-      </>
-
-      <TicketDetailPage
-        open={selectedTicketId !== null}
-        ticketId={selectedTicketId}
-        onClose={() => setSelectedTicketId(null)}
-      />
-    </RoleLayout>
+    <RoleDashboardLayout
+      nav={ROLE_NAV.technician}
+      sections={({ onTicketSelect, userId }) => ({
+        dashboard:      <TechSectionTickets currentTechnicianId={userId} onTicketSelect={onTicketSelect} />,
+        assignedTickets: <TechTicketsPage onTicketSelect={onTicketSelect} />,
+        report:         <TechnicianReportsPage />,
+        settings:       <ComingSoonSection section="Settings" />,
+      })}
+    />
   );
 };
-
-const TechnicianLayout = () => <TechnicianLayoutContent />;
 
 export default TechnicianLayout;

@@ -23,7 +23,7 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
-        start_url: '/technician',
+        start_url: '/tech/mobile',
         icons: [
           { src: 'pwa-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
           { src: 'pwa-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
@@ -42,7 +42,24 @@ export default defineConfig({
   server: {
     proxy: {
       "/data.json": {
-        target: "http://localhost:3000", // Target the http-server
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
+  },
+  // preview proxy — forwards API and WS to local Django so phone/LAN testing works.
+  // Override Origin to localhost:4173 so Django's CORS_ALLOWED_ORIGINS matches
+  // regardless of which LAN IP the phone used to reach this preview server.
+  preview: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        headers: { 'Origin': 'http://localhost:4173' },
+      },
+      '/ws': {
+        target: 'ws://localhost:8000',
+        ws: true,
         changeOrigin: true,
       },
     },

@@ -64,8 +64,11 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         manager: '/manager',
       };
 
-      // Unassigned users (role: null) default to /user until an admin assigns a role.
-      const redirectPath = (result.role && roleRedirect[result.role]) ?? '/user';
+      // Technicians on small screens go straight to the mobile PWA shell.
+      let redirectPath = (result.role && roleRedirect[result.role]) ?? '/user';
+      if (result.role === 'technician' && window.innerWidth < 640) {
+        redirectPath = '/tech/mobile';
+      }
       window.location.assign(redirectPath);
       
       onSuccess?.();

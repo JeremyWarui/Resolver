@@ -57,7 +57,7 @@ self.addEventListener('push', (event: PushEvent) => {
     badge: '/pwa-192.svg',
     tag: `ticket-${payload.ticketId ?? 'general'}`,
     renotify: true,
-    data: { ticketId: payload.ticketId, url: '/technician' },
+    data: { ticketId: payload.ticketId, url: '/tech/mobile' },
   } as NotificationOptions;
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -65,7 +65,7 @@ self.addEventListener('push', (event: PushEvent) => {
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
-  const url = (event.notification.data?.url as string) ?? '/technician';
+  const url = (event.notification.data?.url as string) ?? '/tech/mobile';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
