@@ -134,11 +134,20 @@ export const campusDepartmentsService = {
 
   assignHOD: async (
     id: number,
-    headOfDepartmentId: number | null
+    hodId: number | null
   ): Promise<CampusDepartment> => {
     const { data } = await apiClient.patch<CampusDepartment>(
       `/campus-departments/${id}/assign-hod/`,
-      { head_of_department_id: headOfDepartmentId }
+      { hod_id: hodId }
+    );
+    return data;
+  },
+
+  getHodCandidates: async (
+    campusDepartmentId: number
+  ): Promise<{ id: number; name: string; username: string }[]> => {
+    const { data } = await apiClient.get(
+      `/campus-departments/${campusDepartmentId}/hod-candidates/`
     );
     return data;
   },
