@@ -159,7 +159,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                   Welcome Back
                 </CardTitle>
                 <CardDescription className="text-base text-gray-600 mt-2">
-                  Sign in to KSG Service Desk
+                  Sign in to Resolver
                 </CardDescription>
               </div>
             </CardHeader>

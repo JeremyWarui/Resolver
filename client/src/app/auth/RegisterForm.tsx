@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { User, Mail, Lock, UserPlus, CheckCircle, Shield } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, CheckCircle, Shield, Settings, Zap, Users, BarChart2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface RegisterFormProps {
@@ -86,7 +86,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               Join Resolver
             </h2>
             <p className="text-green-100 text-lg leading-relaxed mb-8">
-              Create your account and start submitting requests instantly. Resolver routes every request to the right team — no manual follow-up needed.
+              Create your account and start submitting requests in minutes. Resolver tracks every request from submission to resolution — so nothing falls through the cracks.
             </p>
 
             <div className="space-y-6">
@@ -96,7 +96,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 </div>
                 <div>
                   <h3 className="text-white font-medium mb-1">Quick Setup</h3>
-                  <p className="text-green-100 text-sm">Register and submit your first request in minutes — no configuration required</p>
+                  <p className="text-green-100 text-sm">Register and submit your first request in minutes — no configuration required on your end</p>
                 </div>
               </div>
 
@@ -105,18 +105,48 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium mb-1">Secure & Reliable</h3>
-                  <p className="text-green-100 text-sm">JWT-secured with role-based access control — your requests and data stay protected</p>
+                  <h3 className="text-white font-medium mb-1">Role-Based Access</h3>
+                  <p className="text-green-100 text-sm">JWT-secured with purpose-built views for requesters, technicians, supervisors and management</p>
                 </div>
               </div>
 
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <UserPlus className="w-5 h-5 text-white" />
+                  <Settings className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium mb-1">Smart Routing</h3>
-                  <p className="text-green-100 text-sm">Requests are automatically routed to the right team based on your organisation's structure</p>
+                  <h3 className="text-white font-medium mb-1">Request Tracking</h3>
+                  <p className="text-green-100 text-sm">Every request is logged, assigned and followed through to resolution with a full audit trail</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-medium mb-1">SLA & Escalation</h3>
+                  <p className="text-green-100 text-sm">Automatic SLA timers and escalation paths keep resolution times in check</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-medium mb-1">Multi-Org Routing</h3>
+                  <p className="text-green-100 text-sm">Scales across multiple sites and departments — requests route automatically to the right team</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <BarChart2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-medium mb-1">Analytics & Reports</h3>
+                  <p className="text-green-100 text-sm">Real-time dashboards and exportable reports give teams full visibility into performance</p>
                 </div>
               </div>
             </div>
