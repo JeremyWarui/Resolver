@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { Users, Pencil, Trash2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -180,6 +180,9 @@ function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => voi
             <ShieldCheck className="h-4 w-4 text-primary" />
             Role Assignments — {user.first_name} {user.last_name}
           </DialogTitle>
+          <DialogDescription>
+            View, add, or remove role assignments for this user.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -617,6 +620,9 @@ const UsersPage = () => {
               <ShieldCheck className="h-4 w-4 text-primary" />
               {editing ? 'Edit User' : 'Add User'}
             </DialogTitle>
+            <DialogDescription>
+              {editing ? 'Update user details and account information.' : 'Create a new user account.'}
+            </DialogDescription>
           </DialogHeader>
           <UserForm
             editing={editing}

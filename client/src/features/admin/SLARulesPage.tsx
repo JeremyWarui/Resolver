@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import apiClient from '@/lib/api/client';
 import {
@@ -523,9 +523,9 @@ function NewPriorityDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>New Priority Level</DialogTitle>
-          <p className="text-sm text-gray-500 mt-1">
+          <DialogDescription>
             Define a new SLA priority tier with response and resolution targets.
-          </p>
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">

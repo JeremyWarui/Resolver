@@ -15,7 +15,7 @@ import {
   MapPin, Building, Wrench, Home, TreePine, Hotel, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -323,6 +323,9 @@ export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickSta
             <DialogTitle className="text-base font-semibold">New Request</DialogTitle>
             {!submitted && <StepIndicator current={step} />}
           </div>
+          <DialogDescription>
+            Submit a new service request — select a category, describe the issue, and confirm.
+          </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1 min-h-0">

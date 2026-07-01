@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useDepartments } from '@/hooks/departments/useDepartments';
 import { useCampuses } from '@/hooks/campuses/useCampuses';
@@ -212,6 +212,9 @@ function AssignCampusDialog({ open, onOpenChange, dept, linkedCampuses, onAssign
             <MapPin className="h-4 w-4 text-primary" />
             Assign {dept.name} to a campus
           </DialogTitle>
+          <DialogDescription>
+            Select a campus to create a branch of this department there.
+          </DialogDescription>
         </DialogHeader>
         <div className="py-2 space-y-5">
           <p className="text-xs text-gray-500">
@@ -314,6 +317,9 @@ function EditHodDialog({ open, onOpenChange, campus, dept, currentHod, onSaved }
           <DialogTitle className="text-base">
             HOD — {campus.code}-{dept.code}
           </DialogTitle>
+          <DialogDescription>
+            Assign a Head of Department for this campus branch.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
           <Label className="text-sm font-medium">Head of Department</Label>
@@ -520,6 +526,9 @@ const DepartmentsPage = () => {
         <DialogContent className="sm:max-w-lg p-8">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-base">{editing ? 'Edit Department' : 'Add Department'}</DialogTitle>
+            <DialogDescription>
+              {editing ? 'Update the department name or code.' : 'Add a new department to the organisation.'}
+            </DialogDescription>
           </DialogHeader>
           <DeptForm
             dept={editing}
