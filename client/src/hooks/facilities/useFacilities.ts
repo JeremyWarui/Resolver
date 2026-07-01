@@ -1,51 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
-import facilitiesService from '@/api/services/facilitiesService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { facilitiesService } from '@/lib/api/organizations';
 import type { Facility } from '@/types';
 
-interface UseFacilitiesResult {
-  facilities: Facility[];
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
-}
+export const FACILITIES_KEY = ['facilities'] as const;
 
-/**
- * Hook to fetch all facilities with direct API calls and state management
- * 
- * @returns Facilities data with loading, error states and refetch function
- * 
- * @example
- * const { facilities, loading, error, refetch } = useFacilities();
- */
-export const useFacilities = (): UseFacilitiesResult => {
-  const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const useFacilities = (campusId?: number) => {
+  const queryClient = useQueryClient();
+  const { data: raw, isLoading, error } = useQuery<Facility[]>({
+    queryKey: campusId ? [...FACILITIES_KEY, campusId] : FACILITIES_KEY,
+    queryFn: async () => {
+      const response = await facilitiesService.getFacilities(campusId ? { campus: campusId } : undefined);
+      return Array.isArray(response) ? response : (response as { results?: Facility[] }).results ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const facilitiesResponse = await facilitiesService.getFacilities();
-      setFacilities(facilitiesResponse.results);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch facilities'));
-      console.error('Error fetching facilities:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const refetch = () => queryClient.invalidateQueries({ queryKey: FACILITIES_KEY });
 
   return {
-    facilities,
-    loading,
-    error,
-    refetch: fetchData,
+    data: raw ?? [],
+    facilities: raw ?? [],
+    isLoading,
+    loading: isLoading,
+    error: error as Error | null,
+    refetch,
   };
 };
 

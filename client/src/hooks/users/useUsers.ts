@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import usersService from '@/api/services/usersService';
+import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '@/types';
 
 interface UseUsersParams {
@@ -9,47 +8,37 @@ interface UseUsersParams {
   page_size?: number;
 }
 
-interface UseUsersResult {
-  users: User[];
-  totalUsers: number;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
-}
+export const USERS_KEY = ['users'] as const;
 
-const useUsers = (params: UseUsersParams = {}): UseUsersResult => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+/**
+ * ⚠️ DEPRECATED: useUsers hook
+ * 
+ * The /users/ endpoint does not exist on the backend.
+ * Per CLAUDE.md §28 Reconciliation, user management endpoints have been removed.
+ * 
+ * This hook now returns an empty array. Components should:
+ * - Use role-assignment endpoints for role-scoped user lists
+ * - Use /sections/{id}/technicians/ for section-scoped technician lists
+ * - Use /auth/me/ for current user profile
+ * 
+ * @deprecated
+ */
+const useUsers = (_params: UseUsersParams = {}, _skip = false) => {
+  const queryClient = useQueryClient();
+  
+  console.warn(
+    'useUsers hook is deprecated. The /users/ endpoint does not exist. ' +
+    'See CLAUDE.md §28 for alternative approaches.'
+  );
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await usersService.getUsers(params);
-      setUsers(response.results);
-      setTotalUsers(response.count);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch users'));
-      console.error('Error fetching users:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.role, params.sections, params.page, params.page_size]);
+  const refetch = () => queryClient.invalidateQueries({ queryKey: USERS_KEY });
 
   return {
-    users,
-    totalUsers,
-    loading,
-    error,
-    refetch: fetchUsers,
+    users: [] as User[],
+    totalUsers: 0,
+    loading: false,
+    error: null,
+    refetch,
   };
 };
 

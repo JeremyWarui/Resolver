@@ -1,55 +1,40 @@
-import { useState, useEffect, useCallback } from 'react';
-import techniciansService from '@/api/services/techniciansService';
-import type { Technician, TechniciansParams } from '@/types';
+import type { Technician } from '@/types';
 
-interface UseTechniciansResult {
-  technicians: Technician[];
-  totalTechnicians: number;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => void;
+export interface TechnicianFilters {
+  campus_department_id?: number;
+  section_ids?: string;
+  section_id?: number;
+  campus_id?: number;
 }
 
-export const useTechnicians = (params?: TechniciansParams): UseTechniciansResult => {
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [totalTechnicians, setTotalTechnicians] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export const TECHNICIANS_KEY = ['technicians'] as const;
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Fetch only technicians - sections should come from SharedDataContext
-      const techniciansResponse = await techniciansService.getTechnicians(params);
-      setTechnicians(techniciansResponse.results);
-      setTotalTechnicians(techniciansResponse.count);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch technicians'));
-      console.error('Error fetching technicians:', err);
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    params?.page,
-    params?.page_size,
-    params?.sections,
-    params?.ordering,
-    params?.search,
-  ]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+/**
+ * ⚠️ DEPRECATED: useTechnicians hook
+ * 
+ * The /technicians/ endpoint does not exist on the backend.
+ * Per CLAUDE.md §28 Reconciliation, user management endpoints have been removed.
+ * 
+ * This hook now returns an empty array. Components should:
+ * - Use /sections/{id}/technicians/ for section-scoped technician lists
+ * - Query role-assignments with role="technician" for global technician data (admin only)
+ * - Use useSectionTechnicians(sectionId) for assignment pools
+ * 
+ * @deprecated
+ */
+export const useTechnicians = (_filters?: TechnicianFilters) => {
+  console.warn(
+    'useTechnicians hook is deprecated. The /technicians/ endpoint does not exist. ' +
+    'Use /sections/{id}/technicians/ for section-scoped lists, or ' +
+    'useSectionTechnicians(sectionId) for assignment pools. ' +
+    'See CLAUDE.md §28 for details.'
+  );
 
   return {
-    technicians,
-    totalTechnicians,
-    loading,
-    error,
-    refetch: fetchData,
+    technicians: [] as Technician[],
+    loading: false,
+    error: null,
+    refetch: () => {},
   };
 };
 

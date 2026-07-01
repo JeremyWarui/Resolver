@@ -1,34 +1,58 @@
-// User interface for nested assigned_to
+import type { NestedRef } from './section.types';
+
+export interface Priority {
+  id: number;
+  name: string;
+  rank: number;
+  response_minutes: number;
+  resolution_minutes: number;
+}
+
+export interface TicketLocation {
+  facility_type: { id: number; name: string; code: string };
+  facility: { id: number; name: string } | null;
+  values: Record<string, unknown>;
+}
+
 export interface AssignedUser {
   id: number;
-  username: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  role: 'user' | 'admin' | 'technician' | 'manager';
-  sections: number[];
+  name?: string;
+  full_name?: string;
+  username?: string;
+  role?: string;
 }
 
-// Comment interface
+export interface EscalationStatus {
+  code: 'none' | 'hos' | 'hod' | 'manager' | 'unknown';
+  label: string;
+}
+
+export interface OrganizationalPath {
+  campus: NestedRef | null;
+  department: NestedRef | null;
+  section: NestedRef;
+}
+
+export interface Attachment {
+  id: number;
+  filename: string;
+  url: string;
+  mime_type: string;
+  size_bytes: number;
+}
+
 export interface Comment {
   id: number;
-  ticket: {
-    id: number;
-    ticket_no: string;
-  };
   text: string;
-  author: string; // username as string
+  author: { id: number; username: string; full_name: string };
   created_at: string;
+  attachments?: Attachment[];
 }
 
-// Feedback interface
 export interface Feedback {
   id: number;
-  ticket: {
-    id: number;
-    ticket_no: string;
-  };
-  rated_by: string; // username as string
+  ticket: { id: number; ticket_no: string };
+  rated_by: string;
   rating: number;
   comment?: string;
   created_at: string;
@@ -37,25 +61,51 @@ export interface Feedback {
 export interface Ticket {
   id: number;
   ticket_no: string;
-  title: string;
   description: string;
   status: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
-  section_id?: number; // write-only
-  section: string; // read-only: section name
-  section_id_value: number; // read-only: section ID for filtering
-  facility_id?: number; // write-only
-  facility: string; // read-only: facility name
-  facility_id_value: number; // read-only: facility ID for filtering
-  raised_by: string; // read-only: username
-  assigned_to_id?: number | null; // write-only
-  assigned_to: AssignedUser | null; // read-only: full user object (DEPRECATED - use assigned_to_name)
-  assigned_to_name?: string | null; // read-only: "FirstName LastName" string (optimized - no extra query)
+  priority?: Priority;
+  current_level?: 'technician' | 'hos' | 'hod';
+
+  // Write-only IDs (sent on create/update)
+  section_id?: number;
+  assigned_to_id?: number | null;
+
+  // Read-only nested objects
+  section: NestedRef;
+  raised_by: string | { id: number; username: string; full_name: string };
+  raised_by_id: number; // user ID — use this for ownership checks, not raised_by
+  assigned_to: AssignedUser | null;
+
+  // SLA timestamps (server-owned; paused_at non-null means SLA frozen)
+  response_due_at?: string | null;
+  resolution_due_at?: string | null;
+  paused_at?: string | null;
+  accumulated_pause?: string;
+
+  // Location (present when category.location_details is true)
+  location?: TicketLocation | null;
+
+  // Timestamps
   created_at: string;
   updated_at: string;
-  resolved_at?: string | null; // read-only: automatically set when status changes to resolved/closed
-  pending_reason?: string | null; // Reason provided when ticket is marked as pending
+  resolved_at?: string | null;
+
+  // Pending reason (required when transitioning to 'pending')
+  pending_reason?: string | null;
+  pending_comment?: string | null;
+  organizational_path?: OrganizationalPath | null;
+
+  // Available technicians (only for roles that can assign)
+  available_technicians?: Array<{ id: number; username: string; full_name: string }>;
+
+  // Nested data (detail view only)
   comments?: Comment[];
   feedback?: Feedback;
+  service_item?: {
+    id: number;
+    name: string;
+    category_name: string;
+  } | null;
 }
 
 export interface TicketsResponse {
@@ -65,11 +115,27 @@ export interface TicketsResponse {
   results: Ticket[];
 }
 
+export interface CursorTicketsMeta {
+  nextCursor?: string | null;
+  prevCursor?: string | null;
+  total: number;
+}
+
+export interface CursorTicketsResponse {
+  data: Ticket[];
+  meta: CursorTicketsMeta;
+  counts: Record<string, number>;
+}
+
+// Canonical create payload — server resolves section + priority (R6/R7)
 export interface CreateTicketPayload {
-  title: string;
+  service_item: number;
   description: string;
-  section_id: number;
-  facility_id: number;
+  location?: {
+    facility_type: number;
+    facility?: number;
+    values: Record<string, unknown>;
+  };
 }
 
 export interface UpdateTicketPayload {
@@ -77,20 +143,41 @@ export interface UpdateTicketPayload {
   description?: string;
   section_id?: number;
   facility_id?: number;
-  status?: 'open' | 'assigned' | 'in_progress' | 'pending' | 'resolved' | 'closed';
+  status?: Ticket['status'];
   assigned_to_id?: number | null;
   pending_reason?: string | null;
+  pending_comment?: string | null;
 }
 
+export interface BulkStatusUpdatePayload {
+  ticket_ids: number[];
+  status: Ticket['status'];
+}
+
+// Params for GET /tickets/ — role scoping enforced server-side from JWT.
 export interface TicketsParams {
+  status?: string;
+  priority?: string;
+  search?: string;
   page?: number;
   page_size?: number;
-  status?: string;
-  section?: number;
-  assigned_to?: number;
-  assigned_to__isnull?: boolean; // For filtering unassigned tickets
-  raised_by?: number;
+  cursor?: string;
+  mine?: 1;          // My Requests context: only tickets raised_by == self
   ordering?: string;
-  search?: string;
-  is_overdue?: boolean; // For filtering overdue tickets (backend implementation needed)
+  // Server-side filters (narrow the role-scoped queryset; never widen scope)
+  section?: number;
+  assigned_to?: number;  // technician (assignee) user id
+  raised_by?: number;    // requester user id
+}
+
+export interface TicketTimelineEvent {
+  id: number | string;
+  event_type:
+    | 'created' | 'assigned' | 'reassigned' | 'status_changed'
+    | 'comment' | 'comment_added' | 'pending' | 'resolved' | 'closed'
+    | 'reopened' | 'rated' | 'escalated' | 'priority_changed' | 'sla_breach';
+  actor?: { id: number; username: string; full_name: string };
+  note?: string;
+  data?: Record<string, unknown>;
+  created_at: string;
 }

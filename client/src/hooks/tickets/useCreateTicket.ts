@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import ticketsService from '@/api/services/ticketsService';
+import ticketsService from '@/lib/api/tickets';
 import type { CreateTicketPayload, Ticket } from '@/types';
 
 interface UseCreateTicketResult {
@@ -9,31 +9,6 @@ interface UseCreateTicketResult {
   reset: () => void;
 }
 
-/**
- * Hook to create tickets with loading states and error handling
- * 
- * Automatically handles:
- * - Loading states during creation
- * - Error handling with consistent messaging  
- * - Success notifications via toast
- * - Error state reset functionality
- * 
- * @returns Mutation function with loading, error states and reset
- * 
- * @example
- * const { createTicket, loading, error, reset } = useCreateTicket();
- * 
- * const handleSubmit = async (data) => {
- *   try {
- *     const newTicket = await createTicket(data);
- *     // Success automatically handled with toast notification
- *     onSuccess(newTicket);
- *   } catch (err) {
- *     // Error automatically handled with toast notification
- *     console.log('Creation failed:', err);
- *   }
- * };
- */
 export const useCreateTicket = (): UseCreateTicketResult => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

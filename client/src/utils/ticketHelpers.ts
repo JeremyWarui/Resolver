@@ -5,6 +5,11 @@
 
 import type { Ticket, UpdateTicketPayload } from '@/types';
 
+export function getRaisedByDisplay(raised_by: Ticket['raised_by']): string {
+  if (typeof raised_by === 'string') return raised_by;
+  return raised_by.full_name || raised_by.username;
+}
+
 /**
  * Extracts only writable fields from a Ticket object for API updates
  * This prevents sending read-only fields to the backend which can cause 500 errors
@@ -43,17 +48,8 @@ export function extractWritableFields(
     }
     if (fields.pending_reason !== undefined) payload.pending_reason = fields.pending_reason;
   } else {
-    // Extract writable fields from ticket object (if they exist as write-only properties)
-    if (ticket.title !== undefined) payload.title = ticket.title;
     if (ticket.description !== undefined) payload.description = ticket.description;
-    if (ticket.section_id !== undefined) payload.section_id = ticket.section_id;
-    if (ticket.facility_id !== undefined) payload.facility_id = ticket.facility_id;
     if (ticket.status !== undefined) payload.status = ticket.status;
-    // Only include assigned_to_id if not closing
-    if (ticket.assigned_to_id !== undefined && ticket.status !== 'closed') {
-      payload.assigned_to_id = ticket.assigned_to_id;
-    }
-    if (ticket.pending_reason !== undefined) payload.pending_reason = ticket.pending_reason;
   }
 
   return payload;

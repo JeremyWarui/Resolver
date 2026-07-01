@@ -1,60 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import useTickets from './useTickets';
 import useUpdateTicket from './useUpdateTicket';
-import { useSharedData } from '@/contexts/SharedDataContext';
+import { useSections } from '@/hooks/sections/useSections';
+import { useFacilities } from '@/hooks/facilities/useFacilities';
 import { extractWritableFields } from '@/utils/ticketHelpers';
+import { formatSectionDisplay } from '@/utils/formatSection';
 import type { Ticket, Section, Facility, Technician, User, TicketsParams } from '@/types';
 
-/**
- * Configuration options for the ticket table hook
- */
 export interface UseTicketTableConfig {
-  /**
-   * Role-based filtering
-   * - 'admin': Show all tickets with full filtering
-   * - 'user': Show only tickets raised by current user
-   * - 'technician': Show only tickets assigned to current technician
-   */
-  role: 'admin' | 'user' | 'technician';
-  
-  /**
-   * Current user ID for role-based filtering
-   */
+  role: 'admin' | 'user' | 'technician' | 'hos' | 'hod' | 'manager';
   currentUserId?: number;
-  
-  /**
-   * Default status filter value
-   */
   defaultStatusFilter?: string;
-  
-  /**
-   * Default page size for pagination
-   */
   defaultPageSize?: number;
-  
-  // Note: technicians, users, and facilities are always available via SharedDataContext
-  
-  /**
-   * Custom ordering for tickets (e.g., '-created_at', 'ticket_no')
-   */
-  ordering?: string;
-  
-  /**
-   * Page size for fetching technicians/users lists (default: 100)
-   */
-  listPageSize?: number;
+  fetchSectionTickets?: boolean;
+  skipUntilUserId?: boolean;
+  externalSections?: Section[];
+  externalUsers?: User[];
+  externalTechnicians?: Technician[];
+  externalFacilities?: Facility[];
+  initialData?: Ticket[];
+  onDataFetched?: (tickets: Ticket[], total: number) => void;
 }
 
-/**
- * Return type for the ticket table hook
- */
 export interface UseTicketTableResult {
-  // Table State
+  // Pagination
   pageIndex: number;
   pageSize: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
   setPageIndex: (index: number) => void;
   setPageSize: (size: number) => void;
-  
+
   // Filter State
   statusFilter: string;
   sectionFilter: number | null;
@@ -68,13 +44,13 @@ export interface UseTicketTableResult {
   setUserFilter: (user: number | null) => void;
   setUnassignedFilter: (unassigned: boolean) => void;
   setOverdueFilter: (overdue: boolean) => void;
-  
+
   // Dialog State
   selectedTicket: Ticket | null;
   isTicketDialogOpen: boolean;
   setSelectedTicket: (ticket: Ticket | null) => void;
   setIsTicketDialogOpen: (open: boolean) => void;
-  
+
   // Data
   tickets: Ticket[];
   totalTickets: number;
@@ -82,29 +58,25 @@ export interface UseTicketTableResult {
   facilities: Facility[];
   technicians: Technician[];
   users: User[];
-  
-  // Transformed Data
   tableData: Ticket[];
-  
+
   // Loading States
   loading: boolean;
   ticketsLoading: boolean;
   techniciansLoading: boolean;
   usersLoading: boolean;
   facilitiesLoading: boolean;
-  
+
   // Actions
   handleViewTicket: (ticket: Ticket) => void;
-  handleTicketUpdate: (updatedTicket: Ticket) => Promise<void>;
+  handleTicketUpdate: (updatedTicket: Ticket) => Promise<Ticket | undefined>;
   handlePageChange: (newPageIndex: number) => void;
   handlePageSizeChange: (newPageSize: number) => void;
   updateTicket: (ticket: Ticket) => Promise<Ticket>;
   refetch: () => void;
-  
+
   // Constants
   allStatuses: string[];
-  
-  // Common DataTable Props
   commonTableProps: {
     searchPlaceholder: string;
     emptyStateMessage: string;
@@ -114,239 +86,217 @@ export interface UseTicketTableResult {
   };
 }
 
-/**
- * Custom hook to manage all ticket table state, data fetching, and actions.
- * Consolidates common patterns across Admin, User, and Technician ticket tables.
- * 
- * @param config - Configuration options for role-based behavior and features
- * @returns All state, data, and handlers needed for a ticket table component
- * 
- * @example
- * // Admin Dashboard - All Tickets
- * const table = useTicketTable({ 
- *   role: 'admin'
- * });
- * 
- * @example
- * // User Dashboard - My Tickets
- * const table = useTicketTable({ 
- *   role: 'user',
- *   currentUserId: userId
- * });
- * 
- * @example
- * // Technician Dashboard - Assigned Tickets
- * const table = useTicketTable({ 
- *   role: 'technician',
- *   currentUserId: technicianId,
- *   defaultStatusFilter: 'in_progress'
- * });
- */
+const ALL_TICKET_STATUSES = [
+  'open', 'assigned', 'in_progress', 'pending',
+  'resolved', 'closed',
+];
+
+const COMMON_TABLE_PROPS = {
+  searchPlaceholder: 'Search by ID or title...',
+  emptyStateMessage: 'No tickets found',
+  emptyStateDescription: 'Try changing your filters or check back later',
+  defaultSorting: [{ id: 'updated_at', desc: true }],
+  manualPagination: true,
+};
+
 export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResult => {
   const {
-    role,
     currentUserId,
     defaultStatusFilter = 'all',
     defaultPageSize = 10,
-    ordering = '-id',
+    skipUntilUserId = false,
+    externalSections,
+    externalUsers,
+    externalTechnicians,
+    externalFacilities,
+    initialData,
+    onDataFetched,
   } = config;
 
   // ==================== STATE ====================
-  // Pagination state
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [pageSize, setPageSizeRaw] = useState(defaultPageSize);
 
-  // Filter state
-  const [statusFilter, setStatusFilter] = useState<string>(defaultStatusFilter);
-  const [sectionFilter, setSectionFilter] = useState<number | null>(null);
-  const [technicianFilter, setTechnicianFilter] = useState<number | null>(null);
-  const [userFilter, setUserFilter] = useState<number | null>(null);
+  // Cursor stack: cursorStack[i] = the cursor to fetch page i.
+  // Index 0 always uses null (first page, no cursor needed).
+  const [cursorStack, setCursorStack] = useState<(string | null)[]>([null]);
+  const [cursorIndex, setCursorIndex] = useState(0);
+
+  const currentCursor = cursorStack[cursorIndex] ?? null;
+
+  // Filter state (section/technician/user/overdue filters are kept as UI state;
+  // the backend scopes results by JWT role, not by these query params)
+  const [statusFilter, setStatusFilterRaw] = useState<string>(defaultStatusFilter);
+  const [sectionFilter, setSectionFilterRaw] = useState<number | null>(null);
+  const [technicianFilter, setTechnicianFilterRaw] = useState<number | null>(null);
+  const [userFilter, setUserFilterRaw] = useState<number | null>(null);
   const [unassignedFilter, setUnassignedFilter] = useState<boolean>(false);
   const [overdueFilter, setOverdueFilter] = useState<boolean>(false);
+
+  // Any server-side filter change must restart cursor pagination at page 1.
+  const resetToFirstPage = useCallback(() => {
+    setCursorStack([null]);
+    setCursorIndex(0);
+  }, []);
+
+  const setStatusFilter = useCallback((status: string) => {
+    setStatusFilterRaw(status);
+    resetToFirstPage();
+  }, [resetToFirstPage]);
+
+  const setSectionFilter = useCallback((section: number | null) => {
+    setSectionFilterRaw(section);
+    resetToFirstPage();
+  }, [resetToFirstPage]);
+
+  const setTechnicianFilter = useCallback((technician: number | null) => {
+    setTechnicianFilterRaw(technician);
+    resetToFirstPage();
+  }, [resetToFirstPage]);
+
+  const setUserFilter = useCallback((user: number | null) => {
+    setUserFilterRaw(user);
+    resetToFirstPage();
+  }, [resetToFirstPage]);
 
   // Dialog state
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
 
   // ==================== DATA FETCHING ====================
-  // Build ticket query params based on role
-  const ticketParams = useMemo(() => {
-    const params: TicketsParams = {
-      page: pageIndex + 1,
-      page_size: pageSize,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      section: sectionFilter || undefined,
-      ordering,
-    };
+  const ticketParams = useMemo((): TicketsParams => ({
+    page_size: pageSize,
+    ...(currentCursor ? { cursor: currentCursor } : {}),
+    ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+    ...(sectionFilter ? { section: sectionFilter } : {}),
+    ...(technicianFilter ? { assigned_to: technicianFilter } : {}),
+    ...(userFilter ? { raised_by: userFilter } : {}),
+  }), [pageSize, currentCursor, statusFilter, sectionFilter, technicianFilter, userFilter]);
 
-    // Add unassigned filter (assigned_to__isnull=True in Django)
-    if (unassignedFilter) {
-      params.assigned_to__isnull = true;
-    }
+  const skipInitialFetch = initialData != null && cursorIndex === 0;
 
-    // Add overdue filter
-    if (overdueFilter) {
-      params.is_overdue = true;
-    }
-
-    // Role-based filtering
-    if (role === 'user') {
-      params.raised_by = currentUserId;
-      params.assigned_to = technicianFilter || undefined;
-    } else if (role === 'technician') {
-      params.assigned_to = currentUserId;
-    } else if (role === 'admin') {
-      params.assigned_to = technicianFilter || undefined;
-      params.raised_by = userFilter || undefined;
-    }
-
-    return params;
-  }, [
-    role,
-    currentUserId,
-    pageIndex,
-    pageSize,
-    statusFilter,
-    sectionFilter,
-    technicianFilter,
-    userFilter,
-    unassignedFilter,
-    overdueFilter,
-    ordering,
-  ]);
-
-  // Fetch tickets
   const {
-    tickets,
-    totalTickets,
+    tickets: fetchedTickets,
+    totalTickets: fetchedTotalTickets,
+    nextCursor,
     loading: ticketsLoading,
     refetch,
-  } = useTickets(ticketParams);
+  } = useTickets(
+    ticketParams,
+    skipUntilUserId && currentUserId === undefined,
+  );
 
-  // Get shared reference data from context (no API calls - already cached at layout level)
-  const {
-    sections, // Get sections from shared context instead of useTickets
-    technicians: allTechniciansData,
-    facilities: allFacilitiesData,
-    users: allUsersData, // Get users from shared context instead of separate API call
-    sectionsLoading,
-    techniciansLoading: techniciansLoadingContext,
-    facilitiesLoading: facilitiesLoadingContext,
-    usersLoading: usersLoadingContext,
-  } = useSharedData();
+  // Store the next-page cursor in the stack when the API returns one
+  const [prevNextCursor, setPrevNextCursor] = useState(nextCursor);
+  const [prevCursorIndex, setPrevCursorIndex] = useState(cursorIndex);
 
-  // SharedDataContext always provides this data
-  const techniciansLoading = techniciansLoadingContext;
-  const facilitiesLoading = facilitiesLoadingContext;
-  const usersLoading = usersLoadingContext;
+  if (prevNextCursor !== nextCursor || prevCursorIndex !== cursorIndex) {
+    setPrevNextCursor(nextCursor);
+    setPrevCursorIndex(cursorIndex);
+    if (nextCursor && cursorStack[cursorIndex + 1] !== nextCursor) {
+      const updated = [...cursorStack];
+      updated[cursorIndex + 1] = nextCursor;
+      setCursorStack(updated);
+    }
+  }
 
-  // Remove independent users fetching - now comes from SharedDataContext
-  // const {
-  //   users: allUsersData,
-  //   loading: usersLoadingRaw,
-  // } = useUsers(fetchUsers ? { page_size: listPageSize } : { page_size: 0 });
-  // const usersLoading = fetchUsers ? usersLoadingRaw : false;
+  const hasNextPage = !!nextCursor;
+  const hasPrevPage = cursorIndex > 0;
 
-  // Update ticket hook
+  const tickets = useMemo(
+    () => (skipInitialFetch ? (initialData ?? []) : fetchedTickets),
+    [skipInitialFetch, initialData, fetchedTickets],
+  );
+  const totalTickets = skipInitialFetch ? (initialData?.length ?? 0) : fetchedTotalTickets;
+
+  useEffect(() => {
+    if (!skipInitialFetch && !ticketsLoading && onDataFetched) {
+      onDataFetched(fetchedTickets, fetchedTotalTickets);
+    }
+  }, [skipInitialFetch, ticketsLoading, fetchedTickets, fetchedTotalTickets, onDataFetched]);
+
+  const { sections: fetchedSections } = useSections();
+  const { facilities: fetchedFacilities, loading: facilitiesLoadingRaw } = useFacilities();
+
+  const sections = externalSections ?? fetchedSections;
+  const allTechniciansData = externalTechnicians ?? [];
+  const allFacilitiesData = externalFacilities ?? fetchedFacilities;
+  const allUsersData = useMemo(() => externalUsers ?? [], [externalUsers]);
+
+  const techniciansLoading = false; // Technicians must be provided externally now (deprecated endpoint)
+  const facilitiesLoading = externalFacilities ? false : facilitiesLoadingRaw;
+  const usersLoading = false; // Users must be provided externally now (deprecated endpoint)
+
   const { updateTicket } = useUpdateTicket();
 
   // ==================== DATA TRANSFORMATION ====================
-  // Add searchField, sectionName, and raisedByName to tickets
   const tableData = useMemo(() => {
     return tickets.map((ticket) => {
-      // Find the user who raised the ticket to get their full name
-      const raisedByUser = allUsersData.find((user) => user.username === ticket.raised_by);
-      const raisedByName = raisedByUser 
+      const raisedByStr = typeof ticket.raised_by === 'string'
+        ? ticket.raised_by
+        : ticket.raised_by.full_name || ticket.raised_by.username;
+      const raisedByUser = allUsersData.find((user) => user.username === raisedByStr);
+      const raisedByName = raisedByUser
         ? `${raisedByUser.first_name} ${raisedByUser.last_name}`
-        : ticket.raised_by; // Fallback to username if user not found
-      
+        : raisedByStr;
+
       return {
         ...ticket,
-        searchField: `${String(ticket.ticket_no).toLowerCase()} ${ticket.title.toLowerCase()}`,
-        sectionName: ticket.section,
-        raisedByName, // Add the full name for display
+        searchField: `${String(ticket.ticket_no).toLowerCase()} ${(ticket.description ?? '').toLowerCase()}`,
+        sectionName: formatSectionDisplay(ticket.section),
+        raisedByName,
       };
     });
   }, [tickets, allUsersData]);
 
   // ==================== HANDLERS ====================
-  /**
-   * Open ticket details dialog
-   */
-  const handleViewTicket = (ticket: Ticket) => {
+  const handleViewTicket = useCallback((ticket: Ticket) => {
     setSelectedTicket(ticket);
     setIsTicketDialogOpen(true);
-  };
+  }, []);
 
-  /**
-   * Update ticket and show success/error toast
-   */
-  const handleTicketUpdate = async (updatedTicket: Ticket) => {
+  const handleTicketUpdate = useCallback(async (updatedTicket: Ticket) => {
     try {
-      // Extract only writable fields from the ticket object
-      // This prevents sending read-only fields (section, facility, raised_by, etc.) to the API
       const updatePayload = {
         id: updatedTicket.id,
         ...extractWritableFields(updatedTicket),
       };
-      
-      console.log('Updating ticket with payload:', updatePayload);
-      
-      // Update ticket via API and get the updated ticket back
       const result = await updateTicket(updatePayload);
-      
-      console.log('Ticket updated successfully:', result);
-      
-      // Refetch tickets to sync UI with backend
       refetch();
-      
       setIsTicketDialogOpen(false);
+      return result;
     } catch (error) {
       console.error('Failed to update ticket:', error);
     }
-  };
+  }, [updateTicket, refetch]);
 
-  /**
-   * Handle page change
-   */
-  const handlePageChange = (newPageIndex: number) => {
-    setPageIndex(newPageIndex);
-  };
+  // Cursor-based: only ±1 from current index is reachable
+  const handlePageChange = useCallback((newPageIndex: number) => {
+    if (newPageIndex === cursorIndex + 1 && hasNextPage) {
+      setCursorIndex(newPageIndex);
+    } else if (newPageIndex === cursorIndex - 1 && hasPrevPage) {
+      setCursorIndex(newPageIndex);
+    }
+  }, [cursorIndex, hasNextPage, hasPrevPage]);
 
-  /**
-   * Handle page size change (resets to first page)
-   */
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setPageIndex(0);
-  };
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    setPageSizeRaw(newPageSize);
+    setCursorStack([null]);
+    setCursorIndex(0);
+  }, []);
 
-  // ==================== CONSTANTS ====================
-  const allStatuses = ['open', 'assigned', 'in_progress', 'pending', 'resolved', 'closed'];
-  
-  const commonTableProps = {
-    searchPlaceholder: 'Search by ID or title...',
-    emptyStateMessage: 'No tickets found',
-    emptyStateDescription: 'Try changing your filters or check back later',
-    defaultSorting: [{ id: 'updated_at', desc: true }],
-    manualPagination: true,
-  };
-
-  // ==================== LOADING STATE ====================
-  const loading =
-    ticketsLoading ||
-    sectionsLoading ||
-    techniciansLoadingContext ||
-    usersLoadingContext ||
-    facilitiesLoadingContext;
+  const setPageIndex = useCallback((index: number) => {
+    handlePageChange(index);
+  }, [handlePageChange]);
 
   // ==================== RETURN ====================
   return {
-    // State
-    pageIndex,
+    // Pagination
+    pageIndex: cursorIndex,
     pageSize,
+    hasNextPage,
+    hasPrevPage,
     setPageIndex,
-    setPageSize,
+    setPageSize: handlePageSizeChange,
 
     // Filters
     statusFilter,
@@ -375,12 +325,10 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     facilities: allFacilitiesData,
     technicians: allTechniciansData,
     users: allUsersData,
-
-    // Transformed Data
     tableData,
 
     // Loading
-    loading,
+    loading: ticketsLoading,
     ticketsLoading,
     techniciansLoading,
     usersLoading,
@@ -395,8 +343,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     refetch,
 
     // Constants
-    allStatuses,
-    commonTableProps,
+    allStatuses: ALL_TICKET_STATUSES,
+    commonTableProps: COMMON_TABLE_PROPS,
   };
 };
 

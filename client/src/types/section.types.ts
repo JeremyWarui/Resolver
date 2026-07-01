@@ -1,13 +1,14 @@
-export interface Section {
+// Utility types for ticket and dashboard references
+export interface NestedRef {
   id: number;
+  code: string;
   name: string;
-  description?: string;
-  technicians?: string[]; // Array of usernames (read-only from StringRelatedField)
+  campus_code?: string | null;
+  department_code?: string | null;
 }
 
-export interface SectionsResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Section[];
+export interface SectionHead {
+  id: number;
+  username: string;
+  name: string;
 }

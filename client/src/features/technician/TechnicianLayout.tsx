@@ -1,0 +1,32 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import ComingSoonSection from '@/components/shared/ComingSoonSection';
+import { RoleDashboardLayout } from '@/components/layout/RoleDashboardLayout';
+import { ROLE_NAV } from '@/config/roleNav';
+import TechSectionTickets from './TechSectionTickets';
+import TechTicketsPage from './TechTicketsPage';
+import TechnicianReportsPage from './TechnicianReportsPage';
+
+const TechnicianLayout = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (window.innerWidth < 640) {
+      navigate('/tech/mobile', { replace: true });
+    }
+  }, [navigate]);
+
+  return (
+    <RoleDashboardLayout
+      nav={ROLE_NAV.technician}
+      sections={({ onTicketSelect, userId }) => ({
+        dashboard:      <TechSectionTickets currentTechnicianId={userId} onTicketSelect={onTicketSelect} />,
+        assignedTickets: <TechTicketsPage onTicketSelect={onTicketSelect} />,
+        report:         <TechnicianReportsPage />,
+        settings:       <ComingSoonSection section="Settings" />,
+      })}
+    />
+  );
+};
+
+export default TechnicianLayout;
