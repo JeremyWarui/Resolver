@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -75,7 +76,7 @@ export function AssignmentModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="w-[520px] max-w-[90vw] max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="w-[520px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between pr-8">
             <DialogTitle>{title}</DialogTitle>
@@ -83,6 +84,9 @@ export function AssignmentModal({
               #{ticket.ticket_no}
             </span>
           </div>
+          <DialogDescription>
+            Assign or reassign this ticket to a technician in your section.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">

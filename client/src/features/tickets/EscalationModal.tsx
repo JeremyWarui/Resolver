@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -63,12 +64,15 @@ export function EscalationModal({ ticket, open, onClose, onSuccess }: Escalation
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="w-[540px] max-w-[90vw] max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="w-[540px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between pr-8">
             <DialogTitle className="text-base font-semibold">Escalate ticket</DialogTitle>
             <span className="text-sm text-muted-foreground font-mono">#{ticket.ticket_no}</span>
           </div>
+          <DialogDescription>
+            Escalate this ticket to the next level and provide a reason.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-1">

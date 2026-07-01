@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -54,9 +55,12 @@ export function RatingModal({ ticket, open, onClose, onSuccess }: RatingModalPro
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md" aria-describedby={undefined}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Rate resolution</DialogTitle>
+          <DialogDescription>
+            Rate how well your request was resolved and choose to close or reopen it.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="py-2">

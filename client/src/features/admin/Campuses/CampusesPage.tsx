@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-table';
 import { MapPin, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -168,9 +168,12 @@ const CampusesPage = () => {
       />
 
       <Dialog open={isFormOpen} onOpenChange={open => { setIsFormOpen(open); if (!open) setEditing(null); }}>
-        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Campus' : 'Add Campus'}</DialogTitle>
+            <DialogDescription>
+              {editing ? 'Update the campus name, code, or location.' : 'Add a new campus to the organisation.'}
+            </DialogDescription>
           </DialogHeader>
           <CampusForm
             campus={editing}
