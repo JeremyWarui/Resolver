@@ -76,66 +76,25 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
               A modern service desk platform for submitting and resolving requests — designed to keep every request tracked, assigned and closed on time.
             </p>
 
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
+            <div className="space-y-5">
+              {[
+                { icon: Shield,     title: 'Role-Based Access',   desc: 'Purpose-built views for requesters, technicians, supervisors and management' },
+                { icon: Settings,   title: 'Request Tracking',    desc: 'Every request is logged, assigned and followed through to resolution' },
+                { icon: Zap,        title: 'SLA & Escalation',    desc: 'Automatic SLA timers and escalation paths keep resolution times in check' },
+                { icon: Users,      title: 'Multi-Org Routing',   desc: 'Scales across multiple sites — requests route to the right team automatically' },
+                { icon: Paperclip,  title: 'File Attachments',    desc: 'Attach screenshots or documents to any request — images compressed on upload' },
+                { icon: BarChart2,  title: 'Analytics & Reports', desc: 'Role-scoped dashboards, metrics and exportable reports for full visibility' },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="flex items-center gap-4">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-sm leading-snug">{title}</h3>
+                    <p className="text-blue-100 text-xs leading-relaxed mt-0.5">{desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Role-Based Access</h3>
-                  <p className="text-blue-100 text-sm">Purpose-built views for requesters, technicians, supervisors and management</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Request Tracking</h3>
-                  <p className="text-blue-100 text-sm">Every request is logged, assigned and followed through to resolution</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">SLA & Escalation</h3>
-                  <p className="text-blue-100 text-sm">Automatic SLA timers and escalation paths keep resolution times in check</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Multi-Org Routing</h3>
-                  <p className="text-blue-100 text-sm">Scales across multiple sites and departments — requests route automatically to the right team based on your organisation's structure</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <Paperclip className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">File Attachments</h3>
-                  <p className="text-blue-100 text-sm">Attach screenshots or documents to any request — images are automatically compressed to save storage</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <BarChart2 className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Analytics & Reports</h3>
-                  <p className="text-blue-100 text-sm">Role-scoped dashboards, performance metrics and exportable reports give full visibility into request trends</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>

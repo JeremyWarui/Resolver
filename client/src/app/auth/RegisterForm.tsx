@@ -89,66 +89,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               Create your account and start submitting requests in minutes. Resolver tracks every request from submission to resolution — so nothing falls through the cracks.
             </p>
 
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-white" />
+            <div className="space-y-5">
+              {[
+                { icon: CheckCircle, title: 'Quick Setup',         desc: 'Register and submit your first request in minutes — no configuration required on your end' },
+                { icon: Shield,      title: 'Role-Based Access',   desc: 'JWT-secured with purpose-built views for requesters, technicians, supervisors and management' },
+                { icon: Settings,    title: 'Request Tracking',    desc: 'Every request is logged, assigned and followed through to resolution with a full audit trail' },
+                { icon: Zap,         title: 'SLA & Escalation',    desc: 'Automatic SLA timers and escalation paths keep resolution times in check' },
+                { icon: Users,       title: 'Multi-Org Routing',   desc: 'Scales across multiple sites — requests route automatically to the right team' },
+                { icon: BarChart2,   title: 'Analytics & Reports', desc: 'Real-time dashboards and exportable reports give teams full visibility into performance' },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="flex items-center gap-4">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-white font-semibold text-sm leading-snug">{title}</h3>
+                    <p className="text-green-100 text-xs leading-relaxed mt-0.5">{desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Quick Setup</h3>
-                  <p className="text-green-100 text-sm">Register and submit your first request in minutes — no configuration required on your end</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Role-Based Access</h3>
-                  <p className="text-green-100 text-sm">JWT-secured with purpose-built views for requesters, technicians, supervisors and management</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Request Tracking</h3>
-                  <p className="text-green-100 text-sm">Every request is logged, assigned and followed through to resolution with a full audit trail</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">SLA & Escalation</h3>
-                  <p className="text-green-100 text-sm">Automatic SLA timers and escalation paths keep resolution times in check</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Multi-Org Routing</h3>
-                  <p className="text-green-100 text-sm">Scales across multiple sites and departments — requests route automatically to the right team</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <BarChart2 className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-white font-medium mb-1">Analytics & Reports</h3>
-                  <p className="text-green-100 text-sm">Real-time dashboards and exportable reports give teams full visibility into performance</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
