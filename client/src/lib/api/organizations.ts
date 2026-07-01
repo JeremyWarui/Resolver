@@ -108,7 +108,11 @@ export const campusDepartmentsService = {
   }): Promise<CampusDepartment> => {
     const { data } = await apiClient.post<CampusDepartment>(
       '/campus-departments/',
-      payload
+      {
+        campus: payload.campus_id,
+        department: payload.department_id,
+        head_of_department: payload.head_of_department_id ?? null,
+      }
     );
     return data;
   },

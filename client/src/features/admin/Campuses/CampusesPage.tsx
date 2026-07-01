@@ -168,7 +168,7 @@ const CampusesPage = () => {
       />
 
       <Dialog open={isFormOpen} onOpenChange={open => { setIsFormOpen(open); if (!open) setEditing(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{editing ? 'Edit Campus' : 'Add Campus'}</DialogTitle>
           </DialogHeader>

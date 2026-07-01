@@ -75,7 +75,7 @@ export function AssignmentModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="w-[520px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[520px] max-w-[90vw] max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <div className="flex items-center justify-between pr-8">
             <DialogTitle>{title}</DialogTitle>

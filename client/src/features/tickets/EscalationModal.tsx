@@ -63,7 +63,7 @@ export function EscalationModal({ ticket, open, onClose, onSuccess }: Escalation
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="w-[540px] max-w-[90vw] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[540px] max-w-[90vw] max-h-[85vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <div className="flex items-center justify-between pr-8">
             <DialogTitle className="text-base font-semibold">Escalate ticket</DialogTitle>

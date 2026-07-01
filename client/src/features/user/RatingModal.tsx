@@ -54,7 +54,7 @@ export function RatingModal({ ticket, open, onClose, onSuccess }: RatingModalPro
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Rate resolution</DialogTitle>
         </DialogHeader>
