@@ -290,26 +290,6 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
                     </CardContent>
                   </Card>
 
-                  {/* Location — from TicketLocation child (R13) */}
-                  {ticket.location && (
-                    <Card>
-                      <CardContent className="p-5">
-                        <SectionLabel>Location</SectionLabel>
-                        <div className="space-y-1 text-sm">
-                          <p className="font-medium">{ticket.location.facility_type?.name ?? '—'}</p>
-                          {ticket.location.facility?.name && (
-                            <p>{ticket.location.facility.name}</p>
-                          )}
-                          {Object.entries(ticket.location.values ?? {}).map(([k, v]) => (
-                            <p key={k} className="text-muted-foreground">
-                              {k.replace(/_/g, ' ')}: {String(v)}
-                            </p>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
                   {/* Activity + Comments merged */}
                   <Card>
                     <CardContent className="p-5">
@@ -371,6 +351,27 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
                           )}
                         </div>
                       </div>
+
+                      {ticket.location && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location Details</p>
+                          <div className="border rounded-lg divide-y">
+                            {ticket.location.facility_type?.name && (
+                              <DetailRow label="Facility type" value={ticket.location.facility_type.name} />
+                            )}
+                            {ticket.location.facility?.name && (
+                              <DetailRow label="Facility" value={ticket.location.facility.name} />
+                            )}
+                            {Object.entries(ticket.location.values ?? {}).map(([k, v]) => (
+                              <DetailRow
+                                key={k}
+                                label={k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                                value={String(v)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 

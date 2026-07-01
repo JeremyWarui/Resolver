@@ -38,6 +38,7 @@ export type DashboardRole = "admin" | "manager" | "hod" | "hos";
 
 interface RoleDashboardViewProps {
   role: DashboardRole;
+  onTicketSelect?: (id: number) => void;
 }
 
 /**
@@ -71,7 +72,7 @@ const HEADER_COPY: Record<DashboardRole, { title: string; subtitle: string }> = 
   hos: { title: "Section Overview", subtitle: "Your section(s)" },
 };
 
-const RoleDashboardView = ({ role }: RoleDashboardViewProps) => {
+const RoleDashboardView = ({ role, onTicketSelect }: RoleDashboardViewProps) => {
   const StatCards = STAT_CARDS[role];
   const { subtitle } = HEADER_COPY[role];
 
@@ -302,7 +303,7 @@ const RoleDashboardView = ({ role }: RoleDashboardViewProps) => {
             <TechniciansWorkload />
           </div>
           {/* Recent tickets — Admin-style table at the bottom (campus-dept-scoped) */}
-          <RecentTicketsTable role="hod" />
+          <RecentTicketsTable role="hod" onTicketSelect={onTicketSelect} />
         </>
       ) : (
         <>
@@ -324,7 +325,7 @@ const RoleDashboardView = ({ role }: RoleDashboardViewProps) => {
             facilityTimeframe={facilityTimeframe}
             setFacilityTimeframe={setFacilityTimeframe}
           />
-          <RecentTicketsTable role={role} />
+          <RecentTicketsTable role={role} onTicketSelect={onTicketSelect} />
         </>
       )}
 

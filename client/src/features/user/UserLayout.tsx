@@ -68,6 +68,7 @@ const UserLayoutContent = () => {
             <UserDashboard
               key={`dashboard-${ticketRefreshKey}`}
               onNavigate={handleSectionChange}
+              onTicketSelect={setSelectedTicketId}
             />
           )}
           {activeSection === 'userTickets' && (

@@ -122,11 +122,11 @@ export const TechTableHeader = ({
   return (
     <>
       {title && (
-        <CardHeader className="px-0">
-          <CardTitle>{title}</CardTitle>
+        <CardHeader className="px-0 pt-0 pb-2">
+          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         </CardHeader>
       )}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center py-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center py-2">
         <Input
           placeholder={searchPlaceholder}
           value={searchValue}

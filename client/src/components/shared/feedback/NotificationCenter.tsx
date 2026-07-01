@@ -37,7 +37,7 @@ export function NotificationCenter() {
       </SheetTrigger>
 
       <SheetContent side="right" className="w-80 p-0 flex flex-col">
-        <SheetHeader className="px-4 py-3 flex-row items-center justify-between space-y-0">
+        <SheetHeader className="px-4 py-3 pr-10 flex-row items-center justify-between space-y-0">
           <SheetTitle className="text-base">Notifications</SheetTitle>
           {unreadCount > 0 && (
             <Button

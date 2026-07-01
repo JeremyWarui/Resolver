@@ -13,7 +13,22 @@ export interface RoleNavConfig {
   headerTitle: Record<string, string>;
 }
 
-export const ROLE_NAV: Record<'hod' | 'hos' | 'manager', RoleNavConfig> = {
+export const ROLE_NAV: Record<'hod' | 'hos' | 'manager' | 'technician', RoleNavConfig> = {
+  technician: {
+    defaultRole: 'technician',
+    sectionFromPath: {
+      '':         'dashboard',
+      assigned:   'assignedTickets',
+      reports:    'report',
+      settings:   'settings',
+    },
+    headerTitle: {
+      dashboard:      'Section Tickets',
+      assignedTickets: 'Assigned Tickets',
+      report:         'Reports',
+      settings:       'Settings',
+    },
+  },
   hod: {
     defaultRole: 'hod',
     sectionFromPath: {

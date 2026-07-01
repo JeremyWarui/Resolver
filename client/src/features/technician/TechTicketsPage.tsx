@@ -1,23 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import TechTicketsTable from './TechTickets';
-import type { User } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
 
 interface TechTicketsPageProps {
-  userData?: User | null;
   onTicketSelect?: (ticketId: number) => void;
 }
 
-const TechTicketsPage = ({ userData, onTicketSelect }: TechTicketsPageProps) => {
-  const technicianId = userData?.id;
+const TechTicketsPage = ({ onTicketSelect }: TechTicketsPageProps) => {
+  const userData = useAuthStore((s) => s.user);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
       <div className="flex justify-between mb-2">
         <div>
-          <p className="text-sm text-gray-600">
-            Welcome back, {userData?.first_name || 'Technician'} 👋 Manage your assigned work
-          </p>
+          <p className="text-sm text-gray-600">Tickets assigned to you</p>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm" className="flex items-center gap-1">
@@ -27,7 +24,7 @@ const TechTicketsPage = ({ userData, onTicketSelect }: TechTicketsPageProps) => 
         </div>
       </div>
 
-      <TechTicketsTable currentTechnicianId={technicianId} onTicketSelect={onTicketSelect} />
+      <TechTicketsTable currentTechnicianId={userData?.id} onTicketSelect={onTicketSelect} />
     </div>
   );
 };

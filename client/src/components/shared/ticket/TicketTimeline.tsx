@@ -86,10 +86,35 @@ const EVENT_CONFIG: Record<TimelineEventType, EventConfig> = {
   sla_breach:       { Icon: AlertCircle,    colorVar: '--status-escalated', label: 'SLA breached'     },
 };
 
+function humanStatus(s: string) {
+  return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function buildSubtext(event: TimelineEvent): string {
   const { event_type, data, actor, note } = event;
   const name = actorName(actor);
   switch (event_type) {
+    case 'created':
+      return `by ${name}`;
+    case 'assigned': {
+      const to = data?.to as string | undefined;
+      return to ? `to ${to} · by ${name}` : `by ${name}`;
+    }
+    case 'reassigned': {
+      const to = data?.to as string | undefined;
+      return to ? `to ${to}` : name;
+    }
+    case 'status_changed': {
+      const from = data?.from as string | undefined;
+      const to   = data?.to   as string | undefined;
+      return from && to
+        ? `${humanStatus(from)} → ${humanStatus(to)} · by ${name}`
+        : `by ${name}`;
+    }
+    case 'resolved':
+    case 'closed':
+    case 'reopened':
+      return `by ${name}`;
     case 'escalated': {
       const from   = data?.from as string | undefined;
       const to     = data?.to   as string | undefined;
@@ -114,7 +139,7 @@ function buildSubtext(event: TimelineEvent): string {
 function DateChip({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 mb-2 mt-3 first:mt-0">
-      <span className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wide">
+      <span className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">
         {label}
       </span>
       <div className="flex-1 h-px bg-border/40" />
@@ -157,10 +182,10 @@ function EventRow({
       {/* Content */}
       <div className="flex-1 min-w-0 flex items-center justify-between gap-3 py-1">
         <div className="min-w-0 flex items-baseline gap-1.5">
-          <span className="text-xs text-foreground">{label}</span>
-          <span className="text-[11px] text-muted-foreground truncate">· {subtext}</span>
+          <span className="text-sm text-foreground">{label}</span>
+          <span className="text-sm text-muted-foreground truncate">· {subtext}</span>
         </div>
-        <span className="text-[11px] text-muted-foreground/70 shrink-0 tabular-nums">
+        <span className="text-xs text-muted-foreground/70 shrink-0 tabular-nums">
           {formatTime(event.created_at)}
         </span>
       </div>

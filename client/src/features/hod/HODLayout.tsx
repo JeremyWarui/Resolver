@@ -13,13 +13,13 @@ const HODLayout = () => (
   <RoleDashboardLayout
     nav={ROLE_NAV.hod}
     sections={({ onTicketSelect }) => ({
-      dashboard: <HODDashboard />,
+      dashboard: <HODDashboard onTicketSelect={onTicketSelect} />,
       tickets: <RoleTicketsPage role="hod" onTicketSelect={onTicketSelect} />,
       technicians: <HODTechnicians />,
       sections: <HODSections />,
       analytics: <RoleAnalyticsView role="hod" />,
       reports: <RoleReportsPage role="hod" />,
-      sla: <SLATrackingView />,
+      sla: <SLATrackingView onTicketSelect={onTicketSelect} />,
       settings: <ComingSoonSection section="Settings" />,
     })}
   />

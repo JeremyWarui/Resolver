@@ -16,7 +16,6 @@ interface RegisterFormProps {
   onSwitchToLogin?: () => void;
 }
 
-// Registration form schema
 const registerSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
@@ -53,12 +52,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         email: values.email,
         password: values.password
       });
-      
+
       toast.success('Account created successfully! Welcome to Resolver.');
-      
-      // Redirect new users to their dashboard (new users default to 'user' role)
       window.location.assign('/user');
-      
       onSuccess?.();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string; error?: string; errors?: Record<string, string> } } };
@@ -87,12 +83,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         <div className="relative z-10 flex flex-col justify-center px-12 py-12">
           <div className="max-w-md">
             <h2 className="text-3xl font-bold text-white mb-6">
-              Join Resolver 🚀
+              Join Resolver
             </h2>
             <p className="text-green-100 text-lg leading-relaxed mb-8">
-              Join our maintenance ticketing platform and start reporting issues instantly. Experience efficient workflows that ensure every maintenance request is tracked to resolution.
+              Create your account and start submitting requests instantly. Resolver routes every request to the right team — no manual follow-up needed.
             </p>
-            
+
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
@@ -100,38 +96,37 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 </div>
                 <div>
                   <h3 className="text-white font-medium mb-1">Quick Setup</h3>
-                  <p className="text-green-100 text-sm">Simple registration to start submitting maintenance tickets</p>
+                  <p className="text-green-100 text-sm">Register and submit your first request in minutes — no configuration required</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-white font-medium mb-1">Secure & Reliable</h3>
-                  <p className="text-green-100 text-sm">Enterprise-grade security with role-based access control</p>
+                  <p className="text-green-100 text-sm">JWT-secured with role-based access control — your requests and data stay protected</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
                   <UserPlus className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium mb-1">Instant Access</h3>
-                  <p className="text-green-100 text-sm">Report maintenance issues and track their resolution immediately</p>
+                  <h3 className="text-white font-medium mb-1">Smart Routing</h3>
+                  <p className="text-green-100 text-sm">Requests are automatically routed to the right team based on your organisation's structure</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Background decoration */}
+
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-white to-transparent opacity-5 rounded-full transform translate-x-32 -translate-y-32" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-white to-transparent opacity-5 rounded-full transform -translate-x-24 translate-y-24" />
       </div>
-      
+
       {/* Right Column - Form */}
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-lg shadow-xl border-0">
@@ -150,51 +145,36 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               </CardDescription>
             </div>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                {/* Name Fields - 2 Column Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="first_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">
-                          First Name
-                        </FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">First Name</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input
-                              placeholder="John"
-                              className="pl-10 h-11"
-                              {...field}
-                              disabled={isLoading}
-                            />
+                            <Input placeholder="John" className="pl-10 h-11" {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="last_name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">
-                          Last Name
-                        </FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Last Name</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="Doe"
-                            className="h-11"
-                            {...field}
-                            disabled={isLoading}
-                          />
+                          <Input placeholder="Doe" className="h-11" {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
@@ -202,24 +182,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                   />
                 </div>
 
-                {/* Username */}
                 <FormField
                   control={form.control}
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">
-                        Username
-                      </FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Username</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input
-                            placeholder="johndoe"
-                            className="pl-10 h-11"
-                            {...field}
-                            disabled={isLoading}
-                          />
+                          <Input placeholder="johndoe" className="pl-10 h-11" {...field} disabled={isLoading} />
                         </div>
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -227,24 +199,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                   )}
                 />
 
-                {/* Email */}
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">
-                        Email Address
-                      </FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Email Address</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input
-                            placeholder="john@example.com"
-                            className="pl-10 h-11"
-                            {...field}
-                            disabled={isLoading}
-                          />
+                          <Input placeholder="john@example.com" className="pl-10 h-11" {...field} disabled={isLoading} />
                         </div>
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -252,51 +216,34 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                   )}
                 />
 
-                {/* Password Fields - 2 Column Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">
-                          Password
-                        </FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input
-                              type="password"
-                              placeholder="Create password"
-                              className="pl-10 h-11"
-                              {...field}
-                              disabled={isLoading}
-                            />
+                            <Input type="password" placeholder="Create password" className="pl-10 h-11" {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">
-                          Confirm Password
-                        </FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Confirm Password</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input
-                              type="password"
-                              placeholder="Confirm password"
-                              className="pl-10 h-11"
-                              {...field}
-                              disabled={isLoading}
-                            />
+                            <Input type="password" placeholder="Confirm password" className="pl-10 h-11" {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
@@ -305,10 +252,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                   />
                 </div>
 
-                {/* Submit Button */}
-                <Button 
-                  type="submit" 
-                  className="w-full h-11 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg" 
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -316,25 +262,21 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               </form>
             </Form>
 
-            {/* Info Box */}
             <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
               <h4 className="font-semibold text-green-800 mb-2 flex items-center">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Account Information (Testing Mode)
+                Account Information
               </h4>
               <ul className="text-sm text-green-700 space-y-1">
-                <li>• New accounts start with "user" role</li>
-                <li>• Email and password authentication for testing</li>
-                <li>• Magic link temporarily disabled</li>
-                <li>• Contact administrator to upgrade to staff role</li>
-                <li>• Start creating tickets immediately after registration</li>
+                <li>• New accounts start with the requester role by default</li>
+                <li>• Contact your administrator to be assigned a staff role</li>
+                <li>• Submit and track requests immediately after registration</li>
+                <li>• Requests are routed automatically based on your organisation's structure</li>
               </ul>
             </div>
 
-            {/* Footer */}
             <div className="pt-6">
               <Separator className="mb-6" />
-              
               {onSwitchToLogin && (
                 <div className="text-center pb-4">
                   <span className="text-sm text-gray-600">Already have an account? </span>

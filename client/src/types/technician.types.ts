@@ -81,21 +81,4 @@ export interface DashboardTicket {
   service_item: ServiceItemInfo;
 }
 
-export interface SectionQueue {
-  unassigned_count: number;
-  tickets_by_status: Record<string, number>;
-}
 
-export interface TechnicianDashboard {
-  technician: {
-    id: number;
-    username: string;
-    name: string;
-    email: string;
-    primary_campus: string;
-  };
-  kpis: TechnicianKPIs;
-  sections: TechnicianSection[];
-  assigned_tickets: DashboardTicket[];
-  section_queue: SectionQueue;
-}

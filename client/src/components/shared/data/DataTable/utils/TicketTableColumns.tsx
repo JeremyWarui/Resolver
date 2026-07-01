@@ -116,31 +116,27 @@ export function createVariantColumns(config: VariantColumnsConfig): ColumnDef<Ti
 
 // Variant → initial column visibility map.
 // Hidden columns are still in the table (so search still works) but not rendered.
+// Standard hidden columns across all variants: facility, due_date, sla_countdown, priority, searchField.
+// Variants may additionally hide columns that aren't relevant to their context.
 export const VARIANT_COLUMN_VISIBILITY: Record<TicketTableVariant, Record<string, boolean>> = {
   queue: {
-    searchField: false, description: false,
-    facility: false, raised_by: false, created_at: false,
-    due_date: false, sla_countdown: false,
+    searchField: false, facility: false, due_date: false, sla_countdown: false,
+    raised_by: false,
   },
   compact: {
-    searchField: false, description: false,
-    ticket_no: false, facility: false, sectionName: false,
-    raised_by: false, assigned_to: false, created_at: false,
-    due_date: false, sla_countdown: false, rate_actions: false,
+    searchField: false, facility: false, due_date: false, sla_countdown: false,
+    ticket_no: false, sectionName: false, raised_by: false, assigned_to: false, created_at: false,
+    rate_actions: false,
   },
   sla: {
-    searchField: false, description: false,
-    facility: false, raised_by: false, created_at: false,
-    priority: false, rate_actions: false,
-    due_date: false,
+    searchField: false, facility: false, due_date: false, sla_countdown: false,
+    raised_by: false, priority: false, rate_actions: false,
   },
   admin: {
-    searchField: false, description: false,
-    facility: false, created_at: false, sla_countdown: false,
+    searchField: false, facility: false, due_date: false, sla_countdown: false,
   },
   'my-tickets': {
-    searchField: false,
-    facility: false, raised_by: false,
-    due_date: false, sla_countdown: false, actions: false,
+    searchField: false, facility: false, due_date: false, sla_countdown: false,
+    raised_by: false, actions: false,
   },
 };

@@ -68,7 +68,6 @@ export function usePermissions(): PermissionMap {
       canCloseTicket: false,
       canReopenTicket: false,
       canRateTicket: false,
-      canViewSectionQueue: false,
       canViewDeptQueue: false,
       canViewOrgAnalytics: false,
       canViewSLATracking: false,

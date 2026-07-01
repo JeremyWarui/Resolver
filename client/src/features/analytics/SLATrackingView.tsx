@@ -12,7 +12,6 @@ import { useSections } from '@/hooks/sections/useSections';
 import { FilterPills } from '@/components/shared/data/FilterPills';
 import { SLAComplianceGauge } from '@/components/shared/data/SLAComplianceGauge';
 import { TicketTable } from '@/components/shared/ticket/TicketTable';
-import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
@@ -64,14 +63,14 @@ function breachClass(ticket: Ticket): string {
   return '';
 }
 
-export function SLATrackingView() {
+interface SLATrackingViewProps { onTicketSelect?: (id: number) => void; }
+
+export function SLATrackingView({ onTicketSelect }: SLATrackingViewProps) {
   const { role } = useRoleContext();
   const isHod = role === 'hod';
 
-  const [slaFilter, setSlaFilter]     = useState<SlaFilter>('all');
-  const [sectionId, setSectionId]     = useState<number | null>(null);
-  const [selectedId, setSelectedId]   = useState<number | null>(null);
-  const [modalOpen, setModalOpen]     = useState(false);
+  const [slaFilter, setSlaFilter]   = useState<SlaFilter>('all');
+  const [sectionId, setSectionId]   = useState<number | null>(null);
 
   const { sections } = useSections();
 
@@ -124,8 +123,7 @@ export function SLATrackingView() {
   }, [sorted]);
 
   const handleRowClick = useCallback((ticket: Ticket) => {
-    setSelectedId(ticket.id);
-    setModalOpen(true);
+    onTicketSelect?.(ticket.id);
   }, []);
 
   const handleRefresh = useCallback(() => refetch(), [refetch]);
@@ -234,15 +232,6 @@ export function SLATrackingView() {
         }
       />
 
-      <TicketDetailModal
-        ticketId={selectedId}
-        isOpen={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) setSelectedId(null);
-        }}
-        onTicketUpdate={() => refetch()}
-      />
     </div>
   );
 }

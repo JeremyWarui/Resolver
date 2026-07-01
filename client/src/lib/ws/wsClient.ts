@@ -13,9 +13,13 @@
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { AppNotification, NotificationEventType, UserScope } from '@/types';
 
+// In production, VITE_WS_URL_PROD overrides (set for real deployments).
+// Fallback: auto-detect from current origin so preview proxy and same-origin
+// deployments work without any env var — wss:// when served over HTTPS.
 const WS_URL =
   import.meta.env.MODE === 'production'
-    ? (import.meta.env.VITE_WS_URL_PROD ?? 'wss://django-resolver.onrender.com/ws/')
+    ? (import.meta.env.VITE_WS_URL_PROD ??
+        `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/`)
     : (import.meta.env.VITE_WS_URL_DEV ?? 'ws://localhost:8000/ws/');
 
 const TOKEN_KEY = 'authToken';
@@ -135,16 +139,25 @@ function handleWsEvent(msg: WsMessage): void {
   switch (msg.type) {
     case 'ticket_created':
       invalidate(['tickets']);
+      useNotificationStore.getState().addNotification(
+        buildNotification(msg, 'ticket_created', 'New ticket raised', `Ticket #${msg.ticket_no ?? ''} has been submitted.`)
+      );
       break;
 
     case 'ticket_assigned':
       invalidate(['ticket', msg.ticketId]);
       invalidate(['tickets']);
+      useNotificationStore.getState().addNotification(
+        buildNotification(msg, 'ticket_assigned', 'Ticket assigned', `Ticket #${msg.ticket_no ?? ''} assigned to ${(msg.assignedToName as string) ?? 'a technician'}.`)
+      );
       break;
 
     case 'ticket_status_changed':
       invalidate(['ticket', msg.ticketId]);
       invalidate(['tickets']);
+      useNotificationStore.getState().addNotification(
+        buildNotification(msg, 'ticket_status_changed', 'Ticket updated', `Ticket #${msg.ticket_no ?? ''} status changed to ${(msg.toStatus as string) ?? ''}.`)
+      );
       break;
 
     case 'comment_added':
@@ -153,11 +166,13 @@ function handleWsEvent(msg: WsMessage): void {
 
     case 'ticket_escalated':
       invalidate(['tickets']);
+      useNotificationStore.getState().addNotification(
+        buildNotification(msg, 'ticket_escalated', 'Ticket escalated', `Ticket #${msg.ticket_no ?? ''} has been escalated.`)
+      );
       break;
 
     case 'ticket_resolved':
       invalidate(['ticket', msg.ticketId]);
-      // Push a notification to the store
       useNotificationStore.getState().addNotification(
         buildNotification(msg, 'ticket_resolved', 'Ticket resolved', 'Your request has been resolved.')
       );

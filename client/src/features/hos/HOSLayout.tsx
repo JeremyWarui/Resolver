@@ -12,12 +12,12 @@ const HOSLayout = () => (
   <RoleDashboardLayout
     nav={ROLE_NAV.hos}
     sections={({ onTicketSelect }) => ({
-      dashboard: <RoleDashboardView role="hos" />,
+      dashboard: <RoleDashboardView role="hos" onTicketSelect={onTicketSelect} />,
       tickets: <RoleTicketsPage role="hos" onTicketSelect={onTicketSelect} />,
       technicians: <HOSTechnicians />,
       analytics: <RoleAnalyticsView role="hos" />,
       reports: <RoleReportsPage role="hos" />,
-      sla: <SLATrackingView />,
+      sla: <SLATrackingView onTicketSelect={onTicketSelect} />,
       settings: <ComingSoonSection section="Settings" />,
     })}
   />

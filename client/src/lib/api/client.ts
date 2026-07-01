@@ -7,9 +7,11 @@ declare module 'axios' {
   }
 }
 
+// In production, VITE_API_URL_PROD overrides (set via hosting env vars).
+// Fallback is relative /api/v1 so the vite preview proxy works for LAN/phone testing.
 const BASE_URL =
   import.meta.env.MODE === 'production'
-    ? (import.meta.env.VITE_API_URL_PROD ?? 'https://django-resolver.onrender.com/api/v1')
+    ? (import.meta.env.VITE_API_URL_PROD ?? '/api/v1')
     : (import.meta.env.VITE_API_URL_DEV ?? 'http://localhost:8000/api/v1');
 
 const TOKEN_KEY = 'authToken';

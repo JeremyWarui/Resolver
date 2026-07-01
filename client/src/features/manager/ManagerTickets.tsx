@@ -4,7 +4,6 @@ import { createTicketTableFilters } from '@/components/shared/data/DataTable/uti
 import { createTicketTableColumns } from '@/components/shared/data/DataTable/utils/TicketTableColumns';
 import { createTicketColumnVisibility } from '@/components/shared/data/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/shared/data/DataTable/DataTable';
-import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
 import { useManagerDashboard } from '@/hooks/dashboard';
 import ManagerStatsCards from './ManagerStatsCards';
 
@@ -58,14 +57,6 @@ const ManagerTickets = ({ userId, onTicketSelect }: { userId?: number; onTicketS
         manualPagination={true}
       />
 
-      {!onTicketSelect && (
-        <TicketDetailModal
-          ticketId={table.selectedTicket?.id ?? null}
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          onTicketUpdate={table.refetch}
-        />
-      )}
     </main>
   );
 };

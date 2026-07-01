@@ -45,6 +45,8 @@ export interface SectionalMetrics {
   resolved: number;
   net_flow: number;
   status_distribution: StatusCount[];
+  live_status_distribution?: StatusCount[];
+  unassigned?: number;
 }
 
 export interface SectionBreakdownItem {
@@ -87,28 +89,12 @@ export interface TechnicianOverviewResponse {
   date_range: DateRange;
   individual: OverviewMetrics;
   sectional: SectionalMetrics;
-  // Legacy shim fields — components that use stale endpoint shapes read these
-  kpis?: {
-    assigned?: number;
-    resolved?: number;
-    pending?: number;
-    avg_resolution_time?: number | null;
-    resolution_rate?: number | null;
-    resolution_rate_pct?: number | null;
-    avg_rating?: number | null;
-    total_tickets?: number;
-    open_tickets?: number;
-  };
   sections?: Array<{
     id: number; name: string; code: string;
     campus?: { id: number; name: string; code: string };
     department?: { id: number; name: string; code: string };
     section_type_name?: string;
   }>;
-  section_queue?: {
-    unassigned_count?: number;
-    tickets_by_status?: Record<string, number>;
-  };
 }
 
 // GET /analytics/sla-compliance/

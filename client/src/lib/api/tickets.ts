@@ -105,7 +105,7 @@ export async function assignTicket(
   technicianId: number
 ): Promise<Ticket> {
   const { data } = await apiClient.post<Ticket>(`/tickets/${id}/assign/`, {
-    assigned_to_id: technicianId,
+    assigned_to: technicianId,
   });
   return data;
 }

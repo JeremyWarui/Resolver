@@ -3,7 +3,6 @@ import { Plus, Ticket as TicketIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FilterPills } from '@/components/shared/data/FilterPills';
 import { TicketTable } from '@/components/shared/ticket/TicketTable';
-import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
 import { RatingModal } from './RatingModal';
 import UserStatsCards from '@/components/shared/data/StatCards/UserStatsCards';
 import { useTickets } from '@/hooks/tickets';
@@ -29,8 +28,7 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
   const [cursor, setCursor] = useState<string | null>(null);
   const [prevCursors, setPrevCursors] = useState<(string | null)[]>([]);
   const [pageSize, setPageSize] = useState(20);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [ratingTicket, setRatingTicket] = useState<Ticket | null>(null);
 
   // Server-side filtered ticket fetch — mine:1 scopes to tickets raised_by == self (R15)
@@ -48,23 +46,17 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
   }
 
   function handleRowClick(ticket: Ticket) {
-    if (onTicketSelect) {
-      onTicketSelect(ticket.id);
-    } else {
-      setSelectedTicket(ticket);
-      setDetailOpen(true);
-    }
+    setSelectedTicketId(ticket.id);
+    onTicketSelect?.(ticket.id);
   }
 
   function handleRate(ticket: Ticket) {
     setRatingTicket(ticket);
   }
 
-  function handleRatingSuccess(updated: Ticket) {
+  function handleRatingSuccess() {
     setRatingTicket(null);
     refetch();
-    // Update selected ticket if the detail modal is also open
-    if (selectedTicket?.id === updated.id) setSelectedTicket(updated);
   }
 
   return (
@@ -122,7 +114,7 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
             loading={loading}
             onRowClick={handleRowClick}
             onRate={handleRate}
-            selectedRowId={selectedTicket?.id ?? null}
+            selectedRowId={selectedTicketId}
             pagination={{
               total: totalTickets,
               pageIndex: prevCursors.length,
@@ -148,19 +140,6 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
           />
         )}
       </div>
-
-      {/* Ticket detail modal — opened on row click when not using external navigation */}
-      {!onTicketSelect && (
-        <TicketDetailModal
-          ticketId={selectedTicket?.id ?? null}
-          isOpen={detailOpen}
-          onOpenChange={setDetailOpen}
-          onTicketUpdate={(updated) => {
-            setSelectedTicket(updated);
-            refetch();
-          }}
-        />
-      )}
 
       {/* Rating modal — opened via Rate & close action column */}
       {ratingTicket && (

@@ -6,7 +6,6 @@ import { createTicketTableColumns } from '@/components/shared/data/DataTable/uti
 import { createTicketColumnVisibility } from '@/components/shared/data/DataTable/utils/TicketColumnVisibility';
 import DataTable from '@/components/shared/data/DataTable/DataTable';
 import { TechTableHeader } from '@/components/shared/data/DataTable/utils/TableHeaders';
-import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
 import { FilterPills } from '@/components/shared/data/FilterPills';
 import type { FilterPill } from '@/types';
 import TechnicianStatsCards from './TechnicianStatsCards';
@@ -113,14 +112,6 @@ function TechTickets({ currentTechnicianId, onTicketSelect }: TechTicketsProps) 
         manualPagination={true}
       />
 
-      {!onTicketSelect && (
-        <TicketDetailModal
-          ticketId={table.selectedTicket?.id ?? null}
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          onTicketUpdate={table.refetch}
-        />
-      )}
     </>
   );
 }

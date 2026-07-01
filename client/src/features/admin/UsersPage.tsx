@@ -17,7 +17,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { getRoleAssignments, createRoleAssignment, deleteRoleAssignment, updateUser, createUser, deleteUser } from '@/lib/api/users';
-import { campusesService, departmentsService } from '@/lib/api/organizations';
+import { getUsers } from '@/lib/api/users';
+import { campusesService, departmentsService, sectionsService } from '@/lib/api/organizations';
 import { AdminResourceTable } from '@/components/shared/data/AdminResourceTable';
 import { useSortableColumn } from '@/hooks/useSortableColumn';
 import { handleDRFError } from '@/utils/handleDRFError';
@@ -42,10 +43,15 @@ const ROLE_BADGE_STYLES: Record<UserRole, string> = {
   admin: 'bg-red-100 text-red-700',
 };
 
+const ROLES_REQUIRING_SECTION: UserRole[] = ['technician', 'hos'];
+const ROLES_REQUIRING_CAMPUS_DEPT: UserRole[] = ['hod'];
+const ROLES_REQUIRING_DEPARTMENT: UserRole[] = ['manager'];
+
 interface RoleAssignFormState {
   role: UserRole;
   campus_id: string;
   department_id: string;
+  section_id: string;
   is_primary: boolean;
 }
 
@@ -53,30 +59,31 @@ const EMPTY_RA_FORM: RoleAssignFormState = {
   role: 'user',
   campus_id: '',
   department_id: '',
+  section_id: '',
   is_primary: false,
 };
 
-function RoleAssignmentModal({
-  user,
-  onClose,
-}: {
-  user: User;
-  onClose: () => void;
-}) {
+function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => void }) {
   const [assignments, setAssignments] = useState<RoleAssignment[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [sections, setSections] = useState<{ id: number; name: string }[]>([]);
   const [loadingDepts, setLoadingDepts] = useState(false);
+  const [loadingSections, setLoadingSections] = useState(false);
   const [form, setForm] = useState<RoleAssignFormState>(EMPTY_RA_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  const needsSection = ROLES_REQUIRING_SECTION.includes(form.role);
+  const needsCampusDept = ROLES_REQUIRING_CAMPUS_DEPT.includes(form.role);
+  const needsDepartment = ROLES_REQUIRING_DEPARTMENT.includes(form.role);
+  const needsCampus = needsSection || needsCampusDept;
+
   const fetchAssignments = async () => {
     setLoadingList(true);
     try {
-      const data = await getRoleAssignments(user.id);
-      setAssignments(data);
+      setAssignments(await getRoleAssignments(user.id));
     } catch {
       toast.error('Failed to load role assignments');
     } finally {
@@ -85,18 +92,18 @@ function RoleAssignmentModal({
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchAssignments() calls setLoadingList(true) before its first await; standard async-data-fetch pattern
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAssignments();
     campusesService.getCampuses().then(setCampuses).catch(() => {});
-    // fetchAssignments is defined inline and recreated each render; adding it would loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
+  // Load departments when campus changes
   useEffect(() => {
     if (!form.campus_id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset cascade when campus cleared; synchronous clear before async fetch is intentional UX
       setDepartments([]);
-      setForm(f => ({ ...f, department_id: '' }));
+      setSections([]);
+      setForm(f => ({ ...f, department_id: '', section_id: '' }));
       return;
     }
     setLoadingDepts(true);
@@ -105,8 +112,25 @@ function RoleAssignmentModal({
       .then(setDepartments)
       .catch(() => {})
       .finally(() => setLoadingDepts(false));
-    setForm(f => ({ ...f, department_id: '' }));
+    setForm(f => ({ ...f, department_id: '', section_id: '' }));
   }, [form.campus_id]);
+
+  // Load sections when department changes (for technician/HOS)
+  useEffect(() => {
+    if (!form.department_id || !needsSection) {
+      setSections([]);
+      setForm(f => ({ ...f, section_id: '' }));
+      return;
+    }
+    setLoadingSections(true);
+    sectionsService
+      .getSections({ department: Number(form.department_id) })
+      .then(setSections)
+      .catch(() => {})
+      .finally(() => setLoadingSections(false));
+    setForm(f => ({ ...f, section_id: '' }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.department_id, needsSection]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +141,7 @@ function RoleAssignmentModal({
         is_primary: form.is_primary,
         campus_id: form.campus_id ? Number(form.campus_id) : null,
         department_id: form.department_id ? Number(form.department_id) : null,
+        section_id: form.section_id ? Number(form.section_id) : null,
       };
       await createRoleAssignment(user.id, payload);
       toast.success('Role assignment added');
@@ -136,13 +161,9 @@ function RoleAssignmentModal({
       toast.success('Role assignment removed');
       fetchAssignments();
     } catch (error: unknown) {
-      const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string } } };
-      if (axiosError?.response?.status === 422) {
-        const msg =
-          axiosError.response.data?.detail ??
-          axiosError.response.data?.error ??
-          'Cannot delete the primary role assignment.';
-        toast.error(msg);
+      const axiosError = error as { response?: { status?: number; data?: { detail?: string } } };
+      if (axiosError?.response?.status === 422 || axiosError?.response?.status === 400) {
+        toast.error(axiosError.response?.data?.detail ?? 'Cannot delete this assignment.');
       } else {
         handleDRFError(error, { fallbackMessage: 'Failed to remove role assignment' });
       }
@@ -208,7 +229,10 @@ function RoleAssignmentModal({
             <form onSubmit={handleAdd} className="space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Role</Label>
-                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v as UserRole }))}>
+                <Select
+                  value={form.role}
+                  onValueChange={v => setForm(f => ({ ...f, role: v as UserRole, campus_id: '', department_id: '', section_id: '' }))}
+                >
                   <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {(Object.keys(ROLE_LABELS) as UserRole[]).map(r => (
@@ -218,42 +242,62 @@ function RoleAssignmentModal({
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Campus — shown for roles that need it */}
+              {(needsCampus || needsDepartment) && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Campus (optional)</Label>
-                  <Select
-                    value={form.campus_id}
-                    onValueChange={v => setForm(f => ({ ...f, campus_id: v }))}
-                  >
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Any" /></SelectTrigger>
+                  <Label className="text-xs">Campus {needsCampus ? '' : '(optional)'}</Label>
+                  <Select value={form.campus_id} onValueChange={v => setForm(f => ({ ...f, campus_id: v }))}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select campus" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
                       {campuses.map(c => (
                         <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+              )}
 
+              {/* Department — shown when campus is selected */}
+              {(needsCampus || needsDepartment) && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Department (optional)</Label>
+                  <Label className="text-xs">Department</Label>
                   <Select
                     value={form.department_id}
                     onValueChange={v => setForm(f => ({ ...f, department_id: v }))}
                     disabled={!form.campus_id || loadingDepts}
                   >
                     <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder={form.campus_id ? (loadingDepts ? 'Loading…' : 'Any') : 'Select campus first'} />
+                      <SelectValue placeholder={!form.campus_id ? 'Select campus first' : loadingDepts ? 'Loading…' : 'Select department'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Any</SelectItem>
                       {departments.map(d => (
                         <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              )}
+
+              {/* Section — only for technician / HOS */}
+              {needsSection && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Section</Label>
+                  <Select
+                    value={form.section_id}
+                    onValueChange={v => setForm(f => ({ ...f, section_id: v }))}
+                    disabled={!form.department_id || loadingSections}
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder={!form.department_id ? 'Select department first' : loadingSections ? 'Loading…' : 'Select section'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sections.map(s => (
+                        <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -261,7 +305,9 @@ function RoleAssignmentModal({
                   checked={form.is_primary}
                   onCheckedChange={checked => setForm(f => ({ ...f, is_primary: !!checked }))}
                 />
-                <Label htmlFor="ra-primary" className="text-xs cursor-pointer">Set as primary assignment</Label>
+                <Label htmlFor="ra-primary" className="text-xs cursor-pointer">
+                  Set as primary assignment (replaces current primary role)
+                </Label>
               </div>
 
               <div className="flex justify-end pt-1">
@@ -283,7 +329,6 @@ interface UserFormData {
   email: string;
   username: string;
   password: string;
-  role: UserRole;
 }
 
 const EMPTY_FORM: UserFormData = {
@@ -292,22 +337,11 @@ const EMPTY_FORM: UserFormData = {
   email: '',
   username: '',
   password: '',
-  role: 'user',
 };
 
-function UserForm({
-  editing,
-  onSuccess,
-  onClose,
-}: {
-  editing: User | null;
-  onSuccess: () => void;
-  onClose: () => void;
-}) {
+function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuccess: () => void; onClose: () => void }) {
   const [form, setForm] = useState<UserFormData>(
-    editing
-      ? { ...EMPTY_FORM, first_name: editing.first_name, last_name: editing.last_name, email: editing.email, username: editing.username, role: editing.role }
-      : EMPTY_FORM
+    editing ? { ...EMPTY_FORM, first_name: editing.first_name, last_name: editing.last_name, email: editing.email, username: editing.username } : EMPTY_FORM
   );
   const [saving, setSaving] = useState(false);
   const [prevEditing, setPrevEditing] = useState(editing);
@@ -316,13 +350,12 @@ function UserForm({
     setPrevEditing(editing);
     setForm(
       editing
-        ? { ...EMPTY_FORM, first_name: editing.first_name, last_name: editing.last_name, email: editing.email, username: editing.username, role: editing.role }
+        ? { ...EMPTY_FORM, first_name: editing.first_name, last_name: editing.last_name, email: editing.email, username: editing.username }
         : EMPTY_FORM
     );
   }
 
-  const set = (key: keyof UserFormData, val: string) =>
-    setForm((f) => ({ ...f, [key]: val }));
+  const set = (key: keyof UserFormData, val: string) => setForm(f => ({ ...f, [key]: val }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -341,7 +374,6 @@ function UserForm({
           first_name: form.first_name.trim(),
           last_name: form.last_name.trim(),
           email: form.email.trim(),
-          role: form.role,
         });
         toast.success('User updated');
       } else {
@@ -350,10 +382,10 @@ function UserForm({
           last_name: form.last_name.trim(),
           email: form.email.trim(),
           password: form.password,
-          role: form.role,
+          ...(form.username.trim() ? { username: form.username.trim() } : {}),
         };
         await createUser(payload);
-        toast.success('User created');
+        toast.success('User created — use the role assignment button to assign a staff role');
       }
       onSuccess();
     } catch (error) {
@@ -382,8 +414,8 @@ function UserForm({
       {!editing && (
         <>
           <div className="space-y-2">
-            <Label>Username</Label>
-            <Input value={form.username} onChange={e => set('username', e.target.value)} placeholder="username (optional, auto-generated if blank)" />
+            <Label>Username <span className="text-muted-foreground text-xs">(optional — auto-generated if blank)</span></Label>
+            <Input value={form.username} onChange={e => set('username', e.target.value)} placeholder="e.g. john.doe" />
           </div>
           <div className="space-y-2">
             <Label>Password</Label>
@@ -391,21 +423,10 @@ function UserForm({
           </div>
         </>
       )}
-      <div className="space-y-2">
-        <Label>Role</Label>
-        <Select value={form.role} onValueChange={v => set('role', v as UserRole)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {(Object.keys(ROLE_LABELS) as UserRole[]).map(r => (
-              <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
         <Button type="submit" disabled={saving} className="bg-primary hover:bg-primary/90">
-          {saving ? 'Saving…' : editing ? 'Update' : 'Create'}
+          {saving ? 'Saving…' : editing ? 'Update' : 'Create User'}
         </Button>
       </div>
     </form>
@@ -415,13 +436,10 @@ function UserForm({
 type UserRow = User & { fullName: string; searchField: string };
 
 const UsersPage = () => {
-  // TanStack Table's useReactTable() returns an interior-mutable table instance whose
-  // method references can't be safely memoized — opt out of React Compiler optimization.
-  // See https://react.dev/reference/react-compiler/directives/use-no-memo
   'use no memo';
 
-  const users = useMemo(() => [] as User[], []);
-  const loading = false;
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -435,25 +453,19 @@ const UsersPage = () => {
   const nameHeader = useSortableColumn('Name');
   const emailHeader = useSortableColumn('Email');
 
-  // ⚠️ User management disabled: /users/ endpoint doesn't exist (§28 Reconciliation)
-  // Users must be managed via Django admin; only role assignments work here
   const fetchUsers = async () => {
-    // setLoading(true);
-    // DISABLED: getUsers() throws error - endpoint doesn't exist
-    // try {
-    //   const resp = await getUsers({ page_size: 200 });
-    //   setUsers(resp.results);
-    // } catch {
-    //   toast.error('Failed to load users');
-    // } finally {
-    //   setLoading(false);
-    // }
+    setLoading(true);
+    try {
+      const resp = await getUsers();
+      setUsers(resp.results);
+    } catch {
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { 
-    // fetchUsers() is disabled - see above
-    console.warn('UsersPage: User listing is disabled (§28 - /users/ endpoint does not exist)');
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const data: UserRow[] = useMemo(() => users.map(u => ({
     ...u,
@@ -518,7 +530,7 @@ const UsersPage = () => {
         const user = row.original;
         return (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setEditing(user); setIsFormOpen(true); }}>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setEditing(user); setIsFormOpen(true); }} title="Edit user">
               <Pencil className="h-3.5 w-3.5 text-gray-500" />
             </Button>
             <Button
@@ -535,6 +547,7 @@ const UsersPage = () => {
               size="sm"
               className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
               onClick={() => setDeleteTarget(user)}
+              title="Delete user"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -544,9 +557,7 @@ const UsersPage = () => {
     },
   ];
 
-  // TanStack Table's table instance is interior-mutable by design (v9 will add a
-  // compiler-safe API); the 'use no memo' directive above is the documented opt-out.
-  // eslint-disable-next-line react-hooks/incompatible-library -- known, handled above
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -619,7 +630,7 @@ const UsersPage = () => {
       {roleAssignTarget && (
         <RoleAssignmentModal
           user={roleAssignTarget}
-          onClose={() => setRoleAssignTarget(null)}
+          onClose={() => { setRoleAssignTarget(null); fetchUsers(); }}
         />
       )}
 

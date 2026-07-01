@@ -5,6 +5,7 @@ import RoleDashboardView from "@/features/shared/RoleDashboardView";
  * role-scoped RoleDashboardView; this thin wrapper preserves the existing
  * default export so AdminLayout's import is unchanged.
  */
-const MainContent = () => <RoleDashboardView role="admin" />;
+interface Props { onTicketSelect?: (id: number) => void; }
+const MainContent = ({ onTicketSelect }: Props) => <RoleDashboardView role="admin" onTicketSelect={onTicketSelect} />;
 
 export default MainContent;

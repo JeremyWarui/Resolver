@@ -20,7 +20,7 @@ const ManagerLayout = () => (
     nav={ROLE_NAV.manager}
     renderWrapper={(node: ReactNode) => <Suspense fallback={<PageLoading />}>{node}</Suspense>}
     sections={({ onTicketSelect, userId }) => ({
-      dashboard: <ManagerDashboard />,
+      dashboard: <ManagerDashboard onTicketSelect={onTicketSelect} />,
       tickets: <ManagerTickets userId={userId} onTicketSelect={onTicketSelect} />,
       analytics: <ManagerAnalytics />,
       reports: <ManagerReportsPage />,

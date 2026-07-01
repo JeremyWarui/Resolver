@@ -41,11 +41,10 @@ export const SIDEBAR_CONFIG: Record<UserRole, SidebarConfig> = {
   },
   technician: {
     items: [
-      { id: 'dashboard', label: 'Section Tickets', icon: LayoutDashboard },
+      { id: 'dashboard',       label: 'Section Tickets',  icon: LayoutDashboard },
       { id: 'assignedTickets', label: 'Assigned Tickets', icon: ClipboardList },
-      { id: 'myRequests', label: 'My Requests', icon: PlusCircle },
-      { id: 'report', label: 'Reports', icon: FileText },
-      { id: 'settings', label: 'Settings', icon: Settings },
+      { id: 'report',          label: 'Reports',          icon: FileText },
+      { id: 'settings',        label: 'Settings',         icon: Settings },
     ],
   },
   hos: {

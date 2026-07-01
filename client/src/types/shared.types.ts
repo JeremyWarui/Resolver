@@ -8,16 +8,6 @@ import type { UserRole } from './user.types';
 // The plan uses `Role`; the codebase uses `UserRole`. Both are valid.
 export type Role = UserRole;
 
-// ─── Role assignment (multi-role — Phase 6, legacy camelCase shape) ───────────
-export interface LegacyRoleAssignment {
-  id: string;
-  role: Role;
-  campusId: number | null;
-  departmentId: number | null;
-  sectionId: number | null;
-  isPrimary: boolean;
-}
-
 // ─── Permission map ───────────────────────────────────────────────────────────
 
 export interface PermissionMap {
@@ -29,7 +19,6 @@ export interface PermissionMap {
   canCloseTicket: boolean;
   canReopenTicket: boolean;
   canRateTicket: boolean;
-  canViewSectionQueue: boolean;
   canViewDeptQueue: boolean;
   canViewOrgAnalytics: boolean;
   canViewSLATracking: boolean;

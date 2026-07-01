@@ -97,7 +97,7 @@ function AdminLayoutContent() {
       loading={loading}
     >
       <Suspense fallback={<PageLoading />}>
-          {activeSection === "dashboard" && <MainContent />}
+          {activeSection === "dashboard" && <MainContent onTicketSelect={setSelectedTicketId} />}
           {activeSection === "tickets" && <TicketsPage onTicketSelect={setSelectedTicketId} />}
           {activeSection === "reports" && <ReportsPage />}
           {activeSection === "analytics" && <OrganisationAnalyticsPage />}

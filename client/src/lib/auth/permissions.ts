@@ -14,7 +14,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMap> = {
     canCloseTicket: true,    // user confirms resolution
     canReopenTicket: true,   // user reopens resolved ticket
     canRateTicket: true,
-    canViewSectionQueue: false,
+
     canViewDeptQueue: false,
     canViewOrgAnalytics: false,
     canViewSLATracking: false,
@@ -32,7 +32,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMap> = {
     canCloseTicket: false,
     canReopenTicket: false,
     canRateTicket: false,
-    canViewSectionQueue: true,
+
     canViewDeptQueue: false,
     canViewOrgAnalytics: false,
     canViewSLATracking: false,
@@ -50,7 +50,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMap> = {
     canCloseTicket: false,
     canReopenTicket: false,
     canRateTicket: false,
-    canViewSectionQueue: true,
+
     canViewDeptQueue: false,
     canViewOrgAnalytics: false,
     canViewSLATracking: true,
@@ -68,7 +68,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMap> = {
     canCloseTicket: false,
     canReopenTicket: false,
     canRateTicket: false,
-    canViewSectionQueue: true,
+
     canViewDeptQueue: true,
     canViewOrgAnalytics: false,
     canViewSLATracking: true,
@@ -86,7 +86,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMap> = {
     canCloseTicket: false,
     canReopenTicket: false,
     canRateTicket: false,
-    canViewSectionQueue: false,
+
     canViewDeptQueue: true,
     canViewOrgAnalytics: true,
     canViewSLATracking: true,
@@ -104,7 +104,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMap> = {
     canCloseTicket: true,
     canReopenTicket: true,
     canRateTicket: false,
-    canViewSectionQueue: true,
+
     canViewDeptQueue: true,
     canViewOrgAnalytics: true,
     canViewSLATracking: true,

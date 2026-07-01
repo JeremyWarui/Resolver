@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { UserStatsCards } from '@/components/shared/data/StatCards';
 import { TicketCreationWizard } from '@/components/shared/ticket/TicketCreationWizard';
-import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
 import QuickActions, { type QuickActionCategory, type QuickActionItem } from './QuickActions';
 import { RecentTicketsCard } from './RecentTicketsCard';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,6 +12,7 @@ import { useTickets } from '@/hooks/tickets';
 
 interface UserDashboardProps {
   onNavigate?: (section: 'dashboard' | 'userTickets' | 'submitTicket' | 'settings') => void;
+  onTicketSelect?: (id: number) => void;
 }
 
 type QuickStart = {
@@ -21,14 +21,12 @@ type QuickStart = {
   item?: QuickActionItem;
 } | undefined;
 
-const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
+const UserDashboard = ({ onNavigate, onTicketSelect }: UserDashboardProps) => {
   const queryClient = useQueryClient();
   const userData = useAuthStore((s) => s.user);
   const { loading: dashLoading, refetch } = useUserDashboard();
   const { tickets: recentTickets } = useTickets({ mine: 1, page_size: 5 });
 
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [quickStart, setQuickStart] = useState<QuickStart>(undefined);
 
@@ -59,10 +57,6 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
     if (!open) setQuickStart(undefined);
   }
 
-  function handleTicketClick(id: number) {
-    setSelectedTicketId(id);
-    setDetailOpen(true);
-  }
 
   return (
     <main className="flex-1 overflow-y-auto bg-muted/30">
@@ -101,7 +95,7 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
           <RecentTicketsCard
             tickets={recentTickets}
             loading={dashLoading}
-            onTicketClick={handleTicketClick}
+            onTicketClick={onTicketSelect}
             onViewAll={() => onNavigate?.('userTickets')}
           />
         </div>
@@ -117,14 +111,6 @@ const UserDashboard = ({ onNavigate }: UserDashboardProps) => {
         quickStart={quickStart}
       />
 
-      <TicketDetailModal
-        ticketId={selectedTicketId}
-        isOpen={detailOpen}
-        onOpenChange={(open) => {
-          setDetailOpen(open);
-          if (!open) setSelectedTicketId(null);
-        }}
-      />
     </main>
   );
 };

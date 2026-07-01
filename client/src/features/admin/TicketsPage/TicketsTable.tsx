@@ -3,7 +3,6 @@ import { useTicketTable } from '@/hooks/tickets';
 import { useTicketFilterOptions } from '@/hooks/tickets/useTicketFilterOptions';
 import { FilterPills } from '@/components/shared/data/FilterPills';
 import { TicketTable } from '@/components/shared/ticket/TicketTable';
-import { TicketDetailModal } from '@/components/shared/ticket/TicketDetailModal';
 import {
   createSectionFilter,
   createTechnicianFilter,
@@ -104,14 +103,6 @@ function AllTicketsTable({
         }}
       />
 
-      {!onTicketSelect && (
-        <TicketDetailModal
-          ticketId={table.selectedTicket?.id ?? null}
-          isOpen={table.isTicketDialogOpen}
-          onOpenChange={table.setIsTicketDialogOpen}
-          onTicketUpdate={table.refetch}
-        />
-      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import RoleDashboardView from "@/features/shared/RoleDashboardView";
  * manager gets a real department overview (stats cards, flow/demand charts,
  * recent tickets, export) with no dead legacy fields.
  */
-const ManagerDashboard = () => <RoleDashboardView role="manager" />;
+interface Props { onTicketSelect?: (id: number) => void; }
+const ManagerDashboard = ({ onTicketSelect }: Props) => <RoleDashboardView role="manager" onTicketSelect={onTicketSelect} />;
 
 export default ManagerDashboard;
