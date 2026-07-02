@@ -36,9 +36,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
   if (isLoading) {
     return (
       <Card className={`${className} animate-pulse`}>
-        <CardContent className='p-4 flex items-center'>
-          <div className='bg-gray-200 p-3 rounded-full mr-6 ml-2 h-12 w-12'></div>
-          <div className="w-full">
+        <CardContent className='p-3 flex items-center'>
+          <div className='bg-gray-200 p-2.5 rounded-full mr-3 h-11 w-11 shrink-0'></div>
+          <div className="w-full min-w-0">
             <div className='h-4 bg-gray-200 rounded w-24 mb-2'></div>
             <div className='h-7 bg-gray-200 rounded w-16 mb-2'></div>
             <div className='h-3 bg-gray-200 rounded w-32'></div>
@@ -50,26 +50,26 @@ const MetricCard: React.FC<MetricCardProps> = ({
   
   return (
     <Card className={className}>
-      <CardContent className='p-4 flex items-center'>
+      <CardContent className='p-3 flex items-center'>
         {icon && (
-          <div className={`${iconBgColor} p-3 rounded-full mr-6 ml-2`}>
+          <div className={`${iconBgColor} p-2.5 rounded-full mr-3 shrink-0`}>
             {icon}
           </div>
         )}
-        <div>
-          <p className='text-sm text-gray-500'>{title}</p>
+        <div className="min-w-0">
+          <p className='text-sm text-gray-500 truncate'>{title}</p>
           <div className='flex items-center'>
             <h3 className='text-2xl font-bold mr-2'>
               {value}
             </h3>
             {badge && (
-              <span className="text-xs px-1.5 py-0.5 rounded" style={getBadgeStyle(badge.color)}>
+              <span className="text-xs px-1.5 py-0.5 rounded whitespace-nowrap" style={getBadgeStyle(badge.color)}>
                 {badge.value}
               </span>
             )}
           </div>
           {description && (
-            <p className='text-xs text-gray-500'>{description}</p>
+            <p className='text-xs text-gray-500 truncate'>{description}</p>
           )}
           {customContent}
         </div>
