@@ -16,7 +16,7 @@ npm install
 Create a `.env` file in `client/`:
 
 ```env
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL_DEV=http://localhost:8000/api/v1
 ```
 
 ```bash
@@ -56,12 +56,14 @@ client/src/
 │   │                     StatCards stack, DataTable, InsightsPanel
 │   ├── shared/ticket/  — TicketCreationWizard, TicketDetailModal, StatusBadge, etc.
 │   ├── shared/forms/   — FilterPanel, TechnicianPicker, FacilityType forms
+│   ├── shared/LazyMount.tsx — defers mounting below-the-fold charts/tables until scrolled into view
 │   └── layout/         — MainLayout, RoleLayout, AppSidebar, RoleSwitcher
 ├── hooks/
 │   ├── dashboard/      — useAdminDashboard, useManagerDashboard, useTechnicianDashboard, etc.
 │   ├── analytics/      — useAnalytics, usePerformanceTechnicians, usePerformanceSections
 │   ├── tickets/        — useTicketFilterOptions, useTicketDetail, useTicketFilters
-│   └── catalog/        — useCatalog
+│   ├── catalog/        — useCatalog
+│   └── useInView.ts    — IntersectionObserver hook backing LazyMount
 ├── lib/api/            — typed API clients per domain (tickets, analytics, reports, auth, …)
 ├── types/              — shared TypeScript interfaces
 └── App.tsx
@@ -98,13 +100,20 @@ Staff users can toggle between their role workspace and the Requester view via t
 
 **Report generation:** `GenerateReports.tsx` reads `useAuth().user.role` to show only relevant report types. Excel files streamed from `/api/v1/reports/generate/`.
 
+**Deferred rendering (`LazyMount`):** wraps a block in a `Skeleton` placeholder until it scrolls near the viewport, then mounts it once and keeps it mounted — avoids forcing every recharts chart's layout measurement into the first paint. Used throughout `RoleDashboardView`/`RoleAnalyticsView`/`RoleReportsPage` for everything below the first chart row.
+
+**Admin Users table:** `UsersPage.tsx` groups users into collapsible sections by role (Admin/Manager/HOD/HOS/Technician/User) with a count badge each, plus Campus/Department toolbar filters — Department options narrow to whatever actually exists at the selected campus (`Department.campuses[]`), not a client-side guess.
+
 ---
 
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_URL` | Django backend base URL (e.g. `http://localhost:8000/api`) |
+| `VITE_API_URL_DEV` | Django backend base URL for local dev (e.g. `http://localhost:8000/api/v1`) |
+| `VITE_API_URL_PROD` | Django backend base URL for production (e.g. `https://django-resolver.onrender.com/api/v1`) |
+
+Both must include the `/api/v1` suffix — all endpoints except `/auth/*` require it.
 
 ---
 
@@ -114,7 +123,7 @@ Staff users can toggle between their role workspace and the Requester view via t
 
 1. Push to GitHub
 2. Import project to Vercel, set root to `client/`
-3. Set `VITE_API_URL` environment variable to production backend URL
+3. Set `VITE_API_URL_PROD` environment variable to the production backend URL (with `/api/v1` suffix)
 4. Deploy — automatic on push
 
 ---

@@ -170,7 +170,7 @@ client/
     │   │   ├── OrganisationAnalytics.tsx
     │   │   ├── ServicesPage.tsx
     │   │   ├── SLARulesPage.tsx          # ⟳ align — Priority + EscalationRule rungs (not flat numbers)
-    │   │   ├── UsersPage.tsx
+    │   │   ├── UsersPage.tsx             # role-grouped collapsible table + Campus/Department filters (§10)
     │   │   ├── WorkflowsPage.tsx         # ⚠ REMOVE — ladder is structural, not configured
     │   │   ├── Campuses/        # CampusesPage.tsx
     │   │   ├── Catalogue/       # CataloguePage.tsx                       # ⟳ category has no department FK
@@ -185,6 +185,12 @@ client/
     │   │
     │   ├── analytics/
     │   │   └── SLATrackingView.tsx       # ⟳ bind to /analytics/* — no client SLA math
+    │   │
+    │   ├── shared/               # role-parametrized views (Admin = canonical template, plan §6.1)
+    │   │   ├── RoleDashboardView.tsx     # dashboard homepage; role: 'admin'|'manager'|'hod'|'hos'
+    │   │   ├── RoleAnalyticsView.tsx     # deep analytics page, same role union
+    │   │   ├── RoleReportsPage.tsx       # reports landing (tabs + Quick Access + Excel export)
+    │   │   └── RoleTicketsPage.tsx
     │   │
     │   ├── hod/
     │   │   ├── HODLayout.tsx
@@ -236,6 +242,7 @@ client/
     │   │   └── AppSidebar.tsx
     │   └── shared/
     │       ├── ComingSoonSection.tsx
+    │       ├── LazyMount.tsx    # defers mounting children until scrolled near viewport (§19)
     │       ├── data/
     │       │   ├── AdminResourceTable.tsx
     │       │   ├── AppBarChart.tsx
@@ -299,6 +306,7 @@ client/
     │   ├── useServiceCategories.ts   # ⟳ admin catalogue mgmt; create flow uses useCatalog (campus-filtered)
     │   ├── useServiceItems.ts        # ⟳ as above
     │   ├── useSortableColumn.tsx
+    │   ├── useInView.ts         # "freeze once visible" IntersectionObserver — backs LazyMount (§19)
     │   ├── useWsChannels.ts     # WebSocket channel subscriptions
     │   ├── analytics/           # useAdminAnalytics, useRoleAnalytics,
     │   │                        #   useTechnicianAnalytics, useTicketAnalytics
@@ -528,6 +536,16 @@ All reference data uses React Query. Multiple components sharing the same `query
 
 Call hooks directly in the component that needs them. **Do not** wrap them in a provider.
 
+> **Rule (C15):** `useDepartments()` (`hooks/departments/useDepartments.ts`) returns the **global**
+> `Department[]` list — the same `DepartmentSerializer` shape used everywhere — and each entry now
+> carries a `campuses: { campus_department_id, id, name, code }[]` field (every campus that
+> department has a `CampusDepartment` presence on). To narrow a Department dropdown by a selected
+> campus, filter client-side on `d.campuses?.some(c => c.id === campusId)` — do **not** rely on the
+> `?campus=` query param on a hook using the campus-scoped variant (`useDepartments(campusId)` in
+> `hooks/useDepartments.ts`, or `departmentsService.getCampusDepartments`) unless you've confirmed
+> `DepartmentViewSet.get_queryset()` still applies it server-side (it does as of C15 — see the SoT —
+> but don't assume a query param is honoured without checking `get_queryset()`).
+
 > **Rule (C4):** Reference/config endpoints consumed by requester UI (departments, section types,
 > catalogue) must be readable by **any authenticated user**. The backend uses `IsAdminOrReadOnly`
 > on `DepartmentViewSet` and `SectionTypeViewSet` — safe methods are open to all authenticated
@@ -742,6 +760,8 @@ For facility location inputs, render the **hardcoded form for the chosen facilit
 
 **Charts**: `recharts` v3. Always wrap in `<ResponsiveContainer width="100%" height={300}>`. Parent must have defined height from CSS — never a fixed pixel height on the parent element.
 
+**Deferred mounting (`LazyMount`)**: `components/shared/LazyMount.tsx` + `hooks/useInView.ts` defer mounting a block (and its recharts `ResponsiveContainer` layout measurement) until it scrolls within `rootMargin: 300px` of the viewport, rendering a `Skeleton` at a caller-supplied `minHeight` until then; once visible it mounts once and stays mounted ("freeze once visible" — scrolling away does not unmount it). Used on `RoleDashboardView`/`RoleAnalyticsView` (every block after the first chart row) and `RoleReportsPage` (the Overview tab's `ServiceHealthCards`). Rule: wrap blocks that are (a) below an already-visible first row and (b) either fetch their own data or render a recharts component — do not wrap static content (nav cards, instruction text) or the sole content of a single-tab view, since deferring something that's already in view on mount has no benefit.
+
 ---
 
 ## 20. Analytics (server-computed)
@@ -901,6 +921,10 @@ VITE_API_URL_PROD=https://django-resolver.onrender.com/api/v1
 **Dashboard hooks must not produce 0 from a missing optional field (C13).** `useUserDashboard` computes `total` from `status_distribution`. If the array is absent, `total = 0` permanently. Use `open_backlog + resolved` as a fallback: `total = distTotal > 0 ? distTotal : openBacklog + resolvedCount`. Every dashboard hook that derives a count from an optional array must have a reliable numeric fallback.
 
 **Both database branches in `settings.py` must have `CONN_MAX_AGE` (C14).** The `DATABASE_URL` branch sets it via `dj_database_url.config(conn_max_age=600)`. The direct-env-var branch (local dev) must also set `CONN_MAX_AGE: 300` and `CONN_HEALTH_CHECKS: True`. Without it, NeonDB cold-start latency (~13–19 s) causes Daphne to cancel requests, which appears as `data=null` stat cards in the UI — not an application bug but a connection-pool misconfiguration.
+
+**A reference-data query param that's accepted but never filters is worse than none (C15).** `/departments/?campus=` and `/sections/?department=` looked correct — the frontend sent them, the URL showed them — but `DepartmentViewSet`/`SectionViewSet` had no `get_queryset()` override, so every Campus→Department→Section cascading select (Users admin page, Technician form) silently showed every row regardless of scope. Before trusting a scoping query param on a reference-data endpoint, check the viewset's `get_queryset()` actually applies it — don't assume from the param existing in the URL.
+
+**Replacing a primary `RoleAssignment` demotes the old one; it does not delete it (C16).** Posting a new `is_primary=True` role assignment for a user (the Users admin page's promote/demote flow) must not error on `one_primary_role_per_user`, and must not delete the previous primary — it demotes it (`is_primary: false`) inside the same transaction, keeping it for audit history. If you see this constraint error surfaced to the UI, the fix is server-side (`UserRoleAssignmentListCreateView`), not a frontend retry/catch.
 
 ---
 
