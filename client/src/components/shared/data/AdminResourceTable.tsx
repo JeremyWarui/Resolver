@@ -46,8 +46,8 @@ export function AdminResourceTable<T>({
 
   return (
     <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-      <Card className="w-full pt-7">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="flex items-center">
             <Icon className="h-6 w-6 mr-2" />
             {title}
@@ -63,7 +63,7 @@ export function AdminResourceTable<T>({
         </CardHeader>
         <CardContent>
           {/* Search and Column Visibility */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center py-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center py-2">
             <Input
               placeholder="Search..."
               value={searchValue}

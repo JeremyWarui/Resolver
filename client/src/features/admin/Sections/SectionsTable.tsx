@@ -220,8 +220,8 @@ function SectionsTable() {
 
   if (loading && sections.length === 0) {
     return (
-      <Card className="w-full pt-7">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="flex items-center">
             <FileText className="h-6 w-6 mr-2" />
             Sections
@@ -235,8 +235,8 @@ function SectionsTable() {
   }
 
   return (
-    <Card className="w-full pt-7">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between py-4">
         <CardTitle className="flex items-center">
           <FileText className="h-6 w-6 mr-2" />
           Sections
@@ -247,7 +247,7 @@ function SectionsTable() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center py-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center py-2">
           <Input placeholder="Search by ID or name..." value={searchValue} onChange={(e) => handleSearch(e.target.value)} className="max-w-sm" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

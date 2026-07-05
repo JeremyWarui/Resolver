@@ -328,8 +328,8 @@ function FacilitiesTable() {
   // Show loading state
   if (facilitiesLoading && facilities.length === 0) {
     return (
-      <Card className="w-full pt-7">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="flex items-center">
             <Building className="h-6 w-6 mr-2" />
             Facilities
@@ -343,8 +343,8 @@ function FacilitiesTable() {
   }
 
   return (
-    <Card className="w-full pt-7">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between py-4">
         <CardTitle className="flex items-center">
           <Building className="h-6 w-6 mr-2" />
           Facilities
@@ -359,7 +359,7 @@ function FacilitiesTable() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center py-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center py-2">
           <Input
             placeholder="Search by ID or name..."
             value={searchValue}

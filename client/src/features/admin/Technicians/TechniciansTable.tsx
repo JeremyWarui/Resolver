@@ -304,8 +304,8 @@ function TechniciansTable() {
 
   if (techniciansLoading && technicians.length === 0) {
     return (
-      <Card className="w-full pt-7">
-        <CardHeader className="flex flex-row items-center justify-between">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between py-4">
           <CardTitle className="flex items-center">
             <Users className="h-6 w-6 mr-2" />Technicians
           </CardTitle>
@@ -318,8 +318,8 @@ function TechniciansTable() {
   }
 
   return (
-    <Card className="w-full pt-7">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between py-4">
         <CardTitle className="flex items-center">
           <Users className="h-6 w-6 mr-2" />Technicians
         </CardTitle>
@@ -334,7 +334,7 @@ function TechniciansTable() {
       </CardHeader>
 
       <CardContent>
-        <div className="flex flex-wrap gap-3 items-center py-4">
+        <div className="flex flex-wrap gap-3 items-center py-2">
           <Input
             placeholder="Search by ID or name..."
             value={searchValue}
