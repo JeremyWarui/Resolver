@@ -115,18 +115,6 @@ export interface TicketsResponse {
   results: Ticket[];
 }
 
-export interface CursorTicketsMeta {
-  nextCursor?: string | null;
-  prevCursor?: string | null;
-  total: number;
-}
-
-export interface CursorTicketsResponse {
-  data: Ticket[];
-  meta: CursorTicketsMeta;
-  counts: Record<string, number>;
-}
-
 // Canonical create payload — server resolves section + priority (R6/R7)
 export interface CreateTicketPayload {
   service_item: number;

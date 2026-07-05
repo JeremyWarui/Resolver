@@ -25,24 +25,22 @@ interface MyTicketsPageProps {
 
 const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
   const [activeFilter, setActiveFilter] = useState('all');
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [prevCursors, setPrevCursors] = useState<(string | null)[]>([]);
+  const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [ratingTicket, setRatingTicket] = useState<Ticket | null>(null);
 
   // Server-side filtered ticket fetch — mine:1 scopes to tickets raised_by == self (R15)
-  const { tickets, totalTickets, loading, refetch, nextCursor } = useTickets({
+  const { tickets, totalTickets, loading, refetch } = useTickets({
     status: activeFilter !== 'all' ? activeFilter : undefined,
     mine: 1,
+    page: pageIndex + 1,
     page_size: pageSize,
-    ...(cursor ? { cursor } : {}),
   });
 
   function handleFilterChange(key: string) {
     setActiveFilter(key);
-    setCursor(null);
-    setPrevCursors([]);
+    setPageIndex(0);
   }
 
   function handleRowClick(ticket: Ticket) {
@@ -117,19 +115,10 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
             selectedRowId={selectedTicketId}
             pagination={{
               total: totalTickets,
-              pageIndex: prevCursors.length,
+              pageIndex,
               pageSize,
-              onPageChange: (idx) => {
-                const currentPageIdx = prevCursors.length;
-                if (idx > currentPageIdx && nextCursor) {
-                  setPrevCursors(p => [...p, cursor]);
-                  setCursor(nextCursor);
-                } else if (idx < currentPageIdx) {
-                  setCursor(prevCursors[idx] ?? null);
-                  setPrevCursors(p => p.slice(0, idx));
-                }
-              },
-              onPageSizeChange: (size) => { setPageSize(size); setCursor(null); setPrevCursors([]); },
+              onPageChange: (idx) => setPageIndex(idx),
+              onPageSizeChange: (size) => { setPageSize(size); setPageIndex(0); },
             }}
             emptyMessage={`No ${activeFilter === 'all' ? '' : activeFilter.replace('_', ' ')} tickets`}
             emptyDescription={

@@ -24,7 +24,6 @@ export function useTicketFilters(): UseTicketFiltersResult {
     overdue: searchParams.get('overdue') === 'true' ? true : undefined,
     page: searchParams.get('page') ? Number(searchParams.get('page')) : undefined,
     pageSize: searchParams.get('pageSize') ? Number(searchParams.get('pageSize')) : undefined,
-    cursor: searchParams.get('cursor') ?? undefined,
   };
 
   const setFilter = useCallback(
@@ -37,9 +36,8 @@ export function useTicketFilters(): UseTicketFiltersResult {
           next.set(key, String(value));
         }
         // Reset to page 1 when any non-pagination filter changes
-        if (key !== 'page' && key !== 'cursor') {
+        if (key !== 'page') {
           next.delete('page');
-          next.delete('cursor');
         }
         return next;
       }, { replace: true });
@@ -51,7 +49,7 @@ export function useTicketFilters(): UseTicketFiltersResult {
     (updates: Partial<TicketFilters>) => {
       setSearchParams(prev => {
         const next = new URLSearchParams(prev);
-        const hasPaginationKey = 'page' in updates || 'cursor' in updates;
+        const hasPaginationKey = 'page' in updates;
         Object.entries(updates).forEach(([k, v]) => {
           if (v === undefined || v === '') {
             next.delete(k);
@@ -61,7 +59,6 @@ export function useTicketFilters(): UseTicketFiltersResult {
         });
         if (!hasPaginationKey) {
           next.delete('page');
-          next.delete('cursor');
         }
         return next;
       }, { replace: true });

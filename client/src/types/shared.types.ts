@@ -55,9 +55,8 @@ export interface TicketFilters {
   dateFrom?: string;
   dateTo?: string;
   overdue?: boolean;
-  page?: number;          // DRF offset pagination (backend currently)
-  pageSize?: number;
-  cursor?: string | null; // cursor pagination (future)
+  page?: number;     // DRF PageNumberPagination — /tickets/ is ordered -updated_at,
+  pageSize?: number; // a mutable sort key that rules out cursor pagination by design.
 }
 
 // Counts returned alongside ticket list — all counts always reflect full unfiltered scope

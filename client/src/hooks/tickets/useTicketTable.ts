@@ -116,12 +116,10 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   // ==================== STATE ====================
   const [pageSize, setPageSizeRaw] = useState(defaultPageSize);
 
-  // Cursor stack: cursorStack[i] = the cursor to fetch page i.
-  // Index 0 always uses null (first page, no cursor needed).
-  const [cursorStack, setCursorStack] = useState<(string | null)[]>([null]);
-  const [cursorIndex, setCursorIndex] = useState(0);
-
-  const currentCursor = cursorStack[cursorIndex] ?? null;
+  // 0-based page index (react-table convention); sent to the API as page = pageIndex + 1.
+  // /tickets/ uses DRF PageNumberPagination (TicketFeedPagination) — the feed is ordered
+  // -updated_at, a mutable sort key, which rules out cursor pagination by design.
+  const [pageIndex, setPageIndexRaw] = useState(0);
 
   // Filter state (section/technician/user/overdue filters are kept as UI state;
   // the backend scopes results by JWT role, not by these query params)
@@ -132,10 +130,9 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   const [unassignedFilter, setUnassignedFilter] = useState<boolean>(false);
   const [overdueFilter, setOverdueFilter] = useState<boolean>(false);
 
-  // Any server-side filter change must restart cursor pagination at page 1.
+  // Any server-side filter change must restart pagination at page 1.
   const resetToFirstPage = useCallback(() => {
-    setCursorStack([null]);
-    setCursorIndex(0);
+    setPageIndexRaw(0);
   }, []);
 
   const setStatusFilter = useCallback((status: string) => {
@@ -164,20 +161,21 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
 
   // ==================== DATA FETCHING ====================
   const ticketParams = useMemo((): TicketsParams => ({
+    page: pageIndex + 1,
     page_size: pageSize,
-    ...(currentCursor ? { cursor: currentCursor } : {}),
     ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
     ...(sectionFilter ? { section: sectionFilter } : {}),
     ...(technicianFilter ? { assigned_to: technicianFilter } : {}),
     ...(userFilter ? { raised_by: userFilter } : {}),
-  }), [pageSize, currentCursor, statusFilter, sectionFilter, technicianFilter, userFilter]);
+  }), [pageIndex, pageSize, statusFilter, sectionFilter, technicianFilter, userFilter]);
 
-  const skipInitialFetch = initialData != null && cursorIndex === 0;
+  const skipInitialFetch = initialData != null && pageIndex === 0;
 
   const {
     tickets: fetchedTickets,
     totalTickets: fetchedTotalTickets,
-    nextCursor,
+    nextPage,
+    prevPage,
     loading: ticketsLoading,
     refetch,
   } = useTickets(
@@ -185,22 +183,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     skipUntilUserId && currentUserId === undefined,
   );
 
-  // Store the next-page cursor in the stack when the API returns one
-  const [prevNextCursor, setPrevNextCursor] = useState(nextCursor);
-  const [prevCursorIndex, setPrevCursorIndex] = useState(cursorIndex);
-
-  if (prevNextCursor !== nextCursor || prevCursorIndex !== cursorIndex) {
-    setPrevNextCursor(nextCursor);
-    setPrevCursorIndex(cursorIndex);
-    if (nextCursor && cursorStack[cursorIndex + 1] !== nextCursor) {
-      const updated = [...cursorStack];
-      updated[cursorIndex + 1] = nextCursor;
-      setCursorStack(updated);
-    }
-  }
-
-  const hasNextPage = !!nextCursor;
-  const hasPrevPage = cursorIndex > 0;
+  const hasNextPage = !!nextPage;
+  const hasPrevPage = !!prevPage;
 
   const tickets = useMemo(
     () => (skipInitialFetch ? (initialData ?? []) : fetchedTickets),
@@ -269,19 +253,13 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     }
   }, [updateTicket, refetch]);
 
-  // Cursor-based: only ±1 from current index is reachable
   const handlePageChange = useCallback((newPageIndex: number) => {
-    if (newPageIndex === cursorIndex + 1 && hasNextPage) {
-      setCursorIndex(newPageIndex);
-    } else if (newPageIndex === cursorIndex - 1 && hasPrevPage) {
-      setCursorIndex(newPageIndex);
-    }
-  }, [cursorIndex, hasNextPage, hasPrevPage]);
+    setPageIndexRaw(newPageIndex);
+  }, []);
 
   const handlePageSizeChange = useCallback((newPageSize: number) => {
     setPageSizeRaw(newPageSize);
-    setCursorStack([null]);
-    setCursorIndex(0);
+    setPageIndexRaw(0);
   }, []);
 
   const setPageIndex = useCallback((index: number) => {
@@ -291,7 +269,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
   // ==================== RETURN ====================
   return {
     // Pagination
-    pageIndex: cursorIndex,
+    pageIndex,
     pageSize,
     hasNextPage,
     hasPrevPage,

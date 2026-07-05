@@ -7,8 +7,6 @@ interface UseTicketsResult {
   totalTickets: number;
   nextPage: string | null;
   prevPage: string | null;
-  nextCursor: string | null;
-  prevCursor: string | null;
   counts: Record<string, number>;
   loading: boolean;
   error: Error | null;
@@ -29,9 +27,6 @@ export const useTickets = (params?: TicketsParams, skip = false): UseTicketsResu
     totalTickets: data?.count ?? 0,
     nextPage: data?.next ?? null,
     prevPage: data?.previous ?? null,
-    // Legacy aliases — callers that still read nextCursor/prevCursor continue to work
-    nextCursor: data?.next ?? null,
-    prevCursor: data?.previous ?? null,
     counts: {},
     loading: isLoading,
     error: error as Error | null,
