@@ -105,7 +105,8 @@ export const createServiceItem = (data: {
   category: number;
   name: string;
   description?: string;
-  default_priority?: number;
+  /** Per-item priority override; omit/null to inherit the category's default_priority. */
+  default_priority_id?: number | null;
   order?: number;
   is_active?: boolean;
 }) => apiClient.post<ServiceItem>(`/service-items/`, data);

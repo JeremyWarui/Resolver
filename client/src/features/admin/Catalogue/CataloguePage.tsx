@@ -528,7 +528,15 @@ export default function CataloguePage() {
                               items.map(item => (
                                 <div key={item.id} className="flex items-start justify-between gap-3 p-2.5 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                                      {item.default_priority && (
+                                        <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5">
+                                          <Clock className="h-3 w-3" />
+                                          {item.default_priority.name} override
+                                        </span>
+                                      )}
+                                    </div>
                                     {item.description && (
                                       <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
                                     )}
@@ -629,6 +637,7 @@ export default function CataloguePage() {
             onOpenChange={(open) => { if (!open) dispatch({ type: 'CLOSE_ITEM_FORM' }); }}
             categoryId={openItemCategoryId ?? undefined}
             categories={activeTypeCategories}
+            priorities={priorities}
             editing={editingItem}
             onSaved={() => { dispatch({ type: 'CLOSE_ITEM_FORM' }); refreshCategories(); }}
           />
@@ -992,6 +1001,7 @@ function ItemForm({
   onOpenChange,
   categoryId,
   categories,
+  priorities,
   editing,
   onSaved,
 }: {
@@ -999,6 +1009,7 @@ function ItemForm({
   onOpenChange: (open: boolean) => void;
   categoryId?: number;
   categories: ServiceCategory[];
+  priorities: SLAPriority[];
   editing?: ServiceItem | null;
   onSaved: () => void;
 }) {
@@ -1006,10 +1017,18 @@ function ItemForm({
   const [description, setDescription] = useState('');
   const [selectedCatId, setSelectedCatId] = useState<string>('');
   const [isActive, setIsActive] = useState(true);
+  // '' = inherit the category's default_priority — the common case; most items
+  // don't need their own override.
+  const [priorityId, setPriorityId] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [prevEditing, setPrevEditing] = useState(editing);
   const [prevOpen, setPrevOpen] = useState(open);
   const [prevCategoryId, setPrevCategoryId] = useState(categoryId);
+
+  const selectedCategory = categories.find(c => String(c.id) === selectedCatId) as
+    | (ServiceCategory & { default_priority?: { id: number; name: string; response_minutes: number; resolution_minutes: number } | null })
+    | undefined;
+  const overridePriority = priorities.find(p => String(p.id) === priorityId);
 
   if (prevEditing !== editing || prevOpen !== open || prevCategoryId !== categoryId) {
     setPrevEditing(editing);
@@ -1022,12 +1041,14 @@ function ItemForm({
         // Bug 3 fix: editing.category is the correct FK field name
         setSelectedCatId(editing.category ? String(editing.category) : (categoryId ? String(categoryId) : ''));
         setIsActive(editing.is_active ?? true);
+        setPriorityId(editing.default_priority?.id ? String(editing.default_priority.id) : '');
       } else {
         setName('');
         setDescription('');
         // Bug 4 fix: categoryId comes directly from the clicked category row
         setSelectedCatId(categoryId ? String(categoryId) : '');
         setIsActive(true);
+        setPriorityId('');
       }
     }
   }
@@ -1043,6 +1064,7 @@ function ItemForm({
           description: description.trim(),
           category: Number(selectedCatId),
           is_active: isActive,
+          default_priority_id: priorityId ? Number(priorityId) : null,
         } as Partial<ServiceItem>);
         toast.success('Item updated');
       } else {
@@ -1052,6 +1074,7 @@ function ItemForm({
           name: name.trim(),
           description: description.trim(),
           is_active: isActive,
+          default_priority_id: priorityId ? Number(priorityId) : null,
         });
         toast.success('Item created');
       }
@@ -1108,6 +1131,37 @@ function ItemForm({
               className="resize-none"
             />
           </div>
+
+          {/* Priority override — optional; most items inherit the category's default */}
+          <div className="space-y-2">
+            <Label htmlFor="item-priority" className="text-sm font-medium">Priority Override</Label>
+            <Select value={priorityId || '__inherit__'} onValueChange={v => setPriorityId(v === '__inherit__' ? '' : v)}>
+              <SelectTrigger id="item-priority" className="h-10">
+                <SelectValue placeholder="Inherit from category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__inherit__">Inherit from category</SelectItem>
+                {priorities.map(p => (
+                  <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {overridePriority ? (
+              <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-blue-50 border border-blue-100 text-xs text-blue-700">
+                <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Respond within <strong>{fmtMins(overridePriority.response_minutes)}</strong></span>
+                <span className="text-blue-300">·</span>
+                <span>Resolve within <strong>{fmtMins(overridePriority.resolution_minutes)}</strong></span>
+              </div>
+            ) : selectedCategory?.default_priority ? (
+              <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-gray-50 border border-gray-200 text-xs text-gray-600">
+                <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Inherits <strong>{selectedCategory.default_priority.name}</strong> from category —</span>
+                <span>{fmtMins(selectedCategory.default_priority.response_minutes)} response, {fmtMins(selectedCategory.default_priority.resolution_minutes)} resolution</span>
+              </div>
+            ) : null}
+          </div>
+
           <div className="pt-1">
             <div className="flex items-center justify-between px-3 py-2 rounded-md bg-gray-50 border border-gray-200">
               <Label htmlFor="item-active" className="text-sm font-medium cursor-pointer flex-1 mb-0">Active</Label>

@@ -173,7 +173,7 @@ client/
     │   │   ├── UsersPage.tsx             # role-grouped collapsible table + Campus/Department filters (§10)
     │   │   ├── WorkflowsPage.tsx         # ⚠ REMOVE — ladder is structural, not configured
     │   │   ├── Campuses/        # CampusesPage.tsx
-    │   │   ├── Catalogue/       # CataloguePage.tsx                       # ⟳ category has no department FK
+    │   │   ├── Catalogue/       # CataloguePage.tsx — ItemForm has an optional per-item priority override (inherits category by default)  # ⟳ category has no department FK
     │   │   ├── Dashboard/       # DashboardLayout, ChartsSection, RecentTickets,
     │   │   │                    #   TechniciansWorkload, FacilityAndWorkload, FacilityChart
     │   │   ├── Departments/     # DepartmentsPage.tsx
@@ -925,6 +925,8 @@ VITE_API_URL_PROD=https://django-resolver.onrender.com/api/v1
 **A reference-data query param that's accepted but never filters is worse than none (C15).** `/departments/?campus=` and `/sections/?department=` looked correct — the frontend sent them, the URL showed them — but `DepartmentViewSet`/`SectionViewSet` had no `get_queryset()` override, so every Campus→Department→Section cascading select (Users admin page, Technician form) silently showed every row regardless of scope. Before trusting a scoping query param on a reference-data endpoint, check the viewset's `get_queryset()` actually applies it — don't assume from the param existing in the URL.
 
 **Replacing a primary `RoleAssignment` demotes the old one; it does not delete it (C16).** Posting a new `is_primary=True` role assignment for a user (the Users admin page's promote/demote flow) must not error on `one_primary_role_per_user`, and must not delete the previous primary — it demotes it (`is_primary: false`) inside the same transaction, keeping it for audit history. If you see this constraint error surfaced to the UI, the fix is server-side (`UserRoleAssignmentListCreateView`), not a frontend retry/catch.
+
+**`ServiceItem` priority override defaults to "inherit," not to the first priority in the list.** `ItemForm`'s priority `Select` must default to an empty/`__inherit__` sentinel, not `priorities[0]` (unlike `CategoryForm`, where a priority is required). Sending `default_priority_id: null` clears an existing override back to inheritance — omitting the field on update does not.
 
 ---
 

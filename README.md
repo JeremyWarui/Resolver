@@ -104,6 +104,8 @@ Staff users can toggle between their role workspace and the Requester view via t
 
 **Admin Users table:** `UsersPage.tsx` groups users into collapsible sections by role (Admin/Manager/HOD/HOS/Technician/User) with a count badge each, plus Campus/Department toolbar filters — Department options narrow to whatever actually exists at the selected campus (`Department.campuses[]`), not a client-side guess.
 
+**Catalogue priority override:** `ItemForm` (`Catalogue/CataloguePage.tsx`) lets a Service Item optionally override its Category's default Priority — defaults to "Inherit from category." Both pickers show a live SLA preview from `/priorities/`, never freeform minutes.
+
 ---
 
 ## Environment Variables
