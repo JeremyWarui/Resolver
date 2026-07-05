@@ -23,6 +23,7 @@ import { useTicketAnalytics } from '@/hooks/analytics';
 import { DateRangeSelector } from '@/components/shared/data/DateRangeSelector';
 import MetricCard from '@/components/shared/data/MetricCard';
 import ServiceHealthCards from '@/components/shared/data/ServiceHealthCards';
+import LazyMount from '@/components/shared/LazyMount';
 import TicketMetricsReport from '@/features/admin/Reports/TicketMetricsReport';
 import TechnicianPerformanceReport from '@/features/admin/Reports/TechnicianPerformanceReport';
 import SectionPerformanceReport from '@/features/admin/Reports/SectionPerformanceReport';
@@ -194,7 +195,9 @@ export default function RoleReportsPage({ role }: RoleReportsPageProps) {
             </div>
 
             {/* Service Health Cards */}
-            <ServiceHealthCards params={params} />
+            <LazyMount minHeight={160}>
+              <ServiceHealthCards params={params} />
+            </LazyMount>
 
             {/* Quick Access Report Cards */}
             <div>

@@ -29,6 +29,7 @@ import { FlowTrendChart } from "@/components/shared/data/TicketVolumeChart";
 import DistributionCharts from "@/components/shared/data/DistributionCharts";
 import ServiceHealthCards from "@/components/shared/data/ServiceHealthCards";
 import InsightsPanel from "@/components/shared/data/InsightsPanel";
+import LazyMount from "@/components/shared/LazyMount";
 import reportsService from "@/lib/api/reports";
 import type { GenerateReportParams } from "@/lib/api/reports";
 import { useTicketAnalytics, useRoleAnalytics, usePerformanceCampusDepts, usePerformanceSections, useAnalytics } from "@/hooks/analytics";
@@ -233,36 +234,46 @@ const RoleDashboardView = ({ role, onTicketSelect }: RoleDashboardViewProps) => 
             title={`Ticket Flow — Last ${trendDays} Days`}
           />
           {/* Per-campus distribution + volume */}
-          <DistributionCharts
-            data={campusVolume}
-            loading={campusLoading}
-            distributionTitle="Campus Distribution Breakdown"
-            distributionDescription="Percentage of total tickets by campus"
-            volumeTitle="Campus Ticket Volume"
-            volumeDescription="Number of tickets by campus"
-            emptyLabel="No campus data available"
-          />
+          <LazyMount minHeight={340}>
+            <DistributionCharts
+              data={campusVolume}
+              loading={campusLoading}
+              distributionTitle="Campus Distribution Breakdown"
+              distributionDescription="Percentage of total tickets by campus"
+              volumeTitle="Campus Ticket Volume"
+              volumeDescription="Number of tickets by campus"
+              emptyLabel="No campus data available"
+            />
+          </LazyMount>
           {/* Per-section distribution + volume */}
-          <DistributionCharts
-            data={sectionVolume}
-            loading={sectionsLoading}
-            distributionTitle="Section Distribution Breakdown"
-            distributionDescription="Percentage of total tickets by section"
-            volumeTitle="Section Ticket Volume"
-            volumeDescription="Number of tickets by section"
-            emptyLabel="No section data available"
-          />
+          <LazyMount minHeight={340}>
+            <DistributionCharts
+              data={sectionVolume}
+              loading={sectionsLoading}
+              distributionTitle="Section Distribution Breakdown"
+              distributionDescription="Percentage of total tickets by section"
+              volumeTitle="Section Ticket Volume"
+              volumeDescription="Number of tickets by section"
+              emptyLabel="No section data available"
+            />
+          </LazyMount>
           {/* Facility demand + technician workload (department-scoped) */}
-          <FacilityAndWorkload
-            facilityAnalyticsData={facilityAnalyticsData}
-            facilityLoading={facilityLoading}
-            facilityTimeframe={facilityTimeframe}
-            setFacilityTimeframe={setFacilityTimeframe}
-          />
+          <LazyMount minHeight={380}>
+            <FacilityAndWorkload
+              facilityAnalyticsData={facilityAnalyticsData}
+              facilityLoading={facilityLoading}
+              facilityTimeframe={facilityTimeframe}
+              setFacilityTimeframe={setFacilityTimeframe}
+            />
+          </LazyMount>
           {/* Service-health KPIs */}
-          <ServiceHealthCards params={{ days: trendDays }} />
+          <LazyMount minHeight={160}>
+            <ServiceHealthCards params={{ days: trendDays }} />
+          </LazyMount>
           {/* Actionable insights */}
-          <InsightsPanel insights={analyticsEnvelope?.insights ?? []} />
+          <LazyMount minHeight={200}>
+            <InsightsPanel insights={analyticsEnvelope?.insights ?? []} />
+          </LazyMount>
         </div>
       ) : isHOD ? (
         <>
@@ -278,32 +289,38 @@ const RoleDashboardView = ({ role, onTicketSelect }: RoleDashboardViewProps) => 
             setCategoryTimeframe={setCategoryTimeframe}
           />
           {/* Second row: per-section volume + facility chart */}
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <ChartCard
-              title="Section Ticket Volume"
-              description="Tickets by section in your campus department"
-            >
-              {sectionsLoading ? (
-                <ChartPlaceholder message="Loading section data..." />
-              ) : sectionVolumeBar.length === 0 ? (
-                <ChartPlaceholder message="No section data available" />
-              ) : (
-                <AppBarChart data={sectionVolumeBar} dataKey="tickets" height={375} />
-              )}
-            </ChartCard>
-            <FacilityChart
-              analyticsData={facilityAnalyticsData}
-              loading={facilityLoading}
-              timePeriod={facilityTimeframe}
-              setTimePeriod={setFacilityTimeframe}
-            />
-          </div>
+          <LazyMount minHeight={420}>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <ChartCard
+                title="Section Ticket Volume"
+                description="Tickets by section in your campus department"
+              >
+                {sectionsLoading ? (
+                  <ChartPlaceholder message="Loading section data..." />
+                ) : sectionVolumeBar.length === 0 ? (
+                  <ChartPlaceholder message="No section data available" />
+                ) : (
+                  <AppBarChart data={sectionVolumeBar} dataKey="tickets" height={375} />
+                )}
+              </ChartCard>
+              <FacilityChart
+                analyticsData={facilityAnalyticsData}
+                loading={facilityLoading}
+                timePeriod={facilityTimeframe}
+                setTimePeriod={setFacilityTimeframe}
+              />
+            </div>
+          </LazyMount>
           {/* Third row: technician workload + recent tickets */}
-          <div className="grid grid-cols-1 gap-2 mb-2">
-            <TechniciansWorkload />
-          </div>
+          <LazyMount minHeight={220}>
+            <div className="grid grid-cols-1 gap-2 mb-2">
+              <TechniciansWorkload />
+            </div>
+          </LazyMount>
           {/* Recent tickets — Admin-style table at the bottom (campus-dept-scoped) */}
-          <RecentTicketsTable role="hod" onTicketSelect={onTicketSelect} />
+          <LazyMount minHeight={400}>
+            <RecentTicketsTable role="hod" onTicketSelect={onTicketSelect} />
+          </LazyMount>
         </>
       ) : (
         <>
@@ -319,13 +336,17 @@ const RoleDashboardView = ({ role, onTicketSelect }: RoleDashboardViewProps) => 
             setCategoryTimeframe={setCategoryTimeframe}
           />
           {/* Charts and Tables - Second Row */}
-          <FacilityAndWorkload
-            facilityAnalyticsData={facilityAnalyticsData}
-            facilityLoading={facilityLoading}
-            facilityTimeframe={facilityTimeframe}
-            setFacilityTimeframe={setFacilityTimeframe}
-          />
-          <RecentTicketsTable role={role} onTicketSelect={onTicketSelect} />
+          <LazyMount minHeight={380}>
+            <FacilityAndWorkload
+              facilityAnalyticsData={facilityAnalyticsData}
+              facilityLoading={facilityLoading}
+              facilityTimeframe={facilityTimeframe}
+              setFacilityTimeframe={setFacilityTimeframe}
+            />
+          </LazyMount>
+          <LazyMount minHeight={400}>
+            <RecentTicketsTable role={role} onTicketSelect={onTicketSelect} />
+          </LazyMount>
         </>
       )}
 

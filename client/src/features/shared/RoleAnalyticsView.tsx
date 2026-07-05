@@ -15,6 +15,7 @@ import { KPICardGrid, type KPIMetric } from '@/components/shared/data/KPICardGri
 import { AppPieChart } from '@/components/shared/data/AppPieChart';
 import ChartCard from '@/components/shared/data/ChartCard';
 import InsightsPanel from '@/components/shared/data/InsightsPanel';
+import LazyMount from '@/components/shared/LazyMount';
 import {
   useSLACompliance,
   useResolutionTimes,
@@ -270,110 +271,117 @@ export function RoleAnalyticsView({ role }: RoleAnalyticsViewProps) {
           />
 
           {/* Status + Priority distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ChartCard title="Status Distribution" description="Tickets by current status">
-              {flowLoading ? (
-                <Skeleton className="h-[360px] w-full" />
-              ) : statusData.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No data</p>
-              ) : (
-                <AppPieChart data={statusData} height={360} innerRadius={85} outerRadius={140} />
-              )}
-            </ChartCard>
-            <ChartCard title="Priority Distribution" description="Tickets by priority level">
-              {flowLoading ? (
-                <Skeleton className="h-[360px] w-full" />
-              ) : priorityData.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No data</p>
-              ) : (
-                <AppPieChart data={priorityData} height={360} innerRadius={85} outerRadius={140} />
-              )}
-            </ChartCard>
-          </div>
+          <LazyMount minHeight={420}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChartCard title="Status Distribution" description="Tickets by current status">
+                {flowLoading ? (
+                  <Skeleton className="h-[360px] w-full" />
+                ) : statusData.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No data</p>
+                ) : (
+                  <AppPieChart data={statusData} height={360} innerRadius={85} outerRadius={140} />
+                )}
+              </ChartCard>
+              <ChartCard title="Priority Distribution" description="Tickets by priority level">
+                {flowLoading ? (
+                  <Skeleton className="h-[360px] w-full" />
+                ) : priorityData.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No data</p>
+                ) : (
+                  <AppPieChart data={priorityData} height={360} innerRadius={85} outerRadius={140} />
+                )}
+              </ChartCard>
+            </div>
+          </LazyMount>
         </>
       )}
 
       {/* Technician Performance Table */}
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-4 pt-6 px-6">
-          <CardTitle className="text-base">Technician Performance</CardTitle>
-          <CardDescription>Performance metrics for all technicians</CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 pt-0">
-          <TechnicianBreakdownTable
-            data={perfTechs}
-            loading={perfTechsLoading}
-            bare={true}
-          />
-        </CardContent>
-      </Card>
+      <LazyMount minHeight={420}>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-4 pt-6 px-6">
+            <CardTitle className="text-base">Technician Performance</CardTitle>
+            <CardDescription>Performance metrics for all technicians</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-0">
+            <TechnicianBreakdownTable
+              data={perfTechs}
+              loading={perfTechsLoading}
+              bare={true}
+            />
+          </CardContent>
+        </Card>
+      </LazyMount>
 
       {/* Section Performance — hidden for HOS (single section) */}
       {role !== 'hos' && (
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-4 pt-6 px-6">
-          <CardTitle className="text-base">Section Performance</CardTitle>
-          <CardDescription>Ticket load and SLA per section</CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 pt-0">
-          {perfSectionsLoading || !perfSections ? (
-            <SectionSkeleton />
-          ) : perfSections.breakdown.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No section data</p>
-          ) : (
-            <div className="overflow-x-auto rounded-md border">
-              <table className="w-full text-sm bg-card">
-                <thead>
-                  <tr className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase tracking-wide">
-                    <th className="px-3 py-3 font-medium">Section</th>
-                    <th className="px-3 py-3 font-medium">Campus</th>
-                    <th className="px-3 py-3 font-medium text-right">Total</th>
-                    <th className="px-3 py-3 font-medium text-right">Open</th>
-                    <th className="px-3 py-3 font-medium text-right">Resolved</th>
-                    <th className="px-3 py-3 font-medium text-right">Escalated</th>
-                    <th className="px-3 py-3 font-medium text-right">SLA %</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {perfSections.breakdown.map((s) => {
-                    const slaPct = s.total_resolved_with_due > 0
-                      ? Math.round((s.resolution_sla_met / s.total_resolved_with_due) * 100)
-                      : null;
-                    return (
-                      <tr key={s.section_id}>
-                        <td className="px-3 py-2.5 font-medium">{s.section_type_name}</td>
-                        <td className="px-3 py-2.5 text-muted-foreground">
-                          <span>{s.campus_name}</span>
-                          <Badge variant="outline" className="ml-2 text-xs">{s.campus_code}</Badge>
-                        </td>
-                        <td className="px-3 py-2.5 text-right">{s.total}</td>
-                        <td className="px-3 py-2.5 text-right text-status-open">{s.open_count}</td>
-                        <td className="px-3 py-2.5 text-right text-status-resolved">{s.resolved_count}</td>
-                        <td className="px-3 py-2.5 text-right">
-                          <span className={s.escalated_count > 0 ? 'text-status-escalated' : 'text-muted-foreground'}>
-                            {s.escalated_count}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
-                          {slaPct != null ? (
-                            <span className={slaPct >= 90 ? 'text-status-resolved' : slaPct >= 75 ? 'text-status-progress' : 'text-status-escalated'}>
-                              {slaPct}%
+      <LazyMount minHeight={420}>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-4 pt-6 px-6">
+            <CardTitle className="text-base">Section Performance</CardTitle>
+            <CardDescription>Ticket load and SLA per section</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-0">
+            {perfSectionsLoading || !perfSections ? (
+              <SectionSkeleton />
+            ) : perfSections.breakdown.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No section data</p>
+            ) : (
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-sm bg-card">
+                  <thead>
+                    <tr className="border-b bg-muted/30 text-left text-xs text-muted-foreground uppercase tracking-wide">
+                      <th className="px-3 py-3 font-medium">Section</th>
+                      <th className="px-3 py-3 font-medium">Campus</th>
+                      <th className="px-3 py-3 font-medium text-right">Total</th>
+                      <th className="px-3 py-3 font-medium text-right">Open</th>
+                      <th className="px-3 py-3 font-medium text-right">Resolved</th>
+                      <th className="px-3 py-3 font-medium text-right">Escalated</th>
+                      <th className="px-3 py-3 font-medium text-right">SLA %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {perfSections.breakdown.map((s) => {
+                      const slaPct = s.total_resolved_with_due > 0
+                        ? Math.round((s.resolution_sla_met / s.total_resolved_with_due) * 100)
+                        : null;
+                      return (
+                        <tr key={s.section_id}>
+                          <td className="px-3 py-2.5 font-medium">{s.section_type_name}</td>
+                          <td className="px-3 py-2.5 text-muted-foreground">
+                            <span>{s.campus_name}</span>
+                            <Badge variant="outline" className="ml-2 text-xs">{s.campus_code}</Badge>
+                          </td>
+                          <td className="px-3 py-2.5 text-right">{s.total}</td>
+                          <td className="px-3 py-2.5 text-right text-status-open">{s.open_count}</td>
+                          <td className="px-3 py-2.5 text-right text-status-resolved">{s.resolved_count}</td>
+                          <td className="px-3 py-2.5 text-right">
+                            <span className={s.escalated_count > 0 ? 'text-status-escalated' : 'text-muted-foreground'}>
+                              {s.escalated_count}
                             </span>
-                          ) : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          </td>
+                          <td className="px-3 py-2.5 text-right">
+                            {slaPct != null ? (
+                              <span className={slaPct >= 90 ? 'text-status-resolved' : slaPct >= 75 ? 'text-status-progress' : 'text-status-escalated'}>
+                                {slaPct}%
+                              </span>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </LazyMount>
       )}
 
       {/* Campus Performance (manager only) — ticket load per campus */}
       {isManager && (
+        <LazyMount minHeight={420}>
         <Card className="overflow-hidden">
           <CardHeader className="pb-4 pt-6 px-6">
             <CardTitle className="text-base">Campus Performance</CardTitle>
@@ -429,153 +437,162 @@ export function RoleAnalyticsView({ role }: RoleAnalyticsViewProps) {
             )}
           </CardContent>
         </Card>
+        </LazyMount>
       )}
 
       {/* Health Overview KPIs — Resolution SLA, Response SLA, Net Flow, CSAT, Reopen Rate */}
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-4 pt-6 px-6">
-          <CardTitle className="text-base">Health Overview</CardTitle>
-          <CardDescription>Service-desk health across your whole department</CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 pt-0">
-          <div className="grid grid-cols-5 gap-2">
-            {headlineKPIs.map((metric) => (
-              <div
-                key={metric.label}
-                className="bg-card rounded-lg border p-3 flex items-start justify-between"
-              >
-                <div className="space-y-1 flex-1">
-                  <p className="text-xs text-muted-foreground font-medium">{metric.label}</p>
-                  <p className="text-lg font-semibold text-foreground">{metric.value}</p>
-                  {metric.description && (
-                    <p className="text-xs text-muted-foreground">{metric.description}</p>
-                  )}
+      <LazyMount minHeight={220}>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-4 pt-6 px-6">
+            <CardTitle className="text-base">Health Overview</CardTitle>
+            <CardDescription>Service-desk health across your whole department</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-0">
+            <div className="grid grid-cols-5 gap-2">
+              {headlineKPIs.map((metric) => (
+                <div
+                  key={metric.label}
+                  className="bg-card rounded-lg border p-3 flex items-start justify-between"
+                >
+                  <div className="space-y-1 flex-1">
+                    <p className="text-xs text-muted-foreground font-medium">{metric.label}</p>
+                    <p className="text-lg font-semibold text-foreground">{metric.value}</p>
+                    {metric.description && (
+                      <p className="text-xs text-muted-foreground">{metric.description}</p>
+                    )}
+                  </div>
+                  <div className={`p-1.5 rounded ml-2 flex-shrink-0 ${metric.colorClass}`}>
+                    {metric.icon}
+                  </div>
                 </div>
-                <div className={`p-1.5 rounded ml-2 flex-shrink-0 ${metric.colorClass}`}>
-                  {metric.icon}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </LazyMount>
 
       {/* SLA Compliance — Compact Grid */}
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-4 pt-6 px-6">
-          <CardTitle className="text-base">SLA Compliance</CardTitle>
-          <CardDescription>Response and resolution SLA performance vs. 95% target</CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 pt-0">
-        <div className="grid grid-cols-4 gap-3">
-          {/* Resolution SLA */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="space-y-1 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Resolution SLA</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {slaLoading ? '—' : `${(sla?.resolution_sla_pct ?? 0).toFixed(1)}%`}
-                </p>
-              </div>
-              <div className={`p-2 rounded ${
-                (sla?.resolution_sla_pct ?? 0) >= 95
-                  ? 'bg-status-resolved/10'
-                  : (sla?.resolution_sla_pct ?? 0) >= 90
-                    ? 'bg-status-progress/10'
-                    : 'bg-status-escalated/10'
-              }`}>
-                <CheckCircle className={`h-5 w-5 ${
+      <LazyMount minHeight={260}>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-4 pt-6 px-6">
+            <CardTitle className="text-base">SLA Compliance</CardTitle>
+            <CardDescription>Response and resolution SLA performance vs. 95% target</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-0">
+          <div className="grid grid-cols-4 gap-3">
+            {/* Resolution SLA */}
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="space-y-1 flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Resolution SLA</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {slaLoading ? '—' : `${(sla?.resolution_sla_pct ?? 0).toFixed(1)}%`}
+                  </p>
+                </div>
+                <div className={`p-2 rounded ${
                   (sla?.resolution_sla_pct ?? 0) >= 95
-                    ? 'text-status-resolved'
+                    ? 'bg-status-resolved/10'
                     : (sla?.resolution_sla_pct ?? 0) >= 90
-                      ? 'text-status-progress'
-                      : 'text-status-escalated'
-                }`} />
+                      ? 'bg-status-progress/10'
+                      : 'bg-status-escalated/10'
+                }`}>
+                  <CheckCircle className={`h-5 w-5 ${
+                    (sla?.resolution_sla_pct ?? 0) >= 95
+                      ? 'text-status-resolved'
+                      : (sla?.resolution_sla_pct ?? 0) >= 90
+                        ? 'text-status-progress'
+                        : 'text-status-escalated'
+                  }`} />
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">Target: 95%</p>
             </div>
-            <p className="text-xs text-muted-foreground">Target: 95%</p>
-          </div>
 
-          {/* Response SLA */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="space-y-1 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Response SLA</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {slaLoading ? '—' : `${(sla?.response_sla_pct ?? 0).toFixed(1)}%`}
-                </p>
-              </div>
-              <div className={`p-2 rounded ${
-                (sla?.response_sla_pct ?? 0) >= 95
-                  ? 'bg-status-resolved/10'
-                  : (sla?.response_sla_pct ?? 0) >= 90
-                    ? 'bg-status-progress/10'
-                    : 'bg-status-escalated/10'
-              }`}>
-                <CheckCircle className={`h-5 w-5 ${
+            {/* Response SLA */}
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="space-y-1 flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Response SLA</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {slaLoading ? '—' : `${(sla?.response_sla_pct ?? 0).toFixed(1)}%`}
+                  </p>
+                </div>
+                <div className={`p-2 rounded ${
                   (sla?.response_sla_pct ?? 0) >= 95
-                    ? 'text-status-resolved'
+                    ? 'bg-status-resolved/10'
                     : (sla?.response_sla_pct ?? 0) >= 90
-                      ? 'text-status-progress'
-                      : 'text-status-escalated'
-                }`} />
+                      ? 'bg-status-progress/10'
+                      : 'bg-status-escalated/10'
+                }`}>
+                  <CheckCircle className={`h-5 w-5 ${
+                    (sla?.response_sla_pct ?? 0) >= 95
+                      ? 'text-status-resolved'
+                      : (sla?.response_sla_pct ?? 0) >= 90
+                        ? 'text-status-progress'
+                        : 'text-status-escalated'
+                  }`} />
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">Target: 95%</p>
             </div>
-            <p className="text-xs text-muted-foreground">Target: 95%</p>
-          </div>
 
-          {/* At Risk */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="space-y-1 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">At Risk</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {slaLoading ? '—' : sla?.at_risk ?? 0}
-                </p>
+            {/* At Risk */}
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="space-y-1 flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">At Risk</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {slaLoading ? '—' : sla?.at_risk ?? 0}
+                  </p>
+                </div>
+                <div className="p-2 rounded bg-status-progress/10">
+                  <AlertCircle className="h-5 w-5 text-status-progress" />
+                </div>
               </div>
-              <div className="p-2 rounded bg-status-progress/10">
-                <AlertCircle className="h-5 w-5 text-status-progress" />
-              </div>
+              <p className="text-xs text-muted-foreground">Approaching deadline</p>
             </div>
-            <p className="text-xs text-muted-foreground">Approaching deadline</p>
-          </div>
 
-          {/* Breached */}
-          <div className="bg-card rounded-lg border p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="space-y-1 flex-1">
-                <p className="text-xs text-muted-foreground font-medium">Breached</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {slaLoading ? '—' : sla?.breached ?? 0}
-                </p>
+            {/* Breached */}
+            <div className="bg-card rounded-lg border p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="space-y-1 flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Breached</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {slaLoading ? '—' : sla?.breached ?? 0}
+                  </p>
+                </div>
+                <div className="p-2 rounded bg-status-escalated/10">
+                  <AlertCircle className="h-5 w-5 text-status-escalated" />
+                </div>
               </div>
-              <div className="p-2 rounded bg-status-escalated/10">
-                <AlertCircle className="h-5 w-5 text-status-escalated" />
-              </div>
+              <p className="text-xs text-muted-foreground">Past deadline</p>
             </div>
-            <p className="text-xs text-muted-foreground">Past deadline</p>
           </div>
-        </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </LazyMount>
 
       {/* Resolution Times — p50 and p90 (never a single mean) */}
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-4 pt-6 px-6">
-          <CardTitle className="text-base">Resolution Times</CardTitle>
-          <CardDescription>p50 = median, p90 = 90th percentile (not mean)</CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 pb-6 pt-0">
-          <KPICardGrid
-            metrics={resolutionKPIs}
-            loading={resLoading || !resTimes}
-            columns={4}
-          />
-        </CardContent>
-      </Card>
+      <LazyMount minHeight={220}>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-4 pt-6 px-6">
+            <CardTitle className="text-base">Resolution Times</CardTitle>
+            <CardDescription>p50 = median, p90 = 90th percentile (not mean)</CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-0">
+            <KPICardGrid
+              metrics={resolutionKPIs}
+              loading={resLoading || !resTimes}
+              columns={4}
+            />
+          </CardContent>
+        </Card>
+      </LazyMount>
 
       {/* Actionable insights — scoped to the caller's role */}
-      <InsightsPanel insights={analyticsEnvelope?.insights ?? []} />
+      <LazyMount minHeight={200}>
+        <InsightsPanel insights={analyticsEnvelope?.insights ?? []} />
+      </LazyMount>
 
     </div>
   );
