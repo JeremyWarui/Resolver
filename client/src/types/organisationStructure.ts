@@ -36,6 +36,15 @@ export interface Department {
   name: string
   code: string
   is_active: boolean
+  /** Present on the global /departments/ list endpoint (DepartmentSerializer) — every
+   *  campus this department has a CampusDepartment presence on. Absent department is
+   *  campus-scoped elsewhere (e.g. CampusDepartment-derived shapes). */
+  campuses?: { campus_department_id: number; id: number; name: string; code: string }[]
+  heads_of_department?: {
+    campus_department_id: number
+    campus: string
+    hod: { id: number; name: string; username: string }
+  }[]
 }
 
 export interface Section {
