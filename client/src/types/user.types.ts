@@ -45,6 +45,7 @@ export interface RoleAssignment {
   section_name: string | null;
   assigned_by_username: string | null;
   assigned_at: string;
+  valid_until: string | null;
 }
 
 export type BackendRoleAssignment = RoleAssignment;
@@ -55,6 +56,7 @@ export interface CreateRoleAssignmentPayload {
   campus_id?: number | null;
   department_id?: number | null;
   section_id?: number | null;
+  valid_until?: string | null;
 }
 
 export interface UpdateRoleAssignmentPayload {

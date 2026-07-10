@@ -185,7 +185,7 @@ export const sectionsService = {
     await apiClient.delete(`/section-types/${id}/`);
   },
 
-  getSections: async (params?: { department?: number }): Promise<Section[]> => {
+  getSections: async (params?: { department?: number; campus?: number }): Promise<Section[]> => {
     const { data } = await apiClient.get('/sections/', { params });
     return toArray<Section>(data);
   },

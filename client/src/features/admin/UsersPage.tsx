@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { getRoleAssignments, createRoleAssignment, deleteRoleAssignment, updateUser, createUser, deleteUser } from '@/lib/api/users';
@@ -58,7 +57,7 @@ interface RoleAssignFormState {
   campus_id: string;
   department_id: string;
   section_id: string;
-  is_primary: boolean;
+  valid_until: string;
 }
 
 const EMPTY_RA_FORM: RoleAssignFormState = {
@@ -66,7 +65,7 @@ const EMPTY_RA_FORM: RoleAssignFormState = {
   campus_id: '',
   department_id: '',
   section_id: '',
-  is_primary: false,
+  valid_until: '',
 };
 
 interface RoleScopeValue {
@@ -118,20 +117,20 @@ function RoleScopeSelectFields({
       .finally(() => setLoadingDepts(false));
   }, [campus_id]);
 
-  // Load sections when department changes (for technician/HOS)
+  // Load sections when campus or department changes (for technician/HOS)
   useEffect(() => {
-    if (!department_id || !needsSection) {
+    if (!campus_id || !department_id || !needsSection) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSections([]);
       return;
     }
     setLoadingSections(true);
     sectionsService
-      .getSections({ department: Number(department_id) })
+      .getSections({ campus: Number(campus_id), department: Number(department_id) })
       .then(setSections)
       .catch(() => {})
       .finally(() => setLoadingSections(false));
-  }, [department_id, needsSection]);
+  }, [campus_id, department_id, needsSection]);
 
   const triggerClass = compact ? 'h-8 text-sm' : '';
   const labelClass = compact ? 'text-xs' : '';
@@ -239,14 +238,19 @@ function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => voi
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.valid_until) {
+      toast.error('Set an end date — cover assignments must be time-boxed');
+      return;
+    }
     setSubmitting(true);
     try {
       const payload: CreateRoleAssignmentPayload = {
         role: form.role,
-        is_primary: form.is_primary,
+        is_primary: false,
         campus_id: form.campus_id ? Number(form.campus_id) : null,
         department_id: form.department_id ? Number(form.department_id) : null,
         section_id: form.section_id ? Number(form.section_id) : null,
+        valid_until: new Date(form.valid_until).toISOString(),
       };
       await createRoleAssignment(user.id, payload);
       toast.success('Role assignment added');
@@ -286,7 +290,8 @@ function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => voi
             Role Assignments — {user.first_name} {user.last_name}
           </DialogTitle>
           <DialogDescription>
-            View, add, or remove role assignments for this user.
+            View or remove assignments, and add a time-boxed cover role. To change this
+            user's primary role, use Edit User instead.
           </DialogDescription>
         </DialogHeader>
 
@@ -310,9 +315,13 @@ function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => voi
                     <span className="flex-1 text-muted-foreground truncate">
                       {[ra.campus_name, ra.department_name, ra.section_name].filter(Boolean).join(' / ') || 'Global'}
                     </span>
-                    {ra.is_primary && (
+                    {ra.is_primary ? (
                       <Badge variant="outline" className="text-xs shrink-0 border-primary text-primary">Primary</Badge>
-                    )}
+                    ) : ra.valid_until ? (
+                      <Badge variant="outline" className="text-xs shrink-0 text-muted-foreground">
+                        Until {new Date(ra.valid_until).toLocaleDateString()}
+                      </Badge>
+                    ) : null}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -331,9 +340,9 @@ function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => voi
 
           <Separator />
 
-          {/* Add assignment form */}
+          {/* Add cover assignment form */}
           <div>
-            <p className="text-sm font-medium text-foreground mb-3">Add Assignment</p>
+            <p className="text-sm font-medium text-foreground mb-3">Add Cover Assignment</p>
             <form onSubmit={handleAdd} className="space-y-3">
               <RoleScopeSelectFields
                 value={{ role: form.role, campus_id: form.campus_id, department_id: form.department_id, section_id: form.section_id }}
@@ -341,20 +350,21 @@ function RoleAssignmentModal({ user, onClose }: { user: User; onClose: () => voi
                 compact
               />
 
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="ra-primary"
-                  checked={form.is_primary}
-                  onCheckedChange={checked => setForm(f => ({ ...f, is_primary: !!checked }))}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Ends on</Label>
+                <Input
+                  type="date"
+                  className="h-8 text-sm"
+                  value={form.valid_until}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setForm(f => ({ ...f, valid_until: e.target.value }))}
+                  required
                 />
-                <Label htmlFor="ra-primary" className="text-xs cursor-pointer">
-                  Set as primary assignment (replaces current primary role)
-                </Label>
               </div>
 
               <div className="flex justify-end pt-1">
                 <Button type="submit" size="sm" disabled={submitting} className="bg-primary hover:bg-primary/90">
-                  {submitting ? 'Adding…' : 'Add Assignment'}
+                  {submitting ? 'Adding…' : 'Add Cover Assignment'}
                 </Button>
               </div>
             </form>
