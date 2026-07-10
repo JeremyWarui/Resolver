@@ -21,6 +21,10 @@ export interface User {
   primary_department_id: number | null;
   primary_department_display: string | null;
   primary_department_name?: string | null;
+  /** The user's home campus (UserProfile.campus) — independent of role scope;
+   * used to route tickets they raise themselves as a requester. */
+  home_campus_id: number | null;
+  home_campus_name: string | null;
 }
 
 export interface CreateUserPayload {
@@ -31,6 +35,11 @@ export interface CreateUserPayload {
   role?: UserRole;
   sections?: number[];
   primary_department_id?: number | null;
+  campus_id: number;
+}
+
+export interface UpdateUserPayload extends Partial<User> {
+  campus_id?: number | null;
 }
 
 export interface RoleAssignment {

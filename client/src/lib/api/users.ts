@@ -2,6 +2,7 @@ import apiClient from './client';
 import type {
   User,
   CreateUserPayload,
+  UpdateUserPayload,
   UsersResponse,
   RoleAssignment,
   CreateRoleAssignmentPayload,
@@ -29,7 +30,7 @@ export async function createUser(payload: CreateUserPayload): Promise<User> {
   return data;
 }
 
-export async function updateUser(id: number, payload: Partial<User>): Promise<User> {
+export async function updateUser(id: number, payload: UpdateUserPayload): Promise<User> {
   const { data } = await apiClient.patch<User>(`/users/${id}/`, payload);
   return data;
 }

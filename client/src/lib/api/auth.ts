@@ -57,6 +57,7 @@ export interface RegisterPayload {
   first_name: string;
   last_name: string;
   password: string;
+  campus_id: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -118,6 +119,17 @@ export async function register(payload: RegisterPayload): Promise<LoginResponse>
   const flat = flattenJWT(data);
   persistSession(flat);
   return flat;
+}
+
+export interface PublicCampus {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export async function getPublicCampuses(): Promise<PublicCampus[]> {
+  const { data } = await apiClient.get<PublicCampus[]>('/auth/campuses/');
+  return data;
 }
 
 export async function switchRoleApi(roleAssignmentId: number): Promise<LoginResponse> {

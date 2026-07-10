@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { User, Mail, Lock, UserPlus, CheckCircle, Shield, Settings, Zap, Users, BarChart2 } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, CheckCircle, Shield, Settings, Zap, Users, BarChart2, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { getPublicCampuses, type PublicCampus } from '@/lib/api/auth';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -22,7 +24,8 @@ const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password')
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+  campus_id: z.string().min(1, 'Select your campus')
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -30,6 +33,11 @@ const registerSchema = z.object({
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
   const { register, isLoading } = useAuth();
+  const [campuses, setCampuses] = React.useState<PublicCampus[]>([]);
+
+  React.useEffect(() => {
+    getPublicCampuses().then(setCampuses).catch(() => {});
+  }, []);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -39,7 +47,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       username: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      campus_id: ''
     }
   });
 
@@ -50,7 +59,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         last_name: values.last_name,
         username: values.username,
         email: values.email,
-        password: values.password
+        password: values.password,
+        campus_id: Number(values.campus_id)
       });
 
       toast.success('Account created successfully! Welcome to Resolver.');
@@ -200,6 +210,32 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                           <Input placeholder="john@example.com" className="pl-10 h-11" {...field} disabled={isLoading} />
                         </div>
                       </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="campus_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Campus</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isLoading}>
+                        <FormControl>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
+                            <SelectTrigger className="pl-10 h-11">
+                              <SelectValue placeholder="Select your campus" />
+                            </SelectTrigger>
+                          </div>
+                        </FormControl>
+                        <SelectContent>
+                          {campuses.map(c => (
+                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage className="text-xs" />
                     </FormItem>
                   )}

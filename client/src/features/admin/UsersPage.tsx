@@ -385,6 +385,7 @@ interface UserFormData {
   campus_id: string;
   department_id: string;
   section_id: string;
+  home_campus_id: string;
 }
 
 const EMPTY_FORM: UserFormData = {
@@ -397,6 +398,7 @@ const EMPTY_FORM: UserFormData = {
   campus_id: '',
   department_id: '',
   section_id: '',
+  home_campus_id: '',
 };
 
 function roleScopeFromUser(u: User | null): Pick<UserFormData, 'role' | 'campus_id' | 'department_id' | 'section_id'> {
@@ -411,7 +413,15 @@ function roleScopeFromUser(u: User | null): Pick<UserFormData, 'role' | 'campus_
 
 function buildForm(editing: User | null): UserFormData {
   return editing
-    ? { ...EMPTY_FORM, first_name: editing.first_name, last_name: editing.last_name, email: editing.email, username: editing.username, ...roleScopeFromUser(editing) }
+    ? {
+        ...EMPTY_FORM,
+        first_name: editing.first_name,
+        last_name: editing.last_name,
+        email: editing.email,
+        username: editing.username,
+        home_campus_id: editing.home_campus_id != null ? String(editing.home_campus_id) : '',
+        ...roleScopeFromUser(editing),
+      }
     : EMPTY_FORM;
 }
 
@@ -419,6 +429,7 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
   const [form, setForm] = useState<UserFormData>(() => buildForm(editing));
   const [saving, setSaving] = useState(false);
   const [prevEditing, setPrevEditing] = useState(editing);
+  const { campuses: homeCampuses } = useCampuses();
 
   if (prevEditing !== editing) {
     setPrevEditing(editing);
@@ -439,6 +450,10 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
     }
     if (!editing && !form.password.trim()) {
       toast.error('Password is required for new users');
+      return;
+    }
+    if (!form.home_campus_id) {
+      toast.error("Select the user's home campus");
       return;
     }
 
@@ -473,6 +488,7 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
           first_name: form.first_name.trim(),
           last_name: form.last_name.trim(),
           email: form.email.trim(),
+          campus_id: Number(form.home_campus_id),
         });
         userId = editing.id;
       } else {
@@ -481,6 +497,7 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
           last_name: form.last_name.trim(),
           email: form.email.trim(),
           password: form.password,
+          campus_id: Number(form.home_campus_id),
           ...(form.username.trim() ? { username: form.username.trim() } : {}),
         };
         const created = await createUser(payload);
@@ -527,6 +544,18 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
       <div className="space-y-2">
         <Label>Email</Label>
         <Input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="user@example.com" required />
+      </div>
+      <div className="space-y-2">
+        <Label>Home Campus</Label>
+        <Select value={form.home_campus_id} onValueChange={v => set('home_campus_id', v)}>
+          <SelectTrigger><SelectValue placeholder="Select campus" /></SelectTrigger>
+          <SelectContent>
+            {homeCampuses.map(c => (
+              <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Where this person is based — used to route tickets they raise themselves, independent of their role.</p>
       </div>
       {!editing && (
         <div className="grid grid-cols-2 gap-4">
