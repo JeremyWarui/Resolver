@@ -191,6 +191,12 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           toast.error('Failed to update technician');
         }
       } else {
+        const campusId = sections.find(s => filteredSections.includes(s.id))?.campus?.id;
+        if (!campusId) {
+          toast.error('Select at least one section so the campus can be determined');
+          setIsSubmitting(false);
+          return;
+        }
         const createPayload: CreateUserPayload = {
           first_name: values.first_name,
           last_name: values.last_name,
@@ -199,6 +205,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           role: 'technician',
           sections: filteredSections,
           primary_department_id: values.primary_department_id ?? null,
+          campus_id: campusId,
         };
         await createUser(createPayload);
         toast.success('Technician created');

@@ -108,6 +108,8 @@ export function useSwitchRole(): { switchRole: (roleAssignmentId: number) => Pro
             primary_department_id: flat.primary_department_id,
             primary_department_display: null,
             primary_department_name: null,
+            home_campus_id: null,
+            home_campus_name: null,
           },
           flat.token
         );
