@@ -96,7 +96,6 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
       first_name: '',
       last_name: '',
       email: '',
-      password: '',
       sections: [],
       primary_department_id: null,
     },
@@ -118,7 +117,6 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           first_name: technician.first_name || '',
           last_name: technician.last_name || '',
           email: technician.email || '',
-          password: '',
           sections: techSections,
           primary_department_id: technician.primary_department_id ?? null,
         });
@@ -131,7 +129,6 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           first_name: '',
           last_name: '',
           email: '',
-          password: '',
           sections: [],
           primary_department_id: null,
         });
@@ -171,7 +168,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
       const filteredSections = (values.sections || []).filter(id => id && id > 0);
 
       if (technician) {
-        const updatePayload: Partial<User> & { password?: string } = {
+        const updatePayload: Partial<User> = {
           first_name: values.first_name,
           last_name: values.last_name,
           email: values.email,
@@ -179,9 +176,6 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           sections: filteredSections,
           primary_department_id: values.primary_department_id ?? null,
         };
-        if (values.password) {
-          updatePayload.password = values.password;
-        }
         const res = await updateUser(technician.id, updatePayload);
         if (res) {
           toast.success('Technician updated');
@@ -201,7 +195,6 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           first_name: values.first_name,
           last_name: values.last_name,
           email: values.email,
-          password: values.password,
           role: 'technician',
           sections: filteredSections,
           primary_department_id: values.primary_department_id ?? null,
@@ -282,15 +275,12 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
         </FormItem>
       )} />
 
-      <FormField control={form.control} name='password' render={({ field }) => (
-        <FormItem>
-          <FormLabel>Password</FormLabel>
-          <FormControl>
-            <Input {...field} type='password' />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )} />
+      {!technician && (
+        <p className="text-sm text-muted-foreground">
+          A username will be generated automatically from the name above, and an email will be
+          sent inviting the technician to set their own password.
+        </p>
+      )}
 
       <FormItem>
         <FormLabel>Campus</FormLabel>

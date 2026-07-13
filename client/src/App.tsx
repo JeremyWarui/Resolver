@@ -5,6 +5,8 @@ import { AuthWrapper } from "./app/auth/AuthWrapper";
 import { ProtectedRoute } from "./app/auth/ProtectedRoute";
 import { LoginForm } from "./app/auth/LoginForm";
 import { RegisterForm } from "./app/auth/RegisterForm";
+import { SetPasswordPage } from "./app/auth/SetPasswordPage";
+import { ForgotPasswordPage } from "./app/auth/ForgotPasswordPage";
 import { DashboardShell } from "./app/dashboard/DashboardShell";
 import { NotFoundPage } from "./app/errors/NotFoundPage";
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -17,6 +19,7 @@ const TechnicianLayout = lazy(() => import("./features/technician/TechnicianLayo
 const HOSLayout = lazy(() => import("./features/hos/HOSLayout"));
 const HODLayout = lazy(() => import("./features/hod/HODLayout"));
 const ManagerLayout = lazy(() => import("./features/manager/ManagerLayout"));
+const ProfilePage = lazy(() => import("./features/shared/ProfilePage").then(m => ({ default: m.ProfilePage })));
 
 const RouteLoading = () => (
   <div className="flex items-center justify-center h-screen">
@@ -55,6 +58,8 @@ const App = () => {
             }
           />
           <Route path="/auth" element={<AuthWrapper />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/set-password/:uid/:token" element={<SetPasswordPage />} />
 
           {/* Protected Dashboard Routes — DashboardShell wires WebSocket for all roles */}
           <Route element={<DashboardShell />}>
@@ -103,6 +108,14 @@ const App = () => {
               element={
                 <ProtectedRoute requiredRoles={['manager']}>
                   <ManagerLayout />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute requiredRoles={[]}>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

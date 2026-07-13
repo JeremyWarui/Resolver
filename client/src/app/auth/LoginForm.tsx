@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,13 +199,12 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
               </Form>
 
               <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => toast.info('Contact your administrator to reset your password.')}
+                <Link
+                  to="/forgot-password"
                   className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
                 >
                   Forgot your password?
-                </button>
+                </Link>
               </div>
 
               {onSwitchToRegister && (

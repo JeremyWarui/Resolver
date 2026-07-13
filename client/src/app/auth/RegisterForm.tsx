@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { User, Mail, Lock, UserPlus, CheckCircle, Shield, Settings, Zap, Users, BarChart2, MapPin } from 'lucide-react';
+import { User, Mail, UserPlus, CheckCircle, MailCheck, Shield, Settings, Zap, Users, BarChart2, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { getPublicCampuses, type PublicCampus } from '@/lib/api/auth';
 
@@ -21,19 +21,14 @@ interface RegisterFormProps {
 const registerSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
   campus_id: z.string().min(1, 'Select your campus')
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
   const { register, isLoading } = useAuth();
   const [campuses, setCampuses] = React.useState<PublicCampus[]>([]);
+  const [createdUsername, setCreatedUsername] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     getPublicCampuses().then(setCampuses).catch(() => {});
@@ -44,27 +39,21 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
     defaultValues: {
       first_name: '',
       last_name: '',
-      username: '',
       email: '',
-      password: '',
-      confirmPassword: '',
       campus_id: ''
     }
   });
 
   const handleSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
-      await register({
+      const result = await register({
         first_name: values.first_name,
         last_name: values.last_name,
-        username: values.username,
         email: values.email,
-        password: values.password,
         campus_id: Number(values.campus_id)
       });
 
-      toast.success('Account created successfully! Welcome to Resolver.');
-      window.location.assign('/user');
+      setCreatedUsername(result.username);
       onSuccess?.();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string; error?: string; errors?: Record<string, string> } } };
@@ -84,6 +73,34 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       toast.error(errorMessage);
     }
   };
+
+  if (createdUsername) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md shadow-xl border-0">
+          <CardHeader className="space-y-4 pb-4 text-center">
+            <div className="flex justify-center">
+              <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                <MailCheck className="w-7 h-7 text-green-600" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">Check your email</CardTitle>
+            <CardDescription className="text-base text-gray-600">
+              Account created. Your username is <span className="font-semibold text-gray-800">{createdUsername}</span>.
+              We've emailed you a link to set your password and activate your account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {onSwitchToLogin && (
+              <Button variant="outline" className="w-full" onClick={onSwitchToLogin}>
+                Back to Sign In
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -183,23 +200,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
                 <FormField
                   control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Username</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input placeholder="johndoe" className="pl-10 h-11" {...field} disabled={isLoading} />
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -241,42 +241,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input type="password" placeholder="Create password" className="pl-10 h-11" {...field} disabled={isLoading} />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-gray-700">Confirm Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input type="password" placeholder="Confirm password" className="pl-10 h-11" {...field} disabled={isLoading} />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full h-11 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg"
@@ -293,10 +257,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 Account Information
               </h4>
               <ul className="text-sm text-green-700 space-y-1">
+                <li>• Your username is generated automatically from your name</li>
+                <li>• We'll email you a link to set your password and activate your account</li>
                 <li>• New accounts start with the requester role by default</li>
                 <li>• Contact your administrator to be assigned a staff role</li>
-                <li>• Submit and track requests immediately after registration</li>
-                <li>• Requests are routed automatically based on your organisation's structure</li>
               </ul>
             </div>
 

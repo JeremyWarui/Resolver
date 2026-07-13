@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LogOut, PanelLeftClose, PanelLeftOpen, Inbox, Briefcase } from 'lucide-react';
+import { LogOut, PanelLeftClose, PanelLeftOpen, Inbox, Briefcase, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useRoleContext } from '@/lib/auth/roleContext';
@@ -142,8 +142,24 @@ export function AppSidebar() {
         </div>
       )}
 
-      {/* Logout */}
-      <div className="shrink-0 p-2 border-t border-border">
+      {/* Profile + Logout */}
+      <div className="shrink-0 p-2 border-t border-border space-y-0.5">
+        <NavLink
+          to="/profile"
+          className={({ isActive }) =>
+            cn(
+              'flex items-center gap-3 w-full px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+              !sidebarOpen && 'justify-center px-0',
+            )
+          }
+          title={!sidebarOpen ? 'My Profile' : undefined}
+        >
+          <UserCircle className="h-4 w-4 shrink-0" />
+          {sidebarOpen && <span>My Profile</span>}
+        </NavLink>
         <button
           onClick={handleLogout}
           className={cn(

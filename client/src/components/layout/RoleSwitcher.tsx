@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
 import type { UserRole } from '@/types';
 
-const ROLE_LABELS: Record<UserRole, string> = {
+export const ROLE_LABELS: Record<UserRole, string> = {
   user: 'User',
   technician: 'Technician',
   hos: 'Head of Section',

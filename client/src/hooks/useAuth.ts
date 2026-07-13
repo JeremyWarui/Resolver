@@ -8,7 +8,12 @@ import {
   hasRole,
   getUserRole,
 } from '@/lib/api/auth';
-import type { LoginResponse, LoginCredentials, RegisterPayload } from '@/lib/api/auth';
+import type {
+  LoginResponse,
+  LoginCredentials,
+  RegisterPayload,
+  RegisterResult,
+} from '@/lib/api/auth';
 import type { User } from '@/types';
 
 export const useAuth = () => {
@@ -28,13 +33,12 @@ export const useAuth = () => {
     }
   };
 
-  const register = async (payload: RegisterPayload): Promise<LoginResponse> => {
+  // No auto-login here: the new account is inactive until the user sets a
+  // password via the emailed invite link (see SetPasswordPage).
+  const register = async (payload: RegisterPayload): Promise<RegisterResult> => {
     setIsLoading(true);
     try {
-      const response = await apiRegister(payload);
-      setUser(getCurrentUser() as User | null);
-      setIsAuthenticated(true);
-      return response;
+      return await apiRegister(payload);
     } finally {
       setIsLoading(false);
     }

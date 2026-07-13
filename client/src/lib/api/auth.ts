@@ -12,6 +12,8 @@ interface JWTUser {
   email: string;
   first_name: string;
   last_name: string;
+  home_campus_name?: string | null;
+  primary_department_name?: string | null;
   active_role: {
     id?: number;
     role: UserRole;
@@ -43,6 +45,8 @@ export interface LoginResponse {
   primary_campus_id: number | null;
   primary_department_id: number | null;
   sections: number[];
+  home_campus_name: string | null;
+  primary_department_name: string | null;
 }
 
 export interface LoginCredentials {
@@ -52,12 +56,15 @@ export interface LoginCredentials {
 }
 
 export interface RegisterPayload {
-  username: string;
   email: string;
   first_name: string;
   last_name: string;
-  password: string;
   campus_id: number;
+}
+
+export interface RegisterResult {
+  username: string;
+  message: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -84,6 +91,8 @@ function flattenJWT(data: JWTLoginResponse): LoginResponse {
     primary_campus_id: tokenCampusId,
     primary_department_id: ar?.department_id ?? null,
     sections: ar?.section_id != null ? [ar.section_id] : [],
+    home_campus_name: data.user.home_campus_name ?? null,
+    primary_department_name: data.user.primary_department_name ?? null,
   };
 }
 
@@ -101,6 +110,8 @@ function persistSession(data: LoginResponse): void {
       primary_campus_id: data.primary_campus_id,
       primary_department_id: data.primary_department_id,
       sections: data.sections ?? [],
+      home_campus_name: data.home_campus_name,
+      primary_department_name: data.primary_department_name,
     })
   );
 }
@@ -114,8 +125,30 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   return flat;
 }
 
-export async function register(payload: RegisterPayload): Promise<LoginResponse> {
-  const { data } = await apiClient.post<JWTLoginResponse>('/auth/register/', payload);
+export async function register(payload: RegisterPayload): Promise<RegisterResult> {
+  // No auto-login: the account is created inactive with an unusable password —
+  // the user must click the emailed invite link and set a password first.
+  const { data } = await apiClient.post<RegisterResult>('/auth/register/', payload);
+  return data;
+}
+
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  const { data } = await apiClient.post<{ message: string }>('/auth/forgot-password/', { email });
+  return data;
+}
+
+export async function setPassword(
+  uid: string,
+  token: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<LoginResponse> {
+  const { data } = await apiClient.post<JWTLoginResponse>('/auth/set-password/', {
+    uid,
+    token,
+    new_password: newPassword,
+    confirm_password: confirmPassword,
+  });
   const flat = flattenJWT(data);
   persistSession(flat);
   return flat;
