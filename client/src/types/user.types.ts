@@ -31,6 +31,7 @@ export interface CreateUserPayload {
   first_name: string;
   last_name: string;
   email: string;
+  password: string;
   role?: UserRole;
   sections?: number[];
   primary_department_id?: number | null;

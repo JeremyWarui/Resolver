@@ -56,15 +56,12 @@ export interface LoginCredentials {
 }
 
 export interface RegisterPayload {
+  username: string;
   email: string;
   first_name: string;
   last_name: string;
+  password: string;
   campus_id: number;
-}
-
-export interface RegisterResult {
-  username: string;
-  message: string;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -125,30 +122,8 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   return flat;
 }
 
-export async function register(payload: RegisterPayload): Promise<RegisterResult> {
-  // No auto-login: the account is created inactive with an unusable password —
-  // the user must click the emailed invite link and set a password first.
-  const { data } = await apiClient.post<RegisterResult>('/auth/register/', payload);
-  return data;
-}
-
-export async function requestPasswordReset(email: string): Promise<{ message: string }> {
-  const { data } = await apiClient.post<{ message: string }>('/auth/forgot-password/', { email });
-  return data;
-}
-
-export async function setPassword(
-  uid: string,
-  token: string,
-  newPassword: string,
-  confirmPassword: string
-): Promise<LoginResponse> {
-  const { data } = await apiClient.post<JWTLoginResponse>('/auth/set-password/', {
-    uid,
-    token,
-    new_password: newPassword,
-    confirm_password: confirmPassword,
-  });
+export async function register(payload: RegisterPayload): Promise<LoginResponse> {
+  const { data } = await apiClient.post<JWTLoginResponse>('/auth/register/', payload);
   const flat = flattenJWT(data);
   persistSession(flat);
   return flat;

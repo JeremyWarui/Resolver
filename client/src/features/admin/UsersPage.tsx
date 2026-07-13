@@ -379,6 +379,8 @@ interface UserFormData {
   first_name: string;
   last_name: string;
   email: string;
+  username: string;
+  password: string;
   role: UserRole;
   campus_id: string;
   department_id: string;
@@ -390,6 +392,8 @@ const EMPTY_FORM: UserFormData = {
   first_name: '',
   last_name: '',
   email: '',
+  username: '',
+  password: '',
   role: 'user',
   campus_id: '',
   department_id: '',
@@ -414,6 +418,7 @@ function buildForm(editing: User | null): UserFormData {
         first_name: editing.first_name,
         last_name: editing.last_name,
         email: editing.email,
+        username: editing.username,
         home_campus_id: editing.home_campus_id != null ? String(editing.home_campus_id) : '',
         ...roleScopeFromUser(editing),
       }
@@ -441,6 +446,10 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
     e.preventDefault();
     if (!form.first_name.trim() || !form.last_name.trim() || !form.email.trim()) {
       toast.error('First name, last name and email are required');
+      return;
+    }
+    if (!editing && !form.password.trim()) {
+      toast.error('Password is required for new users');
       return;
     }
     if (!form.home_campus_id) {
@@ -487,7 +496,9 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
           first_name: form.first_name.trim(),
           last_name: form.last_name.trim(),
           email: form.email.trim(),
+          password: form.password,
           campus_id: Number(form.home_campus_id),
+          ...(form.username.trim() ? { username: form.username.trim() } : {}),
         };
         const created = await createUser(payload);
         userId = created.id;
@@ -547,10 +558,16 @@ function UserForm({ editing, onSuccess, onClose }: { editing: User | null; onSuc
         <p className="text-xs text-muted-foreground">Where this person is based — used to route tickets they raise themselves, independent of their role.</p>
       </div>
       {!editing && (
-        <p className="text-xs text-muted-foreground">
-          A username will be generated automatically from the name above, and an email will be
-          sent inviting the user to set their own password.
-        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Username <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <Input value={form.username} onChange={e => set('username', e.target.value)} placeholder="e.g. john.doe" />
+          </div>
+          <div className="space-y-2">
+            <Label>Password</Label>
+            <Input type="password" value={form.password} onChange={e => set('password', e.target.value)} placeholder="Minimum 8 characters" required />
+          </div>
+        </div>
       )}
 
       <Separator />
