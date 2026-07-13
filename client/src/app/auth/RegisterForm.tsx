@@ -56,9 +56,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       setCreatedUsername(result.username);
       onSuccess?.();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string; error?: string; errors?: Record<string, string> } } };
+      const err = error as {
+        response?: {
+          data?: {
+            message?: string;
+            error?: { code?: string; message?: string } | string;
+            errors?: Record<string, string>;
+          };
+        };
+      };
+      const backendError = err?.response?.data?.error;
       const errorMessage = err?.response?.data?.message
-        || err?.response?.data?.error
+        || (typeof backendError === 'string' ? backendError : backendError?.message)
         || 'Registration failed. Please try again.';
 
       if (err?.response?.data?.errors) {
