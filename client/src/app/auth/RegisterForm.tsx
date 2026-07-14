@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -234,7 +235,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                         <FormControl>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input type="password" placeholder="Create password" className="pl-10 h-11" {...field} disabled={isLoading} />
+                            <PasswordInput placeholder="Create password" className="pl-10 h-11" {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
@@ -251,7 +252,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                         <FormControl>
                           <div className="relative">
                             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input type="password" placeholder="Confirm password" className="pl-10 h-11" {...field} disabled={isLoading} />
+                            <PasswordInput placeholder="Confirm password" className="pl-10 h-11" {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
