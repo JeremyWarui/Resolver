@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { User, Mail, Lock, UserPlus, CheckCircle, Shield, Settings, Zap, Users, BarChart2, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { getPublicCampuses, type PublicCampus } from '@/lib/api/auth';
+import { getPublicCampuses, clearSession, type PublicCampus } from '@/lib/api/auth';
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -21,7 +22,6 @@ interface RegisterFormProps {
 const registerSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
@@ -34,6 +34,7 @@ const registerSchema = z.object({
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
   const { register, isLoading } = useAuth();
   const [campuses, setCampuses] = React.useState<PublicCampus[]>([]);
+  const [generatedUsername, setGeneratedUsername] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     getPublicCampuses().then(setCampuses).catch(() => {});
@@ -44,7 +45,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
     defaultValues: {
       first_name: '',
       last_name: '',
-      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -54,18 +54,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
   const handleSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
-      await register({
+      const result = await register({
         first_name: values.first_name,
         last_name: values.last_name,
-        username: values.username,
         email: values.email,
         password: values.password,
         campus_id: Number(values.campus_id)
       });
 
-      toast.success('Account created successfully! Welcome to Resolver.');
-      window.location.assign('/user');
-      onSuccess?.();
+      // Registration auto-logs the user in; we want them to land on /login
+      // with their generated username instead, so drop that session.
+      clearSession();
+      setGeneratedUsername(result.username);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string; error?: string; errors?: Record<string, string> } } };
       const errorMessage = err?.response?.data?.message
@@ -183,23 +183,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
                 <FormField
                   control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Username</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input placeholder="johndoe" className="pl-10 h-11" {...field} disabled={isLoading} />
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -293,9 +276,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 Account Information
               </h4>
               <ul className="text-sm text-green-700 space-y-1">
+                <li>• Your username is generated automatically from your name — we'll show it once your account is created</li>
                 <li>• New accounts start with the requester role by default</li>
                 <li>• Contact your administrator to be assigned a staff role</li>
-                <li>• Submit and track requests immediately after registration</li>
                 <li>• Requests are routed automatically based on your organisation's structure</li>
               </ul>
             </div>
@@ -318,6 +301,40 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={generatedUsername !== null} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <DialogTitle className="text-center">Account Created</DialogTitle>
+            <DialogDescription className="text-center">
+              Your account is ready. Use the username below to sign in — you'll need it every time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border bg-muted/40 py-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Your username</p>
+            <p className="text-lg font-semibold tracking-wide">{generatedUsername}</p>
+          </div>
+          <DialogFooter>
+            <Button
+              className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+              onClick={() => {
+                setGeneratedUsername(null);
+                onSuccess?.();
+                if (onSwitchToLogin) {
+                  onSwitchToLogin();
+                } else {
+                  window.location.assign('/login');
+                }
+              }}
+            >
+              Continue to Login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

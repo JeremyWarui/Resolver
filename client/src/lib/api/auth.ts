@@ -56,7 +56,6 @@ export interface LoginCredentials {
 }
 
 export interface RegisterPayload {
-  username: string;
   email: string;
   first_name: string;
   last_name: string;
