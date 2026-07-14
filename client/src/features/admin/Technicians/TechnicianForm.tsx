@@ -21,6 +21,8 @@ import { useDepartments } from '@/hooks/useDepartments';
 import useUpdateUser from '@/hooks/users/useUpdateUser';
 import { createTechnicianSchema, type CreateTechnicianFormValues } from '@/utils/entityValidation';
 import { sectionsService } from '@/lib/api/organizations';
+import { createRoleAssignment } from '@/lib/api/users';
+import { handleDRFError } from '@/utils/handleDRFError';
 import type { Technician, CreateUserPayload, User } from '@/types';
 
 interface TechnicianFormProps {
@@ -68,11 +70,15 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
 
   useEffect(() => {
     const departmentId = departmentFilter !== '__all__' ? Number(departmentFilter) : null;
-    if (!departmentId || Number.isNaN(departmentId)) return;
+    const campusId = campusFilter !== '__all__' ? Number(campusFilter) : null;
+    if (!departmentId || Number.isNaN(departmentId) || !campusId || Number.isNaN(campusId)) {
+      setDepartmentSections([]);
+      return;
+    }
 
     let active = true;
 
-    sectionsService.getDepartmentSections(departmentId)
+    sectionsService.getSections({ department: departmentId, campus: campusId })
       .then((sections) => {
         if (!active) return;
         setDepartmentSections(sections);
@@ -89,7 +95,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
     return () => {
       active = false;
     };
-  }, [departmentFilter]);
+  }, [campusFilter, departmentFilter]);
 
   const form = useForm<CreateTechnicianFormValues>({
     resolver: zodResolver(createTechnicianSchema),
@@ -170,29 +176,29 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
     try {
       // Filter out any zero/empty section IDs
       const filteredSections = (values.sections || []).filter(id => id && id > 0);
+      // Section rows are campus-scoped, so the account's campus is derived from
+      // whichever section was picked — same resolution used for create and edit.
+      const campusId = sections.find(s => filteredSections.includes(s.id))?.campus?.id ?? null;
+
+      let userId: number;
 
       if (technician) {
         const updatePayload: Partial<User> & { password?: string } = {
           first_name: values.first_name,
           last_name: values.last_name,
           email: values.email,
-          role: 'technician',
-          sections: filteredSections,
-          primary_department_id: values.primary_department_id ?? null,
         };
         if (values.password) {
           updatePayload.password = values.password;
         }
         const res = await updateUser(technician.id, updatePayload);
-        if (res) {
-          toast.success('Technician updated');
-          onSuccess?.();
-          onOpenChange(false);
-        } else {
+        if (!res) {
           toast.error('Failed to update technician');
+          setIsSubmitting(false);
+          return;
         }
+        userId = technician.id;
       } else {
-        const campusId = sections.find(s => filteredSections.includes(s.id))?.campus?.id;
         if (!campusId) {
           toast.error('Select at least one section so the campus can be determined');
           setIsSubmitting(false);
@@ -203,17 +209,47 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
           last_name: values.last_name,
           email: values.email,
           password: values.password,
-          role: 'technician',
-          sections: filteredSections,
-          primary_department_id: values.primary_department_id ?? null,
           campus_id: campusId,
         };
-        await createUser(createPayload);
-        toast.success('Technician created');
-        form.reset();
-        onSuccess?.();
-        onOpenChange(false);
+        const created = await createUser(createPayload);
+        userId = created.id;
       }
+
+      if (filteredSections.length > 0) {
+        try {
+          await createRoleAssignment(userId, {
+            role: 'technician',
+            is_primary: true,
+            section_id: filteredSections[0],
+            campus_id: campusId,
+            department_id: values.primary_department_id ?? null,
+          });
+
+          // The role-assignment endpoint only syncs the primary/first section into
+          // SectionTechnician as a side effect; link any additional sections
+          // explicitly. Additive-only: on edit, sections removed from the form
+          // are not unlinked here.
+          if (filteredSections.length > 1) {
+            await Promise.allSettled(
+              filteredSections.slice(1).map(sectionId =>
+                sectionsService.addSectionTechnician(sectionId, userId)
+              )
+            );
+          }
+        } catch (roleError) {
+          handleDRFError(roleError, {
+            fallbackMessage: 'Technician saved, but assigning the role/section failed — use the role assignment tools to fix it.',
+          });
+          onSuccess?.();
+          onOpenChange(false);
+          return;
+        }
+      }
+
+      toast.success(technician ? 'Technician updated' : 'Technician created');
+      if (!technician) form.reset();
+      onSuccess?.();
+      onOpenChange(false);
     } catch (err) {
       console.error(err);
       const anyErr = err as { response?: { data?: Record<string, unknown> } };
@@ -364,8 +400,8 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
         <FormItem>
           <FormLabel>Sections</FormLabel>
           <div className='space-y-2'>
-            {departmentFilter === '__all__' ? (
-              <p className='text-sm text-muted-foreground'>Select a department first to see its sections.</p>
+            {campusFilter === '__all__' || departmentFilter === '__all__' ? (
+              <p className='text-sm text-muted-foreground'>Select a campus and department first to see its sections.</p>
             ) : loadingDepartmentSections ? (
               <p className='text-sm text-muted-foreground'>Loading sections...</p>
             ) : departmentSections.length === 0 ? (
@@ -376,7 +412,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
                 <Select
                   value={field.value?.[index]?.toString() || ''}
                   onValueChange={(value) => handleSectionChange(index, value)}
-                  disabled={departmentFilter === '__all__' || loadingDepartmentSections || departmentSections.length === 0}
+                  disabled={campusFilter === '__all__' || departmentFilter === '__all__' || loadingDepartmentSections || departmentSections.length === 0}
                 >
                   <SelectTrigger className='flex-1'>
                     <SelectValue placeholder='Select a section' />

@@ -190,13 +190,6 @@ export const sectionsService = {
     return toArray<Section>(data);
   },
 
-  getDepartmentSections: async (departmentId: number): Promise<Section[]> => {
-    const { data } = await apiClient.get('/sections/', {
-      params: { department: departmentId },
-    });
-    return toArray<Section>(data);
-  },
-
   getSection: async (id: number): Promise<Section> => {
     const { data } = await apiClient.get<Section>(`/sections/${id}/`);
     return data;
@@ -224,6 +217,10 @@ export const sectionsService = {
   getSectionTechnicians: async (sectionId: number): Promise<unknown[]> => {
     const { data } = await apiClient.get(`/sections/${sectionId}/technicians/`);
     return toArray<unknown>(data as unknown[] | { results: unknown[] });
+  },
+
+  addSectionTechnician: async (sectionId: number, userId: number): Promise<void> => {
+    await apiClient.post(`/sections/${sectionId}/technicians/`, { user: userId });
   },
 
   assignHOS: async (id: number, headOfSectionId: number | null): Promise<Section> => {
