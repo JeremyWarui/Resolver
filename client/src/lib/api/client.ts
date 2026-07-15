@@ -53,11 +53,12 @@ function processQueue(error: unknown, token: string | null): void {
   failedQueue = [];
 }
 
-function clearSessionAndRedirect(): void {
+function clearSessionAndRedirect(reason?: 'role-changed'): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem('currentUser');
   if (!window.location.pathname.includes('/login')) {
-    window.location.href = '/login';
+    const suffix = reason ? `?reason=${reason}` : '';
+    window.location.href = `/login${suffix}`;
   }
 }
 
@@ -85,11 +86,25 @@ apiClient.interceptors.response.use(
 
     try {
       // Use bare axios (not apiClient) to avoid triggering this interceptor again
-      const { data } = await axios.post<{ accessToken: string }>(
+      const { data } = await axios.post<{ accessToken: string; roleChanged: boolean }>(
         `${BASE_URL}/auth/refresh/`,
         {},
         { withCredentials: true }
       );
+
+      // jwt_refresh() re-derives role/scope from the DB on every rotation, so
+      // roleChanged means an admin promoted/demoted this user since they last
+      // logged in. The new access token is already scoped correctly, but the
+      // cached user object (sidebar, dashboard choice) is stale and only ever
+      // refreshed at login/switch-role — force a clean re-login rather than
+      // let the UI keep showing the old role's shell.
+      if (data.roleChanged) {
+        const err = new Error('Role changed — re-authentication required');
+        processQueue(err, null);
+        clearSessionAndRedirect('role-changed');
+        return Promise.reject(err);
+      }
+
       const newToken = data.accessToken;
       localStorage.setItem(TOKEN_KEY, newToken);
       apiClient.defaults.headers.common.Authorization = `Bearer ${newToken}`;

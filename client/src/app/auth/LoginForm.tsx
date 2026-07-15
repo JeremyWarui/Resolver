@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +25,26 @@ const loginSchema = z.object({
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const { login, isLoading } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Set by apiClient's refresh interceptor when a silent token refresh finds
+  // the user's role changed server-side (promoted/demoted) — their cached
+  // session was already cleared, this just explains why they landed here.
+  useEffect(() => {
+    if (searchParams.get('reason') === 'role-changed') {
+      // Sonner's <Toaster> subscribes to the toast store in its own effect —
+      // calling toast() in the same tick as this component's mount can fire
+      // before that subscription exists. Defer one tick so it's never missed.
+      setTimeout(() => {
+        toast.info('Your role was updated — please log in again to continue.');
+      }, 0);
+      setSearchParams((prev) => {
+        prev.delete('reason');
+        return prev;
+      }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
