@@ -1,31 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { Mail, Building2, Briefcase, Shield, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { ROLE_LABELS } from '@/components/layout/RoleSwitcher';
+import type { UserRole } from '@/types';
 
-function ProfileRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 py-3 border-b last:border-b-0">
-      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-        <Icon className="w-4 h-4 text-muted-foreground" />
-      </div>
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground">{value}</p>
-      </div>
-    </div>
-  );
-}
+// Department is scoped for technician/hos/hod; section only goes one level
+// deeper, for the two roles actually tied to a single section (SoT §1.3).
+const DEPARTMENT_ROLES: UserRole[] = ['technician', 'hos', 'hod'];
+const SECTION_ROLES: UserRole[] = ['technician', 'hos'];
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -34,6 +19,23 @@ export function ProfilePage() {
   if (!user) return null;
 
   const fullName = `${user.first_name} ${user.last_name}`.trim() || user.username;
+
+  const rows: { label: string; value: string }[] = [
+    { label: 'First Name', value: user.first_name || '—' },
+    { label: 'Last Name', value: user.last_name || '—' },
+    { label: 'Username', value: user.username },
+    { label: 'Email', value: user.email },
+    { label: 'Role', value: ROLE_LABELS[user.role] },
+  ];
+  if (user.home_campus_name) {
+    rows.push({ label: 'Campus', value: user.home_campus_name });
+  }
+  if (DEPARTMENT_ROLES.includes(user.role) && user.primary_department_name) {
+    rows.push({ label: 'Department', value: user.primary_department_name });
+  }
+  if (SECTION_ROLES.includes(user.role) && user.section_name) {
+    rows.push({ label: 'Section', value: user.section_name });
+  }
 
   return (
     <div className="flex flex-col h-full bg-muted/30">
@@ -48,20 +50,26 @@ export function ProfilePage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <Card className="max-w-lg">
-          <CardHeader>
+        <Card className="max-w-lg overflow-hidden">
+          <CardHeader className="border-b bg-muted/30 py-4">
             <CardTitle className="text-base">{fullName}</CardTitle>
             <p className="text-sm text-muted-foreground">@{user.username}</p>
           </CardHeader>
-          <CardContent className="pt-0">
-            <ProfileRow icon={Mail} label="Email" value={user.email} />
-            <ProfileRow icon={Shield} label="Role" value={ROLE_LABELS[user.role]} />
-            {user.home_campus_name && (
-              <ProfileRow icon={Building2} label="Campus" value={user.home_campus_name} />
-            )}
-            {user.primary_department_name && (
-              <ProfileRow icon={Briefcase} label="Department" value={user.primary_department_name} />
-            )}
+          <CardContent className="p-0">
+            <Table>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.label} className="hover:bg-transparent">
+                    <TableCell className="w-40 whitespace-normal py-3 text-xs font-medium text-muted-foreground">
+                      {row.label}
+                    </TableCell>
+                    <TableCell className="whitespace-normal py-3 text-sm font-medium text-foreground">
+                      {row.value}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

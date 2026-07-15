@@ -84,7 +84,9 @@ export function useScope(): UserScope | null {
 
 // useSwitchRole — calls POST /auth/switch-role/ to get a new scoped JWT, then updates the store.
 // useWsChannels automatically reconnects when scope.role changes after setUser.
-// Full profile fields (campus_name, display names) are refreshed by useUserData on next mount.
+// campus_name / primary_*_display are refreshed by useUserData on next mount — the switch-role
+// response doesn't carry those display variants, but it does carry home_campus_name,
+// primary_department_name, and section_name directly, so those are set here right away.
 export function useSwitchRole(): { switchRole: (roleAssignmentId: number) => Promise<void> } {
   const setUser = useAuthStore((s) => s.setUser);
 
@@ -103,13 +105,14 @@ export function useSwitchRole(): { switchRole: (roleAssignmentId: number) => Pro
             campus_name: null,
             sections: flat.sections,
             section_names: [],
+            section_name: flat.section_name,
             primary_campus_id: flat.primary_campus_id,
             primary_campus_display: null,
             primary_department_id: flat.primary_department_id,
             primary_department_display: null,
-            primary_department_name: null,
+            primary_department_name: flat.primary_department_name,
             home_campus_id: null,
-            home_campus_name: null,
+            home_campus_name: flat.home_campus_name,
           },
           flat.token
         );

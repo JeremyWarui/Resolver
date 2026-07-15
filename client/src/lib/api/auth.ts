@@ -14,6 +14,7 @@ interface JWTUser {
   last_name: string;
   home_campus_name?: string | null;
   primary_department_name?: string | null;
+  section_name?: string | null;
   active_role: {
     id?: number;
     role: UserRole;
@@ -47,6 +48,7 @@ export interface LoginResponse {
   sections: number[];
   home_campus_name: string | null;
   primary_department_name: string | null;
+  section_name: string | null;
 }
 
 export interface LoginCredentials {
@@ -89,6 +91,7 @@ function flattenJWT(data: JWTLoginResponse): LoginResponse {
     sections: ar?.section_id != null ? [ar.section_id] : [],
     home_campus_name: data.user.home_campus_name ?? null,
     primary_department_name: data.user.primary_department_name ?? null,
+    section_name: data.user.section_name ?? null,
   };
 }
 
@@ -108,6 +111,7 @@ function persistSession(data: LoginResponse): void {
       sections: data.sections ?? [],
       home_campus_name: data.home_campus_name,
       primary_department_name: data.primary_department_name,
+      section_name: data.section_name,
     })
   );
 }
