@@ -3,8 +3,11 @@ import { useLocation } from "react-router-dom";
 import ComingSoonSection from "@/components/shared/ComingSoonSection";
 import { RoleLayout } from "@/components/layout/RoleLayout";
 import { useAuthStore } from "@/stores/authStore";
-import { useAdminDashboard } from "@/hooks/dashboard";
+import { useUIStore } from "@/stores/uiStore";
 import { TicketDetailPage } from "@/app/dashboard/tickets/TicketDetailPage";
+import { TicketCreationWizard } from "@/components/shared/ticket/TicketCreationWizard";
+
+const MyTicketsPage = lazy(() => import("@/features/user/MyTicketsPage"));
 
 const MainContent = lazy(() => import("./Dashboard/DashboardLayout"));
 const TicketsPage = lazy(() => import("./TicketsPage/TicketsPage"));
@@ -16,7 +19,7 @@ const OrganisationAnalyticsPage = lazy(() => import("./OrganisationAnalytics").t
 const CampusesPage = lazy(() => import("./Campuses/CampusesPage"));
 const DepartmentsPage = lazy(() => import("./Departments/DepartmentsPage"));
 const ServicesPage = lazy(() => import("./ServicesPage"));
-const UsersPage = lazy(() => import("./UsersPage"));
+const UsersPage = lazy(() => import("./Users/UsersPage"));
 const SLARulesPage = lazy(() => import("./SLARulesPage"));
 const AuditLogPage = lazy(() => import("./AuditLogPage"));
 
@@ -66,8 +69,9 @@ const headerTitles: Record<string, string> = {
 function AdminLayoutContent() {
   const location = useLocation();
   const userData = useAuthStore((s) => s.user);
-  const { loading } = useAdminDashboard();
+  const { isMyRequests } = useUIStore();
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   // Derive active section from URL path
   const getSection = (pathname: string): string => {
@@ -78,6 +82,7 @@ function AdminLayoutContent() {
 
   const [activeSection, setActiveSection] = useState<string>(getSection(location.pathname));
   const [prevPathname, setPrevPathname] = useState(location.pathname);
+  const [prevIsMyRequests, setPrevIsMyRequests] = useState(isMyRequests);
 
   if (prevPathname !== location.pathname) {
     setPrevPathname(location.pathname);
@@ -85,7 +90,16 @@ function AdminLayoutContent() {
     setActiveSection(getSection(location.pathname));
   }
 
-  const displayTitle = selectedTicketId !== null ? 'Ticket Detail' : (headerTitles[activeSection] ?? activeSection);
+  if (prevIsMyRequests !== isMyRequests) {
+    setPrevIsMyRequests(isMyRequests);
+    setSelectedTicketId(null);
+  }
+
+  const displayTitle = selectedTicketId !== null
+    ? 'Ticket Detail'
+    : isMyRequests
+      ? 'My Requests'
+      : (headerTitles[activeSection] ?? activeSection);
 
   return (
     <RoleLayout
@@ -94,9 +108,21 @@ function AdminLayoutContent() {
       role={userData?.role || 'admin'}
       title={displayTitle}
       currentUser={userData}
-      loading={loading}
+      // Never pass a data-fetch loading flag here: RoleLayout renders it as a
+      // full-screen z-50 overlay that swallows every click (sidebar included)
+      // while the analytics overview is slow — the dashboard widgets own their
+      // loading skeletons instead.
+      loading={false}
     >
       <Suspense fallback={<PageLoading />}>
+          {isMyRequests ? (
+            // Context switch (§1.2) — admin's own raised tickets, same as every role.
+            <MyTicketsPage
+              onNavigate={(s) => { if (s === 'submitTicket') setWizardOpen(true); }}
+              onTicketSelect={setSelectedTicketId}
+            />
+          ) : (
+          <>
           {activeSection === "dashboard" && <MainContent onTicketSelect={setSelectedTicketId} />}
           {activeSection === "tickets" && <TicketsPage onTicketSelect={setSelectedTicketId} />}
           {activeSection === "reports" && <ReportsPage />}
@@ -112,6 +138,8 @@ function AdminLayoutContent() {
           {activeSection === "audit-log" && <AuditLogPage />}
           {activeSection === "schedule" && <ComingSoonSection section="Schedule" />}
           {activeSection === "settings" && <ComingSoonSection section="Settings" />}
+          </>
+          )}
         </Suspense>
 
       <TicketDetailPage
@@ -119,6 +147,8 @@ function AdminLayoutContent() {
         ticketId={selectedTicketId}
         onClose={() => setSelectedTicketId(null)}
       />
+
+      <TicketCreationWizard isOpen={wizardOpen} onOpenChange={setWizardOpen} />
     </RoleLayout>
   );
 }

@@ -28,12 +28,15 @@ const UserLayoutContent = () => {
   if (prevSection !== activeSection) {
     setPrevSection(activeSection);
     if (activeSection !== 'userTickets') setSelectedTicketId(null);
-    if (location.pathname === '/user/new') setIsCreateTicketOpen(true);
   }
 
-  // Navigate side-effect only — setState handled during render above
+  // /user/new opens the wizard from any page — it maps to the 'dashboard'
+  // section, so a section-change check would miss dashboard → New Ticket.
   useEffect(() => {
-    if (location.pathname === '/user/new') navigate('/user', { replace: true });
+    if (location.pathname === '/user/new') {
+      setIsCreateTicketOpen(true);
+      navigate('/user', { replace: true });
+    }
   }, [location.pathname, navigate]);
 
   const handleTicketCreated = () => {

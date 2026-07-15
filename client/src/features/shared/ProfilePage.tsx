@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
-import { ROLE_LABELS } from '@/components/layout/RoleSwitcher';
+import { ROLE_LABELS } from '@/features/admin/Users/constants';
 import type { UserRole } from '@/types';
 
 // Department is scoped for technician/hos/hod; section only goes one level

@@ -43,7 +43,7 @@ const SECTION_PATH: Record<string, string> = {
 
 export function AppSidebar() {
   const { role } = useRoleContext();
-  const { sidebarOpen, toggleSidebar, isMyRequests, toggleMyRequests } = useUIStore();
+  const { sidebarOpen, toggleSidebar, isMyRequests, toggleMyRequests, setMyRequests } = useUIStore();
   const { handleLogout } = useLogout();
 
   // Pure requesters (role: null, SoT R15) use the 'user' sidebar config.
@@ -99,6 +99,10 @@ export function AppSidebar() {
               key={id}
               to={href}
               end={isBase}
+              // Navigation always exits My Requests mode — otherwise the layouts
+              // keep rendering the requester view and sidebar clicks appear dead
+              // (isMyRequests is persisted, so this survived reloads too).
+              onClick={() => setMyRequests(false)}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
