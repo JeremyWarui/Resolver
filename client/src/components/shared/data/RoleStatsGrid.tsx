@@ -23,7 +23,7 @@ interface RoleStatsGridProps {
 const gridClass = (count: number) =>
   count <= 4
     ? 'grid-cols-2 lg:grid-cols-4'
-    : 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
+    : 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-5';
 
 const RoleStatsGrid = ({ stats, loading, onCardClick, gridClassName }: RoleStatsGridProps) => (
   <div className={`grid ${gridClassName || gridClass(stats.length)} gap-3 mb-2`}>

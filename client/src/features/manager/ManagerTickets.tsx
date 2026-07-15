@@ -31,7 +31,7 @@ const ManagerTickets = ({ userId, onTicketSelect }: { userId?: number; onTicketS
   const columnVisibility = createTicketColumnVisibility({ role: 'manager' });
 
   return (
-    <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
+    <main className="flex-1 overflow-y-auto p-3 bg-gray-50">
       {/* Stat Cards Section */}
       <div className="mb-4">
         <ManagerStatsCards analyticsData={data} loading={loading} />

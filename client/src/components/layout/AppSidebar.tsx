@@ -55,7 +55,7 @@ export function AppSidebar() {
     <aside
       className={cn(
         'hidden sm:flex flex-col h-screen border-r border-border bg-card shrink-0 transition-[width] duration-200 overflow-hidden',
-        sidebarOpen ? 'w-60' : 'w-14',
+        sidebarOpen ? 'w-52' : 'w-14',
       )}
     >
       {/* Brand + toggle */}

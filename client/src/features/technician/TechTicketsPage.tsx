@@ -11,7 +11,7 @@ const TechTicketsPage = ({ onTicketSelect }: TechTicketsPageProps) => {
   const userData = useAuthStore((s) => s.user);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+    <div className="flex-1 overflow-y-auto p-3 bg-gray-50 space-y-4">
       <div className="flex justify-between mb-2">
         <div>
           <p className="text-sm text-gray-600">Tickets assigned to you</p>

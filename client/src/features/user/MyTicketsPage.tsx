@@ -60,7 +60,7 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
   return (
     <div className="flex flex-col h-full bg-muted/30">
       {/* Page header */}
-      <div className="px-6 py-4 border-b bg-background flex items-center justify-between shrink-0">
+      <div className="px-4 py-3 border-b bg-background flex items-center justify-between shrink-0">
         <div />
         <Button
           size="sm"
@@ -73,12 +73,12 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
       </div>
 
       {/* Stat cards */}
-      <div className="px-6 py-4 border-b bg-background shrink-0">
+      <div className="px-4 py-3 border-b bg-background shrink-0">
         <UserStatsCards />
       </div>
 
       {/* Filter pills */}
-      <div className="px-6 py-3 border-b bg-background shrink-0">
+      <div className="px-4 py-2 border-b bg-background shrink-0">
         <FilterPills
           pills={STATUS_PILLS}
           active={activeFilter}
@@ -88,7 +88,7 @@ const MyTicketsPage = ({ onNavigate, onTicketSelect }: MyTicketsPageProps) => {
       </div>
 
       {/* Table area */}
-      <div className="flex-1 overflow-auto px-6 py-4">
+      <div className="flex-1 overflow-auto px-4 py-3">
         {!loading && tickets.length === 0 && activeFilter === 'all' ? (
           /* Empty state — first-time user */
           <div className="flex flex-col items-center justify-center h-full min-h-[320px] text-center">

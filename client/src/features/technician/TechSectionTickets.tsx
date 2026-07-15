@@ -52,7 +52,7 @@ const TechSectionTickets = ({ currentTechnicianId, onTicketSelect }: { currentTe
   });
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+    <div className="flex-1 overflow-y-auto p-3 bg-gray-50 space-y-4">
       <div>
         <p className="font-semibold text-gray-900">
           Welcome back, {userData?.first_name || 'Technician'}
