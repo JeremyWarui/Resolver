@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { wsDisconnect } from '@/lib/ws/wsClient';
 
 // Allow _retry flag on axios request configs without casting everywhere
 declare module 'axios' {
@@ -53,7 +54,11 @@ function processQueue(error: unknown, token: string | null): void {
   failedQueue = [];
 }
 
-function clearSessionAndRedirect(reason?: 'role-changed'): void {
+export function clearSessionAndRedirect(reason?: 'role-changed'): void {
+  // Tear the socket down explicitly — otherwise its exponential-backoff
+  // reconnect loop keeps re-authenticating with a token that's about to be
+  // wiped, and briefly reappears if the redirect races the network tab.
+  wsDisconnect();
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem('currentUser');
   if (!window.location.pathname.includes('/login')) {

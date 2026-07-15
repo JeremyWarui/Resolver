@@ -11,6 +11,7 @@
 //   system_{campusId}   — admin only
 
 import { useNotificationStore } from '@/stores/notificationStore';
+import { clearSessionAndRedirect } from '@/lib/api/client';
 import type { AppNotification, NotificationEventType, UserScope } from '@/types';
 
 // In production, VITE_WS_URL_PROD overrides (set for real deployments).
@@ -193,6 +194,15 @@ function handleWsEvent(msg: WsMessage): void {
 
     case 'section_summary':
       invalidate(['analytics']);
+      break;
+
+    case 'role_changed':
+      // Pushed the instant an admin/HOD promotes/demotes this user's primary
+      // role, or edits an active cover assignment's window. Same forced-
+      // relogin path the apiClient refresh interceptor uses when it detects
+      // a stale role — this just gets there immediately instead of waiting
+      // on the next silent token refresh.
+      clearSessionAndRedirect('role-changed');
       break;
 
     default:
