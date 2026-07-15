@@ -29,6 +29,13 @@ import { handleDRFError } from '@/utils/handleDRFError';
 import type { User, UserRole, RoleAssignment, CreateRoleAssignmentPayload, CreateUserPayload } from '@/types';
 import type { Campus, Department } from '@/types';
 
+function formatJoinedDate(iso?: string): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-KE', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  });
+}
+
 const ROLE_LABELS: Record<UserRole, string> = {
   user: 'User',
   technician: 'Technician',
@@ -601,7 +608,10 @@ const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([]);
+  // Newest registrations float to the top of each role group by default —
+  // the "user" group is where every self-registered account lands, so this
+  // is how an admin spots who just signed up and still needs a role.
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'date_joined', desc: true }]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [campusFilter, setCampusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
@@ -614,6 +624,7 @@ const UsersPage = () => {
 
   const nameHeader = useSortableColumn('Name');
   const emailHeader = useSortableColumn('Email');
+  const joinedHeader = useSortableColumn('Joined');
 
   const { campuses } = useCampuses();
   const { departments } = useDepartments();
@@ -679,6 +690,11 @@ const UsersPage = () => {
       accessorKey: 'email',
       header: emailHeader,
       cell: ({ row }) => <span className="text-sm">{row.getValue('email')}</span>,
+    },
+    {
+      accessorKey: 'date_joined',
+      header: joinedHeader,
+      cell: ({ row }) => <span className="text-sm text-gray-500">{formatJoinedDate(row.getValue('date_joined'))}</span>,
     },
     {
       accessorKey: 'campus_name',
