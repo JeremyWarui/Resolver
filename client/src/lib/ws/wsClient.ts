@@ -1,7 +1,7 @@
 // lib/ws/wsClient.ts — Native WebSocket client for Django Channels backend
 //
 // Connection URL: ws(s)://host/ws/?token=<jwt-access-token>
-// Token is the JWT access token read from localStorage (key: authToken).
+// Token is the JWT access token read from the auth store.
 // Django Channels middleware validates the token in the consumer handshake.
 //
 // Channel naming uses underscores (Django Channels group name constraint):
@@ -11,6 +11,7 @@
 //   system_{campusId}   — admin only
 
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useAuthStore } from '@/stores/authStore';
 import { clearSessionAndRedirect } from '@/lib/api/client';
 import type { AppNotification, NotificationEventType, UserScope } from '@/types';
 
@@ -22,8 +23,6 @@ const WS_URL =
     ? (import.meta.env.VITE_WS_URL_PROD ??
         `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/`)
     : (import.meta.env.VITE_WS_URL_DEV ?? 'ws://localhost:8000/ws/');
-
-const TOKEN_KEY = 'authToken';
 
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -41,7 +40,7 @@ export function wsInit(invalidateQueries: (key: unknown[]) => void): void {
 }
 
 export function wsConnect(): void {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = useAuthStore.getState().getToken();
   if (!token) return;
 
   isIntentionalClose = false;

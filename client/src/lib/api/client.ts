@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { wsDisconnect } from '@/lib/ws/wsClient';
+import { useAuthStore } from '@/stores/authStore';
 
 // Allow _retry flag on axios request configs without casting everywhere
 declare module 'axios' {
@@ -15,8 +16,6 @@ const BASE_URL =
     ? (import.meta.env.VITE_API_URL_PROD ?? '/api/v1')
     : (import.meta.env.VITE_API_URL_DEV ?? 'http://localhost:8000/api/v1');
 
-const TOKEN_KEY = 'authToken';
-
 const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
@@ -27,7 +26,7 @@ const apiClient = axios.create({
 // ── Request interceptor — attach JWT Bearer token ─────────────────────────────
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = useAuthStore.getState().token;
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -59,8 +58,7 @@ export function clearSessionAndRedirect(reason?: 'role-changed'): void {
   // reconnect loop keeps re-authenticating with a token that's about to be
   // wiped, and briefly reappears if the redirect races the network tab.
   wsDisconnect();
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem('currentUser');
+  useAuthStore.getState().clearUser();
   if (!window.location.pathname.includes('/login')) {
     const suffix = reason ? `?reason=${reason}` : '';
     window.location.href = `/login${suffix}`;
@@ -111,8 +109,9 @@ apiClient.interceptors.response.use(
       }
 
       const newToken = data.accessToken;
-      localStorage.setItem(TOKEN_KEY, newToken);
-      apiClient.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+      // The request interceptor reads the store on every call, so updating
+      // the store is what makes replayed + future requests use the new token.
+      useAuthStore.getState().setToken(newToken);
       processQueue(null, newToken);
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
       return apiClient(originalRequest);

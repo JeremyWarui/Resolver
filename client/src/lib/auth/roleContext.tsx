@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
-import { switchRoleApi } from '@/lib/api/auth';
+import { switchRoleApi, flatToUser } from '@/lib/api/auth';
 import { getPermissions } from './permissions';
 import type { PermissionMap, UserScope } from '@/types';
 import type { UserRole } from '@/types';
@@ -22,8 +22,8 @@ const RoleContext = createContext<RoleContextValue>({
 });
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  // useAuthStore is populated by useUserData after a successful profile fetch.
-  // On first render (before fetch completes) user will be null → role/permissions null.
+  // The auth store hydrates synchronously from localStorage at module load,
+  // so an existing session's role/permissions are available on first render.
   const user = useAuthStore((s) => s.user);
 
   const value = useMemo<RoleContextValue>(() => {
@@ -94,28 +94,7 @@ export function useSwitchRole(): { switchRole: (roleAssignmentId: number) => Pro
     async (roleAssignmentId: number) => {
       try {
         const flat = await switchRoleApi(roleAssignmentId);
-        setUser(
-          {
-            id: flat.user_id,
-            username: flat.username,
-            email: flat.email,
-            first_name: flat.first_name,
-            last_name: flat.last_name,
-            role: flat.role,
-            campus_name: null,
-            sections: flat.sections,
-            section_names: [],
-            section_name: flat.section_name,
-            primary_campus_id: flat.primary_campus_id,
-            primary_campus_display: null,
-            primary_department_id: flat.primary_department_id,
-            primary_department_display: null,
-            primary_department_name: flat.primary_department_name,
-            home_campus_id: null,
-            home_campus_name: flat.home_campus_name,
-          },
-          flat.token
-        );
+        setUser(flatToUser(flat), flat.token);
       } catch {
         toast.error('Failed to switch role');
       }

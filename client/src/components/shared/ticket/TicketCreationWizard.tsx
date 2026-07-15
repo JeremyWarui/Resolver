@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/authStore';
 import { createTicket } from '@/lib/api/tickets';
-import { getCurrentUser } from '@/lib/api/auth';
 import { useCatalog, useFacilityTypes, useFacilitiesForType } from '@/hooks/catalog/useCatalog';
 import type { CatalogCategory, CatalogItem } from '@/lib/api/catalogue';
 
@@ -127,9 +126,7 @@ function ReviewRow({ label, children }: { label: string; children: React.ReactNo
 
 export function TicketCreationWizard({ isOpen, onOpenChange, onSuccess, quickStart }: TicketCreationWizardProps) {
   const storeUser = useAuthStore((s) => s.user);
-  // Fall back to localStorage if the store hasn't been re-hydrated yet after page reload
-  // (authStore only persists the token; user is re-hydrated async by useUserData).
-  const campusId = storeUser?.primary_campus_id ?? getCurrentUser()?.primary_campus_id ?? null;
+  const campusId = storeUser?.primary_campus_id ?? null;
   const queryClient = useQueryClient();
 
   // Wizard state

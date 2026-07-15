@@ -1,28 +1,31 @@
+// Thin adapter over the auth store — same public surface as before, but the
+// session state now comes from useAuthStore (the single source of truth), so
+// every component calling useAuth() re-renders when the session changes.
+// The old version held a per-component useState snapshot of localStorage,
+// which silently went stale in components that didn't remount.
+
 import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
 import {
   login as apiLogin,
   register as apiRegister,
   logout as apiLogout,
-  getCurrentUser,
-  isAuthenticated as checkAuthenticated,
   hasRole,
   getUserRole,
 } from '@/lib/api/auth';
 import type { LoginResponse, LoginCredentials, RegisterPayload } from '@/lib/api/auth';
-import type { User } from '@/types';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(() => getCurrentUser() as User | null);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => checkAuthenticated());
 
+  // apiLogin/apiRegister/apiLogout update the store themselves; the
+  // subscriptions above propagate the change to every consumer.
   const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
     setIsLoading(true);
     try {
-      const response = await apiLogin(credentials);
-      setUser(getCurrentUser() as User | null);
-      setIsAuthenticated(true);
-      return response;
+      return await apiLogin(credentials);
     } finally {
       setIsLoading(false);
     }
@@ -31,10 +34,7 @@ export const useAuth = () => {
   const register = async (payload: RegisterPayload): Promise<LoginResponse> => {
     setIsLoading(true);
     try {
-      const response = await apiRegister(payload);
-      setUser(getCurrentUser() as User | null);
-      setIsAuthenticated(true);
-      return response;
+      return await apiRegister(payload);
     } finally {
       setIsLoading(false);
     }
@@ -44,8 +44,6 @@ export const useAuth = () => {
     setIsLoading(true);
     try {
       await apiLogout();
-      setUser(null);
-      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }

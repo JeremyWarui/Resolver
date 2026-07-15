@@ -1,8 +1,6 @@
 import apiClient from './client';
-import type { UserRole } from '@/types';
-
-const TOKEN_KEY = 'authToken';
-const USER_KEY = 'currentUser';
+import { useAuthStore } from '@/stores/authStore';
+import type { User, UserRole } from '@/types';
 
 // ── Backend JWT response shape ────────────────────────────────────────────────
 
@@ -95,25 +93,33 @@ function flattenJWT(data: JWTLoginResponse): LoginResponse {
   };
 }
 
+/** Map the flat login/switch-role response to the app-wide User shape.
+ * Display variants the response doesn't carry are null — useUserData
+ * refreshes them on next mount. */
+export function flatToUser(flat: LoginResponse): User {
+  return {
+    id: flat.user_id,
+    username: flat.username,
+    email: flat.email,
+    first_name: flat.first_name,
+    last_name: flat.last_name,
+    role: flat.role,
+    campus_name: null,
+    sections: flat.sections ?? [],
+    section_names: [],
+    section_name: flat.section_name,
+    primary_campus_id: flat.primary_campus_id,
+    primary_campus_display: null,
+    primary_department_id: flat.primary_department_id,
+    primary_department_display: null,
+    primary_department_name: flat.primary_department_name,
+    home_campus_id: null,
+    home_campus_name: flat.home_campus_name,
+  };
+}
+
 function persistSession(data: LoginResponse): void {
-  localStorage.setItem(TOKEN_KEY, data.token);
-  localStorage.setItem(
-    USER_KEY,
-    JSON.stringify({
-      id: data.user_id,
-      username: data.username,
-      email: data.email,
-      role: data.role,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      primary_campus_id: data.primary_campus_id,
-      primary_department_id: data.primary_department_id,
-      sections: data.sections ?? [],
-      home_campus_name: data.home_campus_name,
-      primary_department_name: data.primary_department_name,
-      section_name: data.section_name,
-    })
-  );
+  useAuthStore.getState().setUser(flatToUser(data), data.token);
 }
 
 // ── Auth API ──────────────────────────────────────────────────────────────────
@@ -188,20 +194,14 @@ export async function updateProfile(
   return flattenJWT(data);
 }
 
-// ── Sync helpers (read localStorage, no API call) ─────────────────────────────
+// ── Sync helpers (read the auth store, no API call) ───────────────────────────
 
 export function isAuthenticated(): boolean {
-  return !!localStorage.getItem(TOKEN_KEY);
+  return useAuthStore.getState().isAuthenticated;
 }
 
-export function getCurrentUser(): LoginResponse | null {
-  const raw = localStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as LoginResponse;
-  } catch {
-    return null;
-  }
+export function getCurrentUser(): User | null {
+  return useAuthStore.getState().user;
 }
 
 export function getUserRole(): UserRole | null {
@@ -215,8 +215,7 @@ export function hasRole(roles: UserRole | UserRole[]): boolean {
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem('user'); // old key used by legacy code
+  useAuthStore.getState().clearUser();
+  localStorage.removeItem('refreshToken'); // old keys used by legacy code
+  localStorage.removeItem('user');
 }

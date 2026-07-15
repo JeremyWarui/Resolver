@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 import { Ticket, Bell, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
-import { getCurrentUser } from '@/lib/api/auth';
 import { useQuery } from '@tanstack/react-query';
 import { getNotifications } from '@/lib/api/notifications';
 import { MobileTicketList } from './MobileTicketList';
@@ -41,10 +40,9 @@ export function MobileShell() {
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const isOnline = useOnlineStatus();
   const clearUser = useAuthStore(s => s.clearUser);
-  const storeUser = useAuthStore(s => s.user);
+  const user = useAuthStore(s => s.user);
   const navigate = useNavigate();
 
-  const user = storeUser ?? (getCurrentUser() as unknown as typeof storeUser);
   const displayName = user
     ? (user.first_name ? `${user.first_name} ${user.last_name ?? ''}`.trim() : user.username)
     : 'Technician';
