@@ -386,14 +386,16 @@ export function technicianViewColumn<T>(options: {
   };
 }
 
-// Rate & close column — only for user my-tickets variant.
-// Shows "Rate & close" for resolved unrated tickets; "Rated" badge once feedback exists.
+// Actions column — only for user my-tickets variant.
+// Shows "Rate & close" for resolved unrated tickets; "Rated" badge once feedback exists;
+// otherwise a "View" hint (row is already clickable — no stopPropagation here) so the
+// column never renders an empty gap for open/assigned/in_progress/pending/closed tickets.
 export function rateAndCloseColumn(options: {
   onRate: (ticket: Ticket) => void;
 }): ColumnDef<Ticket> {
   return {
     id: "rate_actions",
-    header: "",
+    header: "Actions",
     cell: ({ row }) => {
       const ticket = row.original;
       if (ticket.status === "resolved" && !ticket.feedback) {
@@ -417,7 +419,12 @@ export function rateAndCloseColumn(options: {
           </Badge>
         );
       }
-      return null;
+      return (
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <Eye className="h-3.5 w-3.5" />
+          View
+        </span>
+      );
     },
     enableSorting: false,
     size: 130,
