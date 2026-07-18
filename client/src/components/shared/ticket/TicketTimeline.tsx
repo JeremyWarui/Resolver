@@ -147,6 +147,12 @@ function DateChip({ label }: { label: string }) {
   );
 }
 
+// Events whose `note` (TicketLog.reason) is a human-entered message worth
+// rendering: progress notes, pending reasons, resolution notes (QA D1/D2).
+const NOTE_EVENT_TYPES: TimelineEventType[] = [
+  'status_changed', 'pending', 'resolved', 'closed', 'reopened',
+];
+
 function EventRow({
   event,
   isLast,
@@ -160,11 +166,12 @@ function EventRow({
   const name      = actorName(event.actor);
   const label     = isComment ? `Comment added` : cfg.label;
   const subtext   = isComment ? name : buildSubtext(event);
+  const showNote  = !!event.note && NOTE_EVENT_TYPES.includes(event.event_type);
 
   return (
     <div className={cn('flex items-start gap-3', isLast ? '' : 'pb-2')}>
       {/* Icon + connector */}
-      <div className="flex flex-col items-center shrink-0 pt-0.5" style={{ width: 22 }}>
+      <div className="flex flex-col items-center self-stretch shrink-0 pt-0.5" style={{ width: 22 }}>
         <div
           className="flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0"
           style={{ border: `1.5px solid var(${colorVar})`, backgroundColor: 'transparent' }}
@@ -180,14 +187,21 @@ function EventRow({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 flex items-center justify-between gap-3 py-1">
-        <div className="min-w-0 flex items-baseline gap-1.5">
-          <span className="text-sm text-foreground">{label}</span>
-          <span className="text-sm text-muted-foreground truncate">· {subtext}</span>
+      <div className="flex-1 min-w-0 py-1">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex items-baseline gap-1.5">
+            <span className="text-sm text-foreground">{label}</span>
+            <span className="text-sm text-muted-foreground truncate">· {subtext}</span>
+          </div>
+          <span className="text-xs text-muted-foreground/70 shrink-0 tabular-nums">
+            {formatTime(event.created_at)}
+          </span>
         </div>
-        <span className="text-xs text-muted-foreground/70 shrink-0 tabular-nums">
-          {formatTime(event.created_at)}
-        </span>
+        {showNote && (
+          <p className="mt-1 text-sm text-muted-foreground border-l-2 border-border pl-2.5 whitespace-pre-wrap">
+            {event.note}
+          </p>
+        )}
       </div>
     </div>
   );

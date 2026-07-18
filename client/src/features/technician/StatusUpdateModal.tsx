@@ -24,10 +24,12 @@ import { useTicketInvalidate } from '@/hooks/tickets/useTicketDetail';
 import { PENDING_REASON_CHOICES } from '@/constants/tickets';
 import type { Ticket } from '@/types';
 
+// Mirror of the backend ALLOWED map (apps/tickets/services/lifecycle.py),
+// restricted to the transitions a technician drives. Keep the two in sync.
 const VALID_NEXT: Partial<Record<Ticket['status'], Ticket['status'][]>> = {
-  assigned:    ['in_progress', 'open'],
+  assigned:    ['in_progress'],
   in_progress: ['pending', 'resolved'],
-  pending:     ['in_progress'],
+  pending:     ['in_progress', 'resolved'],
 };
 
 const STATUS_LABEL: Record<string, string> = {

@@ -177,14 +177,27 @@ export interface RoleAssignment {
   valid_until: string | null;
 }
 
-export interface MeResponse extends LoginResponse {
-  role_assignments: RoleAssignment[];
+// GET /auth/me/ returns the serialized user at the TOP level (no `user`
+// wrapper, no accessToken) with the server-re-derived active_role — the
+// authoritative answer to "what role is this session actually in now".
+export interface MeResponse {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  /** active_role.role, defaulting to 'user' for pure requesters. */
+  role: UserRole;
+  active_role: RoleAssignment | null;
+  available_roles: RoleAssignment[];
+  home_campus_name: string | null;
+  primary_department_name: string | null;
+  section_name: string | null;
 }
 
 export async function getProfile(): Promise<MeResponse> {
-  const { data } = await apiClient.get<JWTLoginResponse & { role_assignments?: RoleAssignment[] }>('/auth/me/');
-  const flat = flattenJWT(data);
-  return { ...flat, role_assignments: data.role_assignments ?? [] };
+  const { data } = await apiClient.get<Omit<MeResponse, 'role'>>('/auth/me/');
+  return { ...data, role: (data.active_role?.role as UserRole) ?? 'user' };
 }
 
 export async function updateProfile(

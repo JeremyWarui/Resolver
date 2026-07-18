@@ -30,6 +30,13 @@ function TechTickets({ currentTechnicianId, onTicketSelect }: TechTicketsProps) 
     section_type_name: s.section_type_name,
   } as unknown as Section));
 
+  // Pin the page to the technician's OWN tickets (B2): without assigned_to the
+  // fetch returns their full section scope, which belongs to Section Tickets.
+  const fixedParams = useMemo(
+    () => (currentTechnicianId ? { assigned_to: currentTechnicianId } : {}),
+    [currentTechnicianId],
+  );
+
   // Lazy-fetch only when filter changes
   const table = useTicketTable({
     role: 'technician',
@@ -38,6 +45,7 @@ function TechTickets({ currentTechnicianId, onTicketSelect }: TechTicketsProps) 
     defaultPageSize: 20,
     externalSections,
     skipUntilUserId: true,
+    fixedParams,
   });
 
   // Derive counts from actual fetched tickets so stat cards match the table
@@ -45,7 +53,8 @@ function TechTickets({ currentTechnicianId, onTicketSelect }: TechTicketsProps) 
     const tickets = table.tickets;
     return {
       all: table.totalTickets,
-      assigned: tickets.filter(t => t.status === 'open' || t.status === 'assigned').length,
+      // 'open' tickets are unassigned by definition — never the technician's own.
+      assigned: tickets.filter(t => t.status === 'assigned').length,
       in_progress: tickets.filter(t => t.status === 'in_progress').length,
       pending: tickets.filter(t => t.status === 'pending').length,
       resolved: tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length,

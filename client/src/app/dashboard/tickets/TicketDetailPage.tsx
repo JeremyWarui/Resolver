@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   UserCheck, RefreshCw, AlertCircle,
-  RotateCcw, Star,
+  RotateCcw, Star, Hand, CheckCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,7 +22,8 @@ import { useTicketDetail, useTicketTimeline, useTicketInvalidate } from '@/hooks
 import { usePermissions } from '@/lib/auth/roleContext';
 import { useAuthStore } from '@/stores/authStore';
 import { joinChannel, leaveChannel } from '@/lib/ws/wsClient';
-import { reopenTicket } from '@/lib/api/tickets';
+import { claimTicket, reopenTicket } from '@/lib/api/tickets';
+import { RatingStars } from '@/components/shared/ticket/RatingWidget';
 import { formatDate, formatDateTime } from '@/utils/date';
 import { formatSectionDisplay } from '@/utils/formatSection';
 import type { Ticket } from '@/types';
@@ -132,6 +133,7 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
 
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [reopenSubmitting, setReopenSubmitting] = useState(false);
+  const [claimSubmitting, setClaimSubmitting] = useState(false);
 
   useEffect(() => {
     if (ticketId == null) return;
@@ -141,6 +143,32 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
   }, [ticketId]);
 
   const isRaisedByCurrentUser = ticket?.raised_by_id === currentUser?.id;
+
+  // Captured-but-hidden dialog data (QA D1/D2) — both travel as TicketLog.reason
+  // and are already in the fetched timeline; no extra endpoint needed.
+  const pendingReason = useMemo(() => {
+    if (ticket?.status !== 'pending') return null;
+    const ev = [...events].reverse().find(
+      (e) => e.event_type === 'status_changed' && e.data?.to === 'pending',
+    );
+    return ev?.note ?? null;
+  }, [ticket?.status, events]);
+
+  const resolutionNote = useMemo(() => {
+    if (!ticket || !['resolved', 'closed'].includes(ticket.status)) return null;
+    const ev = [...events].reverse().find((e) => e.event_type === 'resolved');
+    return ev?.note ?? null;
+  }, [ticket, events]);
+
+  // Claim (B2a): technician self-assigns an unassigned open section ticket.
+  // A technician can only reach an out-of-section ticket as its requester, so
+  // excluding own-raised tickets leaves exactly the claimable section queue.
+  const showClaim =
+    currentUser?.role === 'technician' &&
+    ticket != null &&
+    ticket.status === 'open' &&
+    ticket.assigned_to == null &&
+    !isRaisedByCurrentUser;
 
   const showStatusUpdate =
     permissions.canUpdateTicketStatus &&
@@ -192,6 +220,21 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
     }
   }
 
+  async function handleClaim() {
+    if (!ticket) return;
+    setClaimSubmitting(true);
+    try {
+      await claimTicket(ticket.id);
+      toast.success('Ticket claimed — it is now assigned to you.');
+      invalidate(ticket.id);
+    } catch {
+      toast.error('Could not claim this ticket. It may already be assigned.');
+      invalidate(ticket.id);
+    } finally {
+      setClaimSubmitting(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
@@ -221,7 +264,7 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
             </DialogHeader>
 
             {/* ── Action toolbar ─────────────────────────────────────────────── */}
-            {(showStatusUpdate || showAssign || showReassign || showEscalate || showConfirmResolved || showReopen) && (
+            {(showClaim || showStatusUpdate || showAssign || showReassign || showEscalate || showConfirmResolved || showReopen) && (
               <div className="px-6 py-3 border-b bg-muted/30 shrink-0 flex items-center justify-between gap-2">
                 {/* Secondary actions — left */}
                 <div className="flex items-center gap-2 flex-wrap">
@@ -235,6 +278,17 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
 
                 {/* Primary actions — right, with background colors */}
                 <div className="flex items-center gap-2 shrink-0">
+                  {showClaim && (
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={handleClaim}
+                      disabled={claimSubmitting}
+                    >
+                      <Hand className="h-3.5 w-3.5 mr-1.5" />
+                      {claimSubmitting ? 'Claiming…' : 'Claim'}
+                    </Button>
+                  )}
                   {showAssign && (
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setActiveModal('assign')}>
                       <UserCheck className="h-3.5 w-3.5 mr-1.5" />
@@ -300,6 +354,7 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
                           ticket={ticket}
                           hideHeader
                           viewerRole={currentUser?.role ?? undefined}
+                          viewerId={currentUser?.id}
                           onCommentAdded={() => invalidate(ticket.id)}
                         />
                       </div>
@@ -409,17 +464,39 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
                     </Card>
                   )}
 
-                  {/* Pending reason — uses status-approval (amber) tokens for paused/waiting state */}
-                  {ticket.status === 'pending' && ticket.pending_reason && (
+                  {/* Pending reason (D1) — derived from the latest pending transition
+                      in the timeline (the reason lands in TicketLog, not on Ticket).
+                      Uses status-approval (amber) tokens for paused/waiting state. */}
+                  {ticket.status === 'pending' && pendingReason && (
                     <Card style={{ borderColor: 'var(--status-approval-border)' }}>
                       <CardContent className="p-5">
                         <SectionLabel>On Hold</SectionLabel>
                         <p className="text-sm capitalize" style={{ color: 'var(--status-approval-text)' }}>
-                          {ticket.pending_reason.replace(/_/g, ' ')}
+                          {pendingReason.replace(/_/g, ' ')}
                         </p>
-                        {ticket.pending_comment && (
-                          <p className="text-sm text-muted-foreground mt-1.5">{ticket.pending_comment}</p>
-                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Resolution note (D2) — the resolved event's reason. */}
+                  {resolutionNote && (
+                    <Card style={{ borderColor: 'var(--status-resolved-border, var(--status-resolved))' }}>
+                      <CardContent className="p-5">
+                        <SectionLabel>Resolution</SectionLabel>
+                        <div className="flex items-start gap-2">
+                          <CheckCheck className="h-4 w-4 mt-0.5 shrink-0" style={{ color: 'var(--status-resolved)' }} />
+                          <p className="text-sm whitespace-pre-wrap">{resolutionNote}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Submitted rating (D3) — nested feedback from the detail API. */}
+                  {ticket.feedback && (
+                    <Card>
+                      <CardContent className="p-5">
+                        <SectionLabel>Requester Feedback</SectionLabel>
+                        <RatingStars rating={ticket.feedback.rating} comment={ticket.feedback.comment} />
                       </CardContent>
                     </Card>
                   )}
@@ -457,6 +534,7 @@ export function TicketDetailPage({ ticketId, open, onClose }: TicketDetailPagePr
                 open
                 onClose={() => setActiveModal(null)}
                 onSuccess={onModalSuccess}
+                resolutionNote={resolutionNote}
               />
             )}
 

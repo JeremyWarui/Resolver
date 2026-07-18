@@ -14,6 +14,9 @@ export interface UseTicketTableConfig {
   defaultPageSize?: number;
   fetchSectionTickets?: boolean;
   skipUntilUserId?: boolean;
+  /** Server params pinned for the page's purpose (e.g. assigned_to on the
+   *  Assigned Tickets page) — applied last, not clearable via filter UI. */
+  fixedParams?: Partial<TicketsParams>;
   externalSections?: Section[];
   externalUsers?: User[];
   externalTechnicians?: Technician[];
@@ -111,6 +114,7 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     externalFacilities,
     initialData,
     onDataFetched,
+    fixedParams,
   } = config;
 
   // ==================== STATE ====================
@@ -167,7 +171,8 @@ export const useTicketTable = (config: UseTicketTableConfig): UseTicketTableResu
     ...(sectionFilter ? { section: sectionFilter } : {}),
     ...(technicianFilter ? { assigned_to: technicianFilter } : {}),
     ...(userFilter ? { raised_by: userFilter } : {}),
-  }), [pageIndex, pageSize, statusFilter, sectionFilter, technicianFilter, userFilter]);
+    ...(fixedParams ?? {}),
+  }), [pageIndex, pageSize, statusFilter, sectionFilter, technicianFilter, userFilter, fixedParams]);
 
   const skipInitialFetch = initialData != null && pageIndex === 0;
 

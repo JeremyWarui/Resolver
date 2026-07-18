@@ -71,7 +71,17 @@ export function RoleAssignmentModal({ user, onClose }: { user: User; onClose: ()
         valid_until: new Date(form.valid_until).toISOString(),
       };
       await createRoleAssignment(user.id, payload);
-      toast.success('Role assignment added');
+      toast.success('Cover assignment added');
+      // C-1 guard: a cover is NOT a promotion — if the admin meant to change
+      // the user's standing role, this is the moment to catch the mistake.
+      const primary = assignments.find(a => a.is_primary);
+      if (primary && primary.role !== form.role) {
+        toast.warning(
+          `This is a temporary cover only — ${user.first_name}'s primary role is still ` +
+          `${ROLE_LABELS[primary.role] ?? primary.role}. Use Edit User to promote them permanently.`,
+          { duration: 8000 },
+        );
+      }
       setForm(EMPTY_RA_FORM);
       fetchAssignments();
     } catch (error) {

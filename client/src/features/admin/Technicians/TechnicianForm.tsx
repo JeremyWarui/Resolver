@@ -34,6 +34,9 @@ interface TechnicianFormProps {
 
 const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: TechnicianFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Set when the user account was created but the role assignment failed —
+  // the next submit retries only the role step instead of re-creating the user.
+  const [pendingRoleUserId, setPendingRoleUserId] = useState<number | null>(null);
   const [sectionInputs, setSectionInputs] = useState<number[]>([0]);
   const [campusFilter, setCampusFilter] = useState<string>('__all__');
   const [departmentFilter, setDepartmentFilter] = useState<string>('__all__');
@@ -115,6 +118,7 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
   if (prevIsOpen !== isOpen || prevTechnicianId !== technician?.id) {
     setPrevIsOpen(isOpen);
     setPrevTechnicianId(technician?.id);
+    setPendingRoleUserId(null);
     if (isOpen) {
       if (technician) {
         const techSections = technician.sections || [];
@@ -182,7 +186,11 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
 
       let userId: number;
 
-      if (technician) {
+      if (pendingRoleUserId != null) {
+        // Previous attempt created the account but the role step failed —
+        // retry the role assignment for that account instead of duplicating it.
+        userId = pendingRoleUserId;
+      } else if (technician) {
         const updatePayload: Partial<User> & { password?: string } = {
           first_name: values.first_name,
           last_name: values.last_name,
@@ -237,16 +245,20 @@ const TechnicianForm = ({ isOpen, onOpenChange, onSuccess, technician = null }: 
             );
           }
         } catch (roleError) {
+          // Loud failure (QA A1): without the role assignment the account is
+          // not a technician (it won't appear in the Technicians table or the
+          // Assign dialog). Keep the dialog open so the admin can retry.
+          setPendingRoleUserId(userId);
           handleDRFError(roleError, {
-            fallbackMessage: 'Technician saved, but assigning the role/section failed — use the role assignment tools to fix it.',
+            fallbackMessage:
+              'The account was saved but assigning the technician role failed. Fix the selection and press save to retry.',
           });
-          onSuccess?.();
-          onOpenChange(false);
           return;
         }
       }
 
       toast.success(technician ? 'Technician updated' : 'Technician created');
+      setPendingRoleUserId(null);
       if (!technician) form.reset();
       onSuccess?.();
       onOpenChange(false);

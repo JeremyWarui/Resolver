@@ -70,6 +70,8 @@ interface CommentThreadProps {
   onCommentAdded?: () => void;
   /** The viewer's role — internal comments are hidden from 'user' (requester). */
   viewerRole?: string;
+  /** The viewer's user id — used for the assigned-technician comment gate. */
+  viewerId?: number;
 }
 
 function getInitials(name?: string) {
@@ -77,13 +79,31 @@ function getInitials(name?: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function CommentThreadInner({ ticket, readOnly = false, hideHeader = false, onCommentAdded, viewerRole }: CommentThreadProps) {
+function CommentThreadInner({ ticket, readOnly = false, hideHeader = false, onCommentAdded, viewerRole, viewerId }: CommentThreadProps) {
   const [comments, setComments] = useState<TicketComment[]>([]);
   const [postVisibility, setPostVisibility] = useState<'public' | 'internal'>('public');
   const [loadingComments, setLoadingComments] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isClosed = readOnly || ticket.status === 'closed';
+  // Mirror of the server-side comment gate (B1): comments open once a
+  // technician is assigned and close with the ticket; among technicians only
+  // the assignee may post (unless they raised the ticket themselves).
+  const isUnassigned = ticket.assigned_to == null;
+  const isOtherTechnician =
+    viewerRole === 'technician' &&
+    viewerId != null &&
+    ticket.assigned_to?.id !== viewerId &&
+    ticket.raised_by_id !== viewerId;
+  const disabledHint = readOnly
+    ? 'Comments are view-only for your role.'
+    : ticket.status === 'closed'
+      ? 'This ticket is closed. Comments are disabled.'
+      : isUnassigned
+        ? 'Comments open once a technician is assigned.'
+        : isOtherTechnician
+          ? 'Only the assigned technician may comment on this ticket.'
+          : null;
+  const isClosed = disabledHint != null;
 
   const form = useForm<TicketCommentFormValues>({
     resolver: zodResolver(ticketCommentSchema),
@@ -241,7 +261,7 @@ function CommentThreadInner({ ticket, readOnly = false, hideHeader = false, onCo
         </div>
       ) : (
         <p className="pt-3 border-t text-sm text-muted-foreground italic text-center py-2">
-          {readOnly ? 'Comments are view-only for your role.' : 'This ticket is closed. Comments are disabled.'}
+          {disabledHint}
         </p>
       )}
     </div>
@@ -255,5 +275,6 @@ export const CommentThread = React.memo(
     prev.ticket.updated_at === next.ticket.updated_at &&
     prev.readOnly === next.readOnly &&
     prev.viewerRole === next.viewerRole &&
+    prev.viewerId === next.viewerId &&
     prev.onCommentAdded === next.onCommentAdded,
 );

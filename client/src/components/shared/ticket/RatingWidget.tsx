@@ -1,5 +1,7 @@
-// RatingWidget — 1–5 star rating + resolved/reopen choice + optional comment.
-// Used when a user confirms resolution of their ticket.
+// RatingWidget — 1–5 star rating + optional comment, submitted with Close.
+// Used when a user confirms resolution of their ticket (Rate & Close).
+// Reopen is a separate standalone action on the ticket detail page (QA B2c).
+// RatingStars is the shared read-only display for submitted feedback (QA D3).
 
 import { useState } from 'react';
 import { Star } from 'lucide-react';
@@ -11,7 +13,41 @@ import { cn } from '@/lib/utils';
 export interface RatingSubmitPayload {
   rating: number;       // 1–5
   comment?: string;
-  action: 'close' | 'reopen';
+}
+
+const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+
+/** Read-only star row for submitted feedback (ticket detail, staff views). */
+export function RatingStars({
+  rating,
+  comment,
+  className,
+}: {
+  rating: number;
+  comment?: string | null;
+  className?: string;
+}) {
+  return (
+    <div className={cn('space-y-1.5', className)}>
+      <div className="flex items-center gap-1.5">
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Star
+              key={n}
+              className={cn(
+                'h-4 w-4',
+                n <= rating ? 'fill-yellow-400 text-yellow-400' : 'fill-none text-muted-foreground/50',
+              )}
+            />
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground">{RATING_LABELS[rating] ?? ''}</span>
+      </div>
+      {comment && (
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">“{comment}”</p>
+      )}
+    </div>
+  );
 }
 
 interface RatingWidgetProps {
@@ -27,7 +63,6 @@ export function RatingWidget({ onSubmit, submitting = false, className, isResolv
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
   const [comment, setComment] = useState('');
-  const [action, setAction] = useState<'close' | 'reopen'>('close');
 
   if (!isResolved || !isRaiser) return null;
 
@@ -62,9 +97,7 @@ export function RatingWidget({ onSubmit, submitting = false, className, isResolv
           })}
         </div>
         {rating > 0 && (
-          <p className="text-xs text-muted-foreground">
-            {['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'][rating]}
-          </p>
+          <p className="text-xs text-muted-foreground">{RATING_LABELS[rating]}</p>
         )}
       </div>
 
@@ -80,43 +113,12 @@ export function RatingWidget({ onSubmit, submitting = false, className, isResolv
         />
       </div>
 
-      {/* Action choice */}
-      <div className="space-y-2">
-        <Label>What would you like to do?</Label>
-        <div className="flex flex-col gap-2">
-          <label className={cn(
-            'flex items-center gap-2 p-3 rounded-md border cursor-pointer transition-colors',
-            action === 'close' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50',
-          )}>
-            <input
-              type="radio"
-              className="sr-only"
-              checked={action === 'close'}
-              onChange={() => setAction('close')}
-            />
-            <span className="flex-1 text-sm font-medium">Close ticket — issue is resolved</span>
-          </label>
-          <label className={cn(
-            'flex items-center gap-2 p-3 rounded-md border cursor-pointer transition-colors',
-            action === 'reopen' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50',
-          )}>
-            <input
-              type="radio"
-              className="sr-only"
-              checked={action === 'reopen'}
-              onChange={() => setAction('reopen')}
-            />
-            <span className="flex-1 text-sm font-medium">Reopen ticket — issue not resolved</span>
-          </label>
-        </div>
-      </div>
-
       <Button
-        onClick={() => onSubmit({ rating, comment: comment || undefined, action })}
+        onClick={() => onSubmit({ rating, comment: comment || undefined })}
         disabled={!canSubmit || submitting}
         className="w-full"
       >
-        {submitting ? 'Submitting…' : action === 'close' ? 'Submit & close ticket' : 'Submit & reopen ticket'}
+        {submitting ? 'Submitting…' : 'Submit & close ticket'}
       </Button>
     </div>
   );

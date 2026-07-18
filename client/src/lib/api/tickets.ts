@@ -200,7 +200,10 @@ export async function getTicketTimeline(ticketId: number): Promise<TicketTimelin
     id: `log-${log.id}`,
     event_type: (log.event_type as TicketTimelineEvent['event_type']) ?? 'status_changed',
     actor: log.actor ?? undefined,
-    note: log.reason || log.to_value || undefined,
+    // note = the human-entered reason only (pending reason, resolution note…).
+    // from/to stay in data — falling back to to_value here rendered raw values
+    // (statuses, comment pks) as if they were notes.
+    note: log.reason || undefined,
     data: {
       from: log.from_value,
       to: log.to_value,
@@ -229,8 +232,16 @@ export async function closeTicket(id: number): Promise<Ticket> {
   return updateTicketStatus(id, 'closed', '');
 }
 
+// Reopen restarts the lifecycle at 'open' (unassigned, fresh SLA clock) —
+// mirrors the backend ALLOWED map (resolved/closed → open).
 export async function reopenTicket(id: number): Promise<Ticket> {
-  return updateTicketStatus(id, 'in_progress', '');
+  return updateTicketStatus(id, 'open', '');
+}
+
+// Technician self-assigns an unassigned open ticket in their section.
+export async function claimTicket(id: number): Promise<Ticket> {
+  const { data } = await apiClient.post<Ticket>(`/tickets/${id}/claim/`);
+  return data;
 }
 
 // Manual escalation is not part of the SoT API surface — escalation is automatic.
@@ -271,6 +282,7 @@ const ticketsService = {
   uploadAttachments,
   closeTicket,
   reopenTicket,
+  claimTicket,
   escalateTicket,
   addTicketFeedback,
 };

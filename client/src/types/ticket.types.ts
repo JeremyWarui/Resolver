@@ -49,10 +49,10 @@ export interface Comment {
   attachments?: Attachment[];
 }
 
+// Shape of the nested read-only `feedback` on ticket detail
+// (TicketFeedbackSerializer — null until the requester submits a rating).
 export interface Feedback {
   id: number;
-  ticket: { id: number; ticket_no: string };
-  rated_by: string;
   rating: number;
   comment?: string;
   created_at: string;
@@ -100,7 +100,7 @@ export interface Ticket {
 
   // Nested data (detail view only)
   comments?: Comment[];
-  feedback?: Feedback;
+  feedback?: Feedback | null;
   service_item?: {
     id: number;
     name: string;

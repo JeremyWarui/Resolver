@@ -139,6 +139,7 @@ function handleWsEvent(msg: WsMessage): void {
   switch (msg.type) {
     case 'ticket_created':
       invalidate(['tickets']);
+      invalidate(['analytics']);
       useNotificationStore.getState().addNotification(
         buildNotification(msg, 'ticket_created', 'New ticket raised', `Ticket #${msg.ticket_no ?? ''} has been submitted.`)
       );
@@ -147,6 +148,7 @@ function handleWsEvent(msg: WsMessage): void {
     case 'ticket_assigned':
       invalidate(['ticket', msg.ticketId]);
       invalidate(['tickets']);
+      invalidate(['analytics']);
       useNotificationStore.getState().addNotification(
         buildNotification(msg, 'ticket_assigned', 'Ticket assigned', `Ticket #${msg.ticket_no ?? ''} assigned to ${(msg.assignedToName as string) ?? 'a technician'}.`)
       );
@@ -155,6 +157,7 @@ function handleWsEvent(msg: WsMessage): void {
     case 'ticket_status_changed':
       invalidate(['ticket', msg.ticketId]);
       invalidate(['tickets']);
+      invalidate(['analytics']);
       useNotificationStore.getState().addNotification(
         buildNotification(msg, 'ticket_status_changed', 'Ticket updated', `Ticket #${msg.ticket_no ?? ''} status changed to ${(msg.toStatus as string) ?? ''}.`)
       );
@@ -173,6 +176,10 @@ function handleWsEvent(msg: WsMessage): void {
 
     case 'ticket_resolved':
       invalidate(['ticket', msg.ticketId]);
+      // The resolve transition must also refresh the requester's table and
+      // stat cards — this event replaces ticket_status_changed for resolved.
+      invalidate(['tickets']);
+      invalidate(['analytics']);
       useNotificationStore.getState().addNotification(
         buildNotification(msg, 'ticket_resolved', 'Ticket resolved', 'Your request has been resolved.')
       );

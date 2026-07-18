@@ -1,8 +1,7 @@
-// RatingModal — user rates a resolved ticket and chooses to close or reopen.
-// Wraps the shared RatingWidget component.
-// On 'close': submits feedback then closes the ticket.
-// On 'reopen': reopens the ticket without submitting feedback.
-// Both actions call onSuccess with the updated ticket.
+// RatingModal — user rates a resolved ticket and closes it (Rate & Close).
+// Shows the technician's resolution note when available so the requester can
+// read what was done before rating (QA D2). Reopen is a separate standalone
+// action on the ticket detail page (QA B2c).
 
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -14,7 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { RatingWidget } from '@/components/shared/ticket/RatingWidget';
-import { addFeedback, closeTicket, updateTicket } from '@/lib/api/tickets';
+import { addFeedback, closeTicket } from '@/lib/api/tickets';
 import { useTicketInvalidate } from '@/hooks/tickets/useTicketDetail';
 import type { Ticket } from '@/types';
 import type { RatingSubmitPayload } from '@/components/shared/ticket/RatingWidget';
@@ -24,28 +23,22 @@ interface RatingModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (updated: Ticket) => void;
+  /** The technician's resolution note (from the resolved timeline event). */
+  resolutionNote?: string | null;
 }
 
-export function RatingModal({ ticket, open, onClose, onSuccess }: RatingModalProps) {
+export function RatingModal({ ticket, open, onClose, onSuccess, resolutionNote }: RatingModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const invalidate = useTicketInvalidate();
 
-  async function handleSubmit({ rating, comment, action }: RatingSubmitPayload) {
+  async function handleSubmit({ rating, comment }: RatingSubmitPayload) {
     setSubmitting(true);
     try {
-      if (action === 'close') {
-        await addFeedback(ticket.id, rating, comment);
-        const updated = await closeTicket(ticket.id);
-        toast.success('Feedback submitted. Ticket closed.');
-        invalidate(ticket.id);
-        onSuccess(updated);
-      } else {
-        // Reopen — no feedback needed
-        const updated = await updateTicket(ticket.id, { status: 'open' });
-        toast.info('Ticket reopened.');
-        invalidate(ticket.id);
-        onSuccess(updated);
-      }
+      await addFeedback(ticket.id, rating, comment);
+      const updated = await closeTicket(ticket.id);
+      toast.success('Feedback submitted. Ticket closed.');
+      invalidate(ticket.id);
+      onSuccess(updated);
     } catch {
       toast.error('Action failed. Please try again.');
     } finally {
@@ -59,9 +52,18 @@ export function RatingModal({ ticket, open, onClose, onSuccess }: RatingModalPro
         <DialogHeader>
           <DialogTitle>Rate resolution</DialogTitle>
           <DialogDescription>
-            Rate how well your request was resolved and choose to close or reopen it.
+            Rate how well your request was resolved and close the ticket.
           </DialogDescription>
         </DialogHeader>
+
+        {resolutionNote && (
+          <div className="rounded-md border bg-muted/40 px-3.5 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+              Resolution
+            </p>
+            <p className="text-sm whitespace-pre-wrap">{resolutionNote}</p>
+          </div>
+        )}
 
         <div className="py-2">
           <RatingWidget onSubmit={handleSubmit} submitting={submitting} />
